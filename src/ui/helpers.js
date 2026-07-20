@@ -108,3 +108,17 @@ export function fmtDur(min) {
 export function dayLabel(d, now) {
   return isSameDay(d, now) ? 'Heute' : wdShort(d) + ' ' + new Date(d).getDate() + '.';
 }
+
+// Session editor (story #43): the exercise list is THIS session's plan checked
+// for the chosen day — the summary line says exactly that instead of a
+// cryptic "(n/m frei)".
+export function exerciseListSummary(levels, day) {
+  const total = levels.length;
+  const restricted = levels.filter((l) => l !== 'fresh').length;
+  if (!total) return { tone: 'fresh', text: `Noch keine Übungen – ＋ fügt passende für ${day} hinzu.` };
+  if (!restricted) {
+    return { tone: 'fresh', text: `✓ Alle ${total} machbar am ${day} – geprüft gegen Erholung, Schmerz & Constraints.` };
+  }
+  const tone = levels.includes('stop') ? 'stop' : 'caution';
+  return { tone, text: `${restricted} von ${total} am ${day} eingeschränkt – ⇄ schlägt eine freie Alternative vor.` };
+}

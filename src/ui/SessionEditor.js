@@ -11,7 +11,7 @@ import { exerciseReadiness, READY_RANK } from '../engine/readiness.js';
 import { generateStrength } from '../engine/generator.js';
 import { passesConstraints } from '../engine/swap.js';
 import { sportUi, SportGlyph } from './sportsUi.js';
-import { SLOT_HOUR, SLOT_LABEL } from './helpers.js';
+import { SLOT_HOUR, SLOT_LABEL, exerciseListSummary } from './helpers.js';
 
 function prefillStrength(state, unit, when) {
   const gen = generateStrength(state.profile, state, when).find((u) => u.unit === unit);
@@ -79,10 +79,13 @@ export function SessionEditor({ state, now, mode, sessionId, initDay = 1, initSl
 
   const exSection = (ctx.sportId === 'strength' && ctx.exercises) ? (() => {
     const rs = ctx.exercises.map((id) => ({ id, r: exerciseReadiness(id, when, state, now) }));
-    const nOk = rs.filter((x) => x.r.level === 'fresh').length;
     const dayLbl = ctx.dayOff === 0 ? 'heute' : WD[when.getDay()] + ' ' + when.getDate() + '.';
+    // Story #43: this is THIS session's plan, checked for the chosen day —
+    // the summary line names the check instead of a cryptic count.
+    const sum = exerciseListSummary(rs.map((x) => x.r.level), dayLbl);
     return html`<div class="field">
-      <div class="f-lbl">Übungen · was geht ${dayLbl}? <span style="color:var(--text-low);text-transform:none;letter-spacing:0">(${nOk}/${rs.length} frei)</span></div>
+      <div class="f-lbl">Übungen dieser Einheit</div>
+      <p class="subtle" style="font-size:12.5px;margin:2px 0 10px;color:var(--${sum.tone === 'fresh' ? 'fresh' : sum.tone === 'stop' ? 'stop' : 'caution'})">${sum.text}</p>
       ${rs.map((x, i) => {
         const e = cat.exById[x.id];
         const lv = x.r.level;
