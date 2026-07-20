@@ -4,7 +4,7 @@ import { wdShort, isSameDay } from '../engine/time.js';
 import { REGION_LABELS, FAT_LABELS, ACWR_CHIP_LABEL } from '../engine/texts.js';
 import { catalogOf } from '../engine/catalog.js';
 import { sportUi, SportGlyph } from './sportsUi.js';
-import { nextLoggable, currentRegionStatus, upcomingSessions, ridgeData, MONTHS, zoneWording, needsOnboarding } from './helpers.js';
+import { nextLoggable, currentRegionStatus, upcomingSessions, ridgeData, MONTHS, zoneWording, needsOnboarding, checkinDoneToday } from './helpers.js';
 
 function Ridge({ state, now }) {
   const r = ridgeData(state, now);
@@ -27,7 +27,7 @@ function Ridge({ state, now }) {
     </div>`;
 }
 
-export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onAdd, onRegenerate }) {
+export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onAdd, onRegenerate, onReportFatigue }) {
   const cat = catalogOf(state);
   const a = acwr(state.logs, now);
   const { zone, word: zoneWord, ratioLabel } = zoneWording(a);
@@ -69,13 +69,22 @@ export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onA
       </button>`
     : ''}
     ${!onboarding && !next ? html`<div class="mini-card" style="margin-top:16px"><span class="mc-emoji">✓</span><div class="mc-body"><div class="mc-t">Alles geloggt</div><div class="mc-s">Keine offene Einheit</div></div></div>` : ''}
-    <button class="ghost-cta" onClick=${onCheckin}>
-      <div style="text-align:left"><div class="g-k">Guten Morgen</div><div>Check-in · 30 Sekunden</div></div>
-      <span>→</span>
-    </button>
+    ${checkinDoneToday(state, now) ? html`
+      <button class="ghost-cta" onClick=${onCheckin} style="border-color:rgba(52,214,166,.35)">
+        <div style="text-align:left"><div class="g-k" style="color:var(--fresh)">✓ Check-in erledigt</div><div>Bis morgen – antippen zum Korrigieren</div></div>
+        <span>→</span>
+      </button>`
+    : html`
+      <button class="ghost-cta" onClick=${onCheckin}>
+        <div style="text-align:left"><div class="g-k">Guten Morgen</div><div>Check-in · 30 Sekunden</div></div>
+        <span>→</span>
+      </button>`}
     <div class="sec-title"><h3>Erholung heute</h3></div>
     <div class="region-strip">
-      ${regs.map((x) => html`<span class="rpill"><span class="mark m-${x.level}"></span>${REGION_LABELS[x.r]} · ${FAT_LABELS[x.level]}</span>`)}
+      ${regs.length
+        ? regs.map((x) => html`<span class="rpill"><span class="mark m-${x.level}"></span>${REGION_LABELS[x.r]} · ${FAT_LABELS[x.level]}</span>`)
+        : html`<span class="rpill"><span class="mark m-fresh"></span>Alles frisch – keine Einschränkungen</span>`}
+      <button class="rpill" style="cursor:pointer" onClick=${onReportFatigue}>＋ melden</button>
     </div>
     ${up.length ? html`<div class="sec-title"><h3>Diese Woche</h3><button class="link" onClick=${onGoWeek}>Alle ansehen</button></div>` : ''}
     ${up.map((p) => {
