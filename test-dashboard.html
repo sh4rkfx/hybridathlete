@@ -53,6 +53,25 @@ tr.fail td{background:var(--stop-dim)}
 .note{color:var(--text-low);font-size:12.5px;margin-top:8px}
 #empty{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:26px;
   color:var(--text-mid);display:none}
+/* Story #41: expandable scenario rows with detail sections */
+.trows{display:flex;flex-direction:column;gap:8px}
+.trow{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden}
+.trow.fail{border-color:rgba(255,97,136,.45)}
+.trow-head{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;list-style:none;font-size:13.5px}
+.trow-head::-webkit-details-marker{display:none}
+.trow-head .ttl{flex:1;min-width:0}
+.trow-head .caret{color:var(--text-low);transition:transform .15s ease}
+.trow[open] .caret{transform:rotate(90deg)}
+.trow-body{padding:4px 14px 14px;border-top:1px solid var(--border)}
+.d-sec{margin-top:10px}
+.d-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-low);margin-bottom:4px}
+.d-txt{font-size:13px;color:var(--text-mid)}
+.d-block{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:9px 11px;font:12px/1.55 ui-monospace,monospace;color:var(--text-mid);
+  white-space:pre-wrap;overflow-x:auto;margin:0}
+.d-block.exp{border-left:3px solid var(--brand)}
+.d-block.act-pass{border-left:3px solid var(--fresh)}
+.d-block.act-fail{border-left:3px solid var(--stop);color:var(--text-hi)}
 </style>
 </head>
 <body>
@@ -84,18 +103,28 @@ tr.fail td{background:var(--stop-dim)}
 
   let html = '';
 
-  // Scenario section first & prominent: T01–T17 with anchor + evidence.
+  // Scenario section first & prominent: T01–T17, expandable with
+  // desc / input / expected / actual (+ failure log) — dashboard parity.
+  const sec = (label, body, cls) => body
+    ? '<div class="d-sec"><div class="d-lbl">'+label+'</div><pre class="d-block '+(cls||'')+'">'+esc(body)+'</pre></div>' : '';
   const scen = R.suites.find(s=>s.name==='scenario');
   if(scen){
     const rows = scen.tests.map(t =>
-      '<tr class="'+(t.status==='fail'?'fail':'')+'"><td>'+mark(t.status)+'<span class="tid">'+esc(t.id)+'</span></td>'
-      + '<td>'+esc(t.title.replace(/^T\d{2}\s*—\s*/,''))+'</td>'
-      + '<td class="anchor">'+esc(t.anchor||'–')+'</td>'
-      + '<td><span class="ev '+esc(t.evidenceLevel||'')+'">'+esc(t.evidenceLevel||'–')+'</span></td>'
-      + '<td class="dur">'+t.durationMs+' ms</td></tr>').join('');
-    html += '<h2>Szenario-Tests T01–T17 (Wissenschafts-Gate)</h2><div class="tbl-wrap"><table>'
-      + '<tr><th>Test</th><th>Titel</th><th>Anker (AC + Literatur)</th><th>Evidenzgrad</th><th></th></tr>'
-      + rows + '</table></div>';
+      '<details class="trow '+(t.status==='fail'?'fail':'')+'">'
+      + '<summary class="trow-head">'+mark(t.status)+'<span class="tid">'+esc(t.id)+'</span>'
+      + '<span class="ttl">'+esc(t.title.replace(/^T\d{2}\s*—\s*/,''))+'</span>'
+      + '<span class="ev '+esc(t.evidenceLevel||'')+'">'+esc(t.evidenceLevel||'–')+'</span>'
+      + '<span class="dur">'+t.durationMs+' ms</span><span class="caret">›</span></summary>'
+      + '<div class="trow-body">'
+      + '<div class="d-sec"><div class="d-lbl">Anker (AC + Literatur)</div><div class="d-txt anchor">'+esc(t.anchor||'–')+'</div></div>'
+      + (t.desc ? '<div class="d-sec"><div class="d-lbl">Was wird getestet</div><div class="d-txt">'+esc(t.desc)+'</div></div>' : '')
+      + sec('Input', t.input)
+      + sec('Expected', t.expected, 'exp')
+      + sec('Actual', t.actual, t.status==='fail'?'act-fail':'act-pass')
+      + sec('Log / Stacktrace', t.failure, 'act-fail')
+      + '</div></details>').join('');
+    html += '<h2>Szenario-Tests T01–T17 (Wissenschafts-Gate) · aufklappen für Details</h2>'
+      + '<div class="trows">' + rows + '</div>';
 
     // R1–R8 coverage matrix from the scenario metadata.
     const ruleIds = ['R1','R2','R3','R4','R5','R6','R7','R8'];
@@ -113,11 +142,12 @@ tr.fail td{background:var(--stop-dim)}
       + '<div class="note">R2/R8 wirken als Filter im Generator und in der Ersatzsuche — zusätzlich abgedeckt durch die Unit-Suiten (test/engine/generator.test.js, test/engine/swap.test.js).</div>';
   }
 
-  // All suites, grouped.
+  // All suites, grouped; failed tests expose their assertion log inline.
   for(const s of R.suites){
     const rows = s.tests.map(t =>
-      '<tr class="'+(t.status==='fail'?'fail':'')+'"><td style="width:60%">'+mark(t.status)+esc(t.title)+'</td>'
-      + '<td class="dur">'+t.durationMs+' ms</td></tr>').join('');
+      '<tr class="'+(t.status==='fail'?'fail':'')+'"><td style="width:60%">'+mark(t.status)+esc(t.title)
+      + (t.failure ? '<pre class="d-block act-fail" style="margin-top:8px">'+esc(t.failure)+'</pre>' : '')
+      + '</td><td class="dur">'+t.durationMs+' ms</td></tr>').join('');
     html += '<h2 class="suite">Suite · '+esc(s.name)+' ('+s.tests.length+')</h2><div class="tbl-wrap"><table>'+rows+'</table></div>';
   }
 

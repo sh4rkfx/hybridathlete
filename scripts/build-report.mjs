@@ -6,6 +6,15 @@ import { SCENARIO_META } from '../test/scenario/meta.js';
 
 const vitestJson = JSON.parse(readFileSync('.vitest-report.json', 'utf8'));
 
+// Story #41: runtime-captured Input/Expected/Actual per scenario test (JSONL).
+const details = {};
+if (existsSync('.test-details.jsonl')) {
+  for (const line of readFileSync('.test-details.jsonl', 'utf8').split('\n')) {
+    if (!line.trim()) continue;
+    try { const d = JSON.parse(line); details[d.id] = d; } catch { /* partial line */ }
+  }
+}
+
 let coverage = null;
 if (existsSync('coverage/coverage-summary.json')) {
   const summary = JSON.parse(readFileSync('coverage/coverage-summary.json', 'utf8'));
@@ -39,6 +48,7 @@ for (const tf of vitestJson.testResults) {
     const meta = id ? SCENARIO_META[id] : null;
     const status = t.status === 'passed' ? 'pass' : t.status === 'failed' ? 'fail' : 'skip';
     if (status === 'pass') pass++; else if (status === 'fail') fail++; else skip++;
+    const detail = id ? details[id] : undefined;
     suitesMap[suite].tests.push({
       id: id ?? t.title,
       title: t.title,
@@ -47,6 +57,12 @@ for (const tf of vitestJson.testResults) {
       anchor: meta?.anchor,
       evidenceLevel: meta?.evidenceLevel,
       rules: meta?.rules,
+      // Story #41: what is tested / input / expected / actual + failure log
+      desc: meta?.desc,
+      input: detail?.input,
+      expected: detail?.expected,
+      actual: detail?.actual,
+      failure: t.failureMessages?.length ? t.failureMessages.join('\n\n') : undefined,
     });
   }
 }
