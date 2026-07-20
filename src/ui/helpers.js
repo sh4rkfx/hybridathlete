@@ -4,10 +4,30 @@ export { SLOT_HOUR, SLOT_LABEL };
 import { srpeTL } from '../engine/load.js';
 import { estPlannedTL, latestFatigue } from '../engine/planner.js';
 import { catalogOf } from '../engine/catalog.js';
+import { acwrZone } from '../engine/acwr.js';
 
 export const MONTHS = ['JAN', 'FEB', 'MÄR', 'APR', 'MAI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEZ'];
 
 export const catalog = catalogOf; // convenience re-export
+
+// Weekly-load headline (story #27): without a chronic base an ACWR of 0.00 is
+// not "Untertrainiert" — it is simply no data yet.
+export function zoneWording(a) {
+  if (!a.chronicWk) return { zone: 'neutral', word: 'Noch keine Daten', ratioLabel: '–' };
+  const zone = acwrZone(a.ratio);
+  const word = {
+    fresh: 'Im grünen Bereich',
+    caution: a.ratio < 0.8 ? 'Untertrainiert' : 'Erhöht – aufpassen',
+    stop: 'Überlast',
+  }[zone];
+  return { zone, word, ratioLabel: a.ratio.toFixed(2) };
+}
+
+// First-run detection (story #27): nothing planned (removed doesn't count) and
+// nothing logged -> Home shows the onboarding block instead of empty sections.
+export function needsOnboarding(state) {
+  return state.logs.length === 0 && !state.planned.some((p) => p.status !== 'removed');
+}
 
 export function nextLoggable(state, now) {
   const up = state.planned
