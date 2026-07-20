@@ -42,8 +42,10 @@ export function loadDemoWeek(state, now) {
   const strength = generateStrength(state.profile);
   const legsUnit = strength.find((u) => u.unit === 'legs');
   const pushUnit = strength.find((u) => u.unit === 'push');
-  if (legsUnit) planned.push(mkPlanned('strength', hr(12), 'midday', false, { unit: 'legs', exercises: legsUnit.exercises }));
-  if (pushUnit) planned.push(mkPlanned('strength', at(2, 17), 'evening', false, { unit: 'push', exercises: pushUnit.exercises }));
+  // Slot derived from the actual hour so card time and week-view column match.
+  const legsAt = hr(12);
+  if (legsUnit) planned.push(mkPlanned('strength', legsAt, slotOfHour(legsAt.getHours()), false, { unit: 'legs', exercises: legsUnit.exercises }));
+  if (pushUnit) planned.push(mkPlanned('strength', at(2, 17), slotOfHour(17), false, { unit: 'push', exercises: pushUnit.exercises }));
   planned.push(mkPlanned('bouldering', at(2, 18), 'evening', true));
   planned.push(mkPlanned('running', at(3, 7), 'morning', false, { distance: 10 }));
   planned.push(mkPlanned('mountain_day', at(5, 9), 'morning', true, { hm: 1200 }));

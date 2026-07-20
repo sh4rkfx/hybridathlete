@@ -1,6 +1,6 @@
 // Shared planning helpers + suggestion construction (spec §3.2–§3.5).
 // All functions are pure; `now` is injected for deterministic tests.
-import { hoursBetween, dOnly, addDays } from './time.js';
+import { hoursBetween, dOnly, addDays, SLOT_HOUR } from './time.js';
 import { RULE_META } from './texts.js';
 
 let _idc = 1;
@@ -53,8 +53,11 @@ export function estPlannedTL(pl) {
 
 export function proposeChange(op, target) {
   if (op === 'move') {
-    // V1: move by a flat +2 days, keep slot (exact target date selectable in V2).
+    // V1: move by a flat +2 days, keep slot (exact target date selectable in
+    // V2). The hour is normalized to the slot's standard hour so the card
+    // never shows a time outside its week-view column.
     const nd = addDays(new Date(target.date), 2);
+    nd.setHours(SLOT_HOUR[target.slot] ?? nd.getHours(), 0, 0, 0);
     return { date: nd.toISOString() };
   }
   if (op === 'reduce') return { reduced: true };

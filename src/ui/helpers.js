@@ -1,11 +1,10 @@
 // Shared UI selectors/formatters on top of the engine (all pure).
-import { addDays, dOnly, isSameDay, wdShort } from '../engine/time.js';
+import { addDays, dOnly, isSameDay, wdShort, SLOT_HOUR, SLOT_LABEL } from '../engine/time.js';
+export { SLOT_HOUR, SLOT_LABEL };
 import { srpeTL } from '../engine/load.js';
 import { estPlannedTL, latestFatigue } from '../engine/planner.js';
 import { catalogOf } from '../engine/catalog.js';
 
-export const SLOT_HOUR = { morning: 8, midday: 12, evening: 18 };
-export const SLOT_LABEL = { morning: 'morgens', midday: 'mittags', evening: 'abends' };
 export const MONTHS = ['JAN', 'FEB', 'MÄR', 'APR', 'MAI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEZ'];
 
 export const catalog = catalogOf; // convenience re-export

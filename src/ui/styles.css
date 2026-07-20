@@ -1,7 +1,9 @@
 :root{
   --bg:#0E1320; --surface-1:#151B2B; --surface-2:#1B2333; --surface-3:#222C40;
   --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.14);
-  --text-hi:#EEF2FB; --text-mid:#9BA6BD; --text-low:#6B7591;
+  /* --text-low raised from #6B7591 for WCAG AA (>=4.5:1 on every surface,
+     incl. --surface-3 slot cards); traffic-light colors stay untouched. */
+  --text-hi:#EEF2FB; --text-mid:#9BA6BD; --text-low:#8E99B2;
   --brand:#C8F542; --brand-hi:#D9FF6B; --brand-dim:rgba(200,245,66,.13); --brand-line:rgba(200,245,66,.5);
   --fresh:#34D6A6; --fresh-dim:rgba(52,214,166,.15);
   --caution:#F2B84B; --caution-dim:rgba(242,184,75,.15);

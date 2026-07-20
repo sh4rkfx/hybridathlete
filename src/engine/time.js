@@ -8,3 +8,6 @@ export const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 export function wdShort(d) { return WD[new Date(d).getDay()]; }
 export function isSameDay(a, b) { return dOnly(a).getTime() === dOnly(b).getTime(); }
 export function slotOfHour(h) { return h < 12 ? 'morning' : h < 18 ? 'midday' : 'evening'; }
+// Slot standard hours (spec §6.5 column header: morgens 8 / mittags 12 / abends 18).
+export const SLOT_HOUR = { morning: 8, midday: 12, evening: 18 };
+export const SLOT_LABEL = { morning: 'morgens', midday: 'mittags', evening: 'abends' };
