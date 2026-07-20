@@ -44,15 +44,28 @@ export function nextLoggable(state, now) {
   return up[0] || null;
 }
 
+// Story #39: recovery strip shows SIGNAL only — non-fresh regions. All fresh
+// -> empty list, the UI renders one positive chip instead of filler.
 export function currentRegionStatus(state, now) {
-  const regions = ['shoulder', 'fingers', 'quads', 'core', 'upper_back', 'posterior_chain'];
-  const status = regions.map((r) => {
-    const f = latestFatigue(state, r, now);
-    return { r, level: f ? f.level : 'fresh' };
-  });
-  return status.filter((x) => x.level !== 'fresh')
-    .concat(status.filter((x) => x.level === 'fresh').slice(0, 2))
-    .slice(0, 4);
+  const regions = ['shoulder', 'fingers', 'forearm', 'elbow', 'quads', 'core', 'upper_back', 'lower_back', 'posterior_chain', 'calves', 'chest', 'triceps'];
+  return regions
+    .map((r) => ({ r, level: latestFatigue(state, r, now)?.level ?? 'fresh' }))
+    .filter((x) => x.level !== 'fresh');
+}
+
+// Story #39: check-in state for today — done flag for the home card and the
+// saved levels so reopening the check-in shows what was entered.
+export function checkinDoneToday(state, now) {
+  return state.fatigue.some((f) => f.context === 'morning_checkin' && isSameDay(f.ts, now));
+}
+
+export function todayCheckinLevels(state, now) {
+  const levels = {};
+  state.fatigue
+    .filter((f) => f.context === 'morning_checkin' && isSameDay(f.ts, now))
+    .sort((a, b) => new Date(a.ts) - new Date(b.ts))
+    .forEach((f) => { levels[f.region] = f.level; });
+  return levels;
 }
 
 export function upcomingSessions(state, now, n = 4) {

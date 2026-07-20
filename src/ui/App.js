@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { atHour, addDays, dOnly, WD, slotOfHour, SLOT_HOUR as ENGINE_SLOT_HOUR } from '../engine/time.js';
 import { catalogOf, SPLITS } from '../engine/catalog.js';
 import { generateStrength } from '../engine/generator.js';
-import { REGION_LABELS } from '../engine/texts.js';
+import { REGION_LABELS, FAT_LABELS } from '../engine/texts.js';
 import * as store from './store.js';
 import { loadDemoWeek } from './demo.js';
 import { SLOT_HOUR, SLOT_LABEL } from './helpers.js';
@@ -16,11 +16,12 @@ import { LogFlow } from './LogFlow.js';
 import { MorningCheckin } from './MorningCheckin.js';
 import { SessionEditor } from './SessionEditor.js';
 import { AcwrExplainer } from './AcwrExplainer.js';
+import { FatigueReport } from './FatigueReport.js';
 
 const NAV = [
   ['home', 'Home', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 12l8-8 8 8M5 10v8h4v-5h4v5h4v-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`],
   ['week', 'Woche', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="4" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 8h16M8 2v4M14 2v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`],
-  ['inbox', 'Inbox', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V6z" stroke="currentColor" stroke-width="1.8"/><path d="M3 8l8 5 8-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`],
+  ['inbox', 'Coach', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6a3 3 0 013-3h10a3 3 0 013 3v6a3 3 0 01-3 3H9l-4.2 3.4c-.5.4-1.3 0-1.3-.6V15A3 3 0 013 12V6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 8h8M7 11h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`],
   ['rules', 'Regeln', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 3h9l4 4v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 3v5h5M7 12h8M7 15h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`],
   ['settings', 'Setup', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M11 2v3M11 17v3M2 11h3M17 11h3M4.5 4.5l2 2M15.5 15.5l2 2M17.5 4.5l-2 2M6.5 15.5l-2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`],
 ];
@@ -51,7 +52,7 @@ export function App() {
   if (!state) return html`<div class="phone"><div class="viewport" style="display:grid;place-items:center;color:var(--text-mid)">Lade …</div></div>`;
   const cat = catalogOf(state);
   const sugCount = state.suggestions.length;
-  const sugToast = (n) => (n ? `${n} Vorschlag${n === 1 ? '' : 'e'} – Coach hat die Woche geprüft` : 'keine Konflikte');
+  const sugToast = (n) => (n ? `${n === 1 ? '1 Vorschlag' : n + ' Vorschläge'} – Coach hat die Woche geprüft` : 'keine Konflikte');
 
   /* ---------- actions ---------- */
   const acceptSug = (key) => { store.acceptSuggestion(key); toast('Übernommen ✓ – Woche aktualisiert'); };
@@ -167,7 +168,7 @@ export function App() {
       msg = `${cat.sports[p.sportId].name} → ${WD[new Date(newDate).getDay()]} ${SLOT_LABEL[slot]}`;
     }
     const n = store.getState().suggestions.length;
-    toast(msg + (n ? ` · ${n} Vorschlag${n === 1 ? '' : 'e'}` : ''));
+    toast(msg + (n ? ` · ${n === 1 ? '1 Vorschlag' : n + ' Vorschläge'}` : ''));
   };
 
   const settingsActions = {
@@ -254,7 +255,8 @@ export function App() {
       onAcwr=${() => setOverlay({ kind: 'acwr' })}
       onGoWeek=${() => setScreen('week')}
       onAdd=${openAdd}
-      onRegenerate=${settingsActions.regenerate} />`,
+      onRegenerate=${settingsActions.regenerate}
+      onReportFatigue=${() => setOverlay({ kind: 'fatigue' })} />`,
     week: () => html`<${WeekView} state=${state} now=${now} onEdit=${openEdit} onAdd=${openAdd} onMove=${moveSession} suppressTapRef=${suppressTapRef} />`,
     inbox: () => html`<${SuggestionInbox} state=${state} onAccept=${acceptSug} onReject=${rejectSug} />`,
     rules: () => html`<${RulebookScreen} state=${state} />`,
@@ -275,6 +277,14 @@ export function App() {
     ${overlay?.kind === 'checkin' ? html`<${MorningCheckin} state=${state} now=${now} onClose=${() => setOverlay(null)} onSave=${saveCheckin} />` : ''}
     ${(overlay?.kind === 'edit' || overlay?.kind === 'add') ? html`<${SessionEditor} state=${state} now=${now} mode=${overlay.kind} sessionId=${overlay.sessionId} initDay=${overlay.dayOff} initSlot=${overlay.slot} onClose=${() => setOverlay(null)} onSave=${saveEditor} toast=${toast} />` : ''}
     ${overlay?.kind === 'acwr' ? html`<${AcwrExplainer} state=${state} now=${now} onClose=${() => setOverlay(null)} />` : ''}
+    ${overlay?.kind === 'fatigue' ? html`<${FatigueReport} onClose=${() => setOverlay(null)} onSave=${(region, level) => {
+      store.update((st) => {
+        st.fatigue.push({ id: store.uid(), region, level, ts: new Date().toISOString(), context: 'manual' });
+      });
+      setOverlay(null);
+      const n = store.getState().suggestions.length;
+      toast(`${REGION_LABELS[region]} · ${FAT_LABELS[level]} gemeldet` + (n ? ` · ${n === 1 ? '1 Vorschlag' : n + ' Vorschläge'}` : ''));
+    }} />` : ''}
     <div class="toast ${toastMsg ? 'show' : ''}" aria-live="polite" role="status">
       <span class="t-i" style="background:${toastMsg?.kind === 'stop' ? 'var(--stop-dim)' : 'var(--fresh-dim)'}">${toastMsg?.kind === 'stop' ? '✕' : '✓'}</span>
       <span class="t-t">${toastMsg?.text ?? ''}</span>

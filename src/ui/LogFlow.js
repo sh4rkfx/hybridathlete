@@ -91,7 +91,11 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
       planned: p, sportId, loadSource: sport.loadSource,
       duration: defaultDur(sportId), sRPE: 6, hardFingerLoad: false,
       hm: sportId === 'mountain_day' ? 800 : 0,
-      fatigue: {}, pain: null, sets: {}, pickSport: false,
+      fatigue: {}, pain: null,
+      // Story #39: default is "done as planned" — every planned exercise starts
+      // checked, the user unchecks what was skipped.
+      sets: sport.loadSource === 'exercises' ? Object.fromEntries((p?.exercises ?? []).map((id) => [id, true])) : {},
+      pickSport: false, editConfirm: false,
       steps: buildSteps(sportId, sport.loadSource),
     };
   }, [plannedId]);
@@ -155,14 +159,17 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
         <div class="alt-row"><button class="alt-choice" onClick=${() => patch({ pickSport: true })}>Freie Session loggen</button></div>`;
     } else {
       const p = ctx.planned;
-      body = html`${kicker}<h2>Einheit bestätigen</h2><p class="s-hint">Stimmt das? Ein Tap und weiter.</p>
+      // Story #39: default path is one tap on Weiter; the alternatives sit
+      // behind the ✎ edit affordance instead of competing with the happy path.
+      body = html`${kicker}<h2>Einheit bestätigen</h2><p class="s-hint">Passt? Dann einfach <b>Weiter</b>.</p>
         <div class="session-card"><span class="sc-icon"><${SportGlyph} id=${ctx.sportId} size=${24} /></span>
-          <div><div class="sc-t">${cat.sports[ctx.sportId].name}${p.unit ? ' · ' + p.unit : ''}</div>
-          <div class="sc-s">${wdShort(p.date).toUpperCase()} · ${new Date(p.date).getHours()}:00${p.fixed ? ' · 📌 FIX' : ''}</div></div></div>
-        <div class="alt-row">
-          <button class="alt-choice" onClick=${() => onSkip(ctx.planned)}>Nicht gemacht – ausgefallen</button>
+          <div style="flex:1"><div class="sc-t">${cat.sports[ctx.sportId].name}${p.unit ? ' · ' + p.unit : ''}</div>
+          <div class="sc-s">${wdShort(p.date).toUpperCase()} · ${new Date(p.date).getHours()}:00${p.fixed ? ' · 📌 FIX' : ''}</div></div>
+          <button class="exr-btn" onClick=${() => patch({ editConfirm: !ctx.editConfirm })} title="Stimmt nicht ganz?" aria-label="Einheit ändern">✎</button></div>
+        ${ctx.editConfirm ? html`<div class="alt-row">
           <button class="alt-choice" onClick=${() => patch({ pickSport: true })}>Was anderes gemacht</button>
-        </div>`;
+          <button class="alt-choice" onClick=${() => onSkip(ctx.planned)}>Nicht gemacht – ausgefallen</button>
+        </div>` : ''}`;
     }
   } else if (stepName === 'effort') {
     const md = ui.maxDur || 180;
@@ -185,18 +192,22 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
       <div class="switch ${ctx.hardFingerLoad ? 'on' : ''}" onClick=${() => patch({ hardFingerLoad: !ctx.hardFingerLoad })} role="switch" aria-checked=${ctx.hardFingerLoad} tabindex="0"><span class="knob"></span></div></div>`;
   } else if (stepName === 'sets') {
     const exs = ((ctx.planned && ctx.planned.exercises) || []).map((id) => cat.exById[id]).filter(Boolean);
-    body = html`${kicker}<h2>Übungen</h2><p class="s-hint">Tippe an, was du gemacht hast. Die Ampel zeigt, was von Ermüdung ${'&'} Verletzung her heute frei ist.</p>
+    const done = Object.keys(ctx.sets).length;
+    // Story #39: checkboxes, everything pre-selected — the question is not
+    // "what did you tap?" but "what did you leave out?".
+    body = html`${kicker}<h2>Übungen</h2><p class="s-hint">Wie geplant vorausgewählt (${done}/${exs.length}) – <b>tippe ab, was du weggelassen hast</b>. Die Ampel zeigt den heutigen Zustand der Region.</p>
       ${exs.map((e) => {
         const r = exerciseReadiness(e.id, now, state, now);
         const on = !!ctx.sets[e.id];
-        return html`<div class="set-row" style="cursor:pointer" onClick=${() => {
+        return html`<div class="set-row" role="checkbox" aria-checked=${on} tabindex="0" style="cursor:pointer;${on ? '' : 'opacity:.55'}" onClick=${() => {
           const sets = { ...ctx.sets };
           if (sets[e.id]) delete sets[e.id]; else sets[e.id] = true;
           patch({ sets });
         }}>
           <span class="mark m-${r.level}" style="flex:none" title=${r.reasons[0] || 'frei'}></span>
-          <span class="ex-name">${e.name}${r.level !== 'fresh' ? html`<span class="exr-r" style="display:block">${r.reasons.join(' · ')}</span>` : ''}</span>
-          <span class="ex-scheme">${on ? '✓ ' + sc.sets + '×' + sc.reps : 'antippen'}</span>
+          <span class="ex-name" style=${on ? '' : 'text-decoration:line-through'}>${e.name}${r.level !== 'fresh' ? html`<span class="exr-r" style="display:block;text-decoration:none">${r.reasons.join(' · ')}</span>` : ''}</span>
+          <span class="ex-scheme">${sc.sets}×${sc.reps}</span>
+          <span style="flex:none;font-weight:700;color:${on ? 'var(--fresh)' : 'var(--text-low)'};min-width:22px;text-align:center">${on ? '✓' : '○'}</span>
         </div>`;
       })}`;
   } else if (stepName === 'fatigue') {
