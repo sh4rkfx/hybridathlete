@@ -1,8 +1,8 @@
 import { html } from './html.js';
-import { useRef, useEffect } from 'preact/hooks';
+import { useRef, useEffect, useState } from 'preact/hooks';
 import { addDays, dOnly, isSameDay, WD } from '../engine/time.js';
 import { catalogOf } from '../engine/catalog.js';
-import { sportUi } from './sportsUi.js';
+import { sportUi, SportGlyph } from './sportsUi.js';
 
 // Pointer-based drag & drop (no native HTML5 DnD — no touch support there):
 // ~280 ms long-press lifts the card (ghost follows the pointer), >10 px of
@@ -109,7 +109,7 @@ function SlotCell({ p, dayOff, sl, cat, onEdit, onAdd }) {
     class="slot ${ui.border} ${(p.status === 'removed' || p.status === 'skipped') ? 'removed' : ''}"
     data-day=${dayOff} data-slot=${sl} data-pid=${editable ? p.id : null}
     onClick=${editable ? () => onEdit(p.id) : null} style=${editable ? 'cursor:pointer' : ''}>
-    <span class="s-sport">${ui.emoji} ${s.name}${p.fixed ? ' 📌' : ''}</span>
+    <span class="s-sport"><${SportGlyph} id=${p.sportId} /> ${s.name}${p.fixed ? ' 📌' : ''}</span>
     <span class="s-meta ${p.status === 'skipped' ? 'skipped' : ''}">${p.unit ? p.unit + ' · ' : ''}${meta}</span>
   </div>`;
 }
@@ -118,6 +118,15 @@ export function WeekView({ state, now, onEdit, onAdd, onMove, suppressTapRef }) 
   const rootRef = useRef(null);
   useWeekDnD(rootRef, { onMove, suppressTapRef });
   const cat = catalogOf(state);
+
+  // One-time drag & drop hint (story #35): shown until dismissed, never again.
+  const [dndHint, setDndHint] = useState(() => {
+    try { return !localStorage.getItem('ha_dnd_hint_seen') && state.planned.some((p) => p.status === 'planned'); } catch { return false; }
+  });
+  const dismissDndHint = () => {
+    try { localStorage.setItem('ha_dnd_hint_seen', '1'); } catch { /* private mode */ }
+    setDndHint(false);
+  };
 
   const rows = [];
   for (let i = 0; i < 7; i++) {
@@ -136,7 +145,11 @@ export function WeekView({ state, now, onEdit, onAdd, onMove, suppressTapRef }) 
   return html`<div ref=${rootRef}>
     <div class="eyebrow">Planung</div><h1 class="title">Deine Woche</h1>
     <p class="subtle">📌 Fixe Einheiten bleiben unangetastet. HybridAthlete plant nur darum herum.</p>
-    <div class="slot-head"><span></span><span>morgens</span><span>mittags</span><span>abends</span></div>
+    ${dndHint ? html`<div class="gap-hint" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span><b>Tipp:</b> Karte ~0,3 s halten und ziehen zum Verschieben – Drop auf einen belegten Slot tauscht beide Einheiten.</span>
+      <button class="c-del" onClick=${dismissDndHint} aria-label="Hinweis schließen">✕</button>
+    </div>` : ''}
+    <div class="slot-head"><span></span><span>morgens 8</span><span>mittags 12</span><span>abends 18</span></div>
     <div class="week-grid">${rows}</div>
     <button class="alt-choice" style="width:100%;margin-top:12px" onClick=${() => onAdd(1, 'evening')}>＋ Einheit planen</button>
     <div class="proto-note">Antippen = bearbeiten · Halten & Ziehen = verschieben · leerer Slot = neue Einheit</div>

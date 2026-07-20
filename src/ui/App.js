@@ -275,7 +275,7 @@ export function App() {
     ${overlay?.kind === 'checkin' ? html`<${MorningCheckin} state=${state} now=${now} onClose=${() => setOverlay(null)} onSave=${saveCheckin} />` : ''}
     ${(overlay?.kind === 'edit' || overlay?.kind === 'add') ? html`<${SessionEditor} state=${state} now=${now} mode=${overlay.kind} sessionId=${overlay.sessionId} initDay=${overlay.dayOff} initSlot=${overlay.slot} onClose=${() => setOverlay(null)} onSave=${saveEditor} toast=${toast} />` : ''}
     ${overlay?.kind === 'acwr' ? html`<${AcwrExplainer} state=${state} now=${now} onClose=${() => setOverlay(null)} />` : ''}
-    <div class="toast ${toastMsg ? 'show' : ''}">
+    <div class="toast ${toastMsg ? 'show' : ''}" aria-live="polite" role="status">
       <span class="t-i" style="background:${toastMsg?.kind === 'stop' ? 'var(--stop-dim)' : 'var(--fresh-dim)'}">${toastMsg?.kind === 'stop' ? '✕' : '✓'}</span>
       <span class="t-t">${toastMsg?.text ?? ''}</span>
     </div>

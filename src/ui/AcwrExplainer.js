@@ -1,11 +1,13 @@
 // ACWR explainer overlay (spec §6.8): live numbers, zones, projection note,
 // source + open criticism.
 import { html } from './html.js';
+import { useOverlayA11y } from './overlayA11y.js';
 import { acwr } from '../engine/acwr.js';
 
 export function AcwrExplainer({ state, now, onClose }) {
+  const a11yRef = useOverlayA11y(onClose);
   const a = acwr(state.logs, now);
-  return html`<div class="overlay show" aria-hidden="false">
+  return html`<div class="overlay show" role="dialog" aria-modal="true" tabindex="-1" ref=${a11yRef} aria-hidden="false">
     <div class="ov-head"><button class="oh-close" onClick=${onClose} aria-label="Schließen">✕</button><span class="oh-title">Wochenlast · ACWR</span><span style="width:38px"></span></div>
     <div class="ov-body">
       <div class="s-k">Acute : Chronic Workload Ratio</div>
@@ -22,7 +24,7 @@ export function AcwrExplainer({ state, now, onClose }) {
         <div class="zone-row"><span class="mark m-caution"></span><span class="z-range">1.3 – 1.5</span><span class="z-t">Erhöht – bewusst steuern</span></div>
         <div class="zone-row"><span class="mark m-stop"></span><span class="z-range">${'>'} 1.5</span><span class="z-t">Deutlich erhöhtes Risiko – Rampe zu steil</span></div>
       </div>
-      <p class="s-hint" style="margin-top:14px">Auf dem Home-Screen ist der Sweet Spot als <b>grünes Band</b> hinter der Lastkurve eingezeichnet. Regel R7 prüft die <b>prognostizierte</b> ACWR am Ende der Planungswoche – also inklusive allem, was noch ansteht – und meldet sich erst über 1.5.</p>
+      <p class="s-hint" style="margin-top:14px">Auf dem Home-Screen ist der Sweet Spot als <b>grünes Band</b> hinter der Lastkurve eingezeichnet. Der Chip zeigt die <b>aktuelle</b> Ratio (Ist-Stand heute); Regel R7 prüft dagegen die <b>prognostizierte</b> ACWR am Ende der Planungswoche – also inklusive allem, was noch ansteht – und meldet sich erst über 1.5. Deshalb können die beiden Zahlen auseinanderliegen.</p>
       <p class="s-hint" style="margin-top:10px;font-size:12.5px">Typischer Fall nach einer ruhigen Phase (Urlaub, Reha): Die chronische Basis ist niedrig, eine normale Woche wirkt plötzlich wie eine steile Rampe – genau das Szenario, in dem sich die meisten Verletzungen anbahnen.</p>
       <div class="evi" style="margin-top:12px"><span class="rule">R7 · Quelle</span><span class="lvl assumption">Kohorte · umstritten</span></div>
       <p class="s-hint" style="margin-top:6px;font-size:12px">Gabbett (2016), Br J Sports Med. Methodische Kritik (Lolli 2019: mathematical coupling; Impellizzeri 2020: Sensitivität) ist bekannt – deshalb hat R7 in HybridAthlete die niedrigste Priorität und schlägt nur den beweglichsten Baustein zum Streichen vor.</p>

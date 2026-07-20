@@ -4,6 +4,10 @@
 // reference prototype and is asserted by the scenario tests (e.g. /Bergtag/).
 export const FAT_LABELS = { fresh: 'frisch', caution: 'müde', stop: 'platt' };
 
+// Story #35: the home chip shows the CURRENT ratio; R7 warns on the projected
+// one — the labels keep the two numbers apart.
+export const ACWR_CHIP_LABEL = 'ACWR aktuell ⓘ';
+
 export const REGION_LABELS = {
   fingers: 'Finger', forearm: 'Unterarm', elbow: 'Ellbogen', shoulder: 'Schulter',
   chest: 'Brust', triceps: 'Trizeps', upper_back: 'Oberer Rücken', lower_back: 'Unterer Rücken',
@@ -19,7 +23,7 @@ export const RULE_META = {
   R2: { name: 'Dauerhafte Constraints', lvl: 'expert', lvlLabel: 'Experten-Konsens',
     src: 'Nutzerdefinierte Einschränkung (z. B. Knieflexion 80–90° unter Last). Substitutions-Mechanik = Standard-Load-Management.' },
   R3: { name: 'Sehnen/Pulley-Erholung', lvl: 'expert', lvlLabel: 'Experten-Konsens',
-    src: 'Low S., ‚Rehabbing injured pulleys‘; The Climbing Doctor; Hooper’s Beta. ~48 h zwischen harten Finger-Reizen. Kein validierter Wert für gesunde Ringbänder — bewusst konservativ.' },
+    src: "Low S., 'Rehabbing injured pulleys'; The Climbing Doctor; Hooper's Beta. ~48 h zwischen harten Finger-Reizen. Kein validierter Wert für gesunde Ringbänder — bewusst konservativ." },
   R4: { name: 'Exzentrische Erholung', lvl: 'cohort', lvlLabel: 'Kohorte',
     src: 'DOMS-Reviews (Physiopedia; ScienceDirect 2026); Eston et al. (1995). Peak 24–72 h nach exzentrischer Last. hm-Skalierung als Annahme gekennzeichnet.' },
   R5: { name: 'Muskuläre Erholung', lvl: 'expert', lvlLabel: 'Experten-Konsens',

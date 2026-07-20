@@ -2,12 +2,13 @@
 // sport-dependent: confirm -> effort (+hm for mountain) -> finger (bouldering)
 // -> sets (strength) -> fatigue -> pain.
 import { html } from './html.js';
+import { useOverlayA11y } from './overlayA11y.js';
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import { wdShort } from '../engine/time.js';
 import { REGION_LABELS, FAT_LABELS } from '../engine/texts.js';
 import { catalogOf, GOAL_SCHEMES } from '../engine/catalog.js';
 import { exerciseReadiness } from '../engine/readiness.js';
-import { sportUi } from './sportsUi.js';
+import { sportUi, SportGlyph } from './sportsUi.js';
 import { rpeMeta, fmtDur } from './helpers.js';
 
 const defaultDur = (sportId) => sportId === 'mountain_day' ? 360 : sportId === 'running' ? 45 : sportId === 'strength' ? 60 : 90;
@@ -48,12 +49,23 @@ function loadedRegions(ctx, cat) {
   return Object.keys(lp).filter((r) => lp[r] >= 2 && r !== 'systemic' && r !== 'knee');
 }
 
-function Stepper({ label, value, display, onStep, fillPct, fillColor, right }) {
+// The track is a real control (story #35): tap or drag sets the value via
+// onScrub(fraction) — it no longer looks like a slider without being one.
+function Stepper({ label, value, display, onStep, onScrub, fillPct, fillColor, right }) {
+  const scrub = (e) => {
+    if (!onScrub) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    onScrub(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
+  };
   return html`<div class="metric">
     <div class="m-label"><span class="ml-t">${label}</span>${right ?? html`<span class="ml-v">${display}</span>`}</div>
     <div class="stepper">
       <button class="sbtn" onClick=${() => onStep(-1)}>−</button>
-      <div class="track"><div class="fill" style="width:${fillPct}%;${fillColor ? 'background:' + fillColor : ''}"></div></div>
+      <div class="track" style="touch-action:none;cursor:pointer"
+        onPointerDown=${(e) => { e.currentTarget.setPointerCapture(e.pointerId); scrub(e); }}
+        onPointerMove=${(e) => { if (e.buttons) scrub(e); }}>
+        <div class="fill" style="width:${fillPct}%;${fillColor ? 'background:' + fillColor : ''}"></div>
+      </div>
       <button class="sbtn" onClick=${() => onStep(1)}>+</button>
     </div>
   </div>`;
@@ -69,6 +81,7 @@ function Segmented({ value, onSelect }) {
 }
 
 export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toast }) {
+  const a11yRef = useOverlayA11y(onClose);
   const cat = catalogOf(state);
   const initial = useMemo(() => {
     const p = state.planned.find((x) => x.id === plannedId) || null;
@@ -136,14 +149,14 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
     if (ctx.pickSport) {
       body = html`${kicker}<h2>Was hast du gemacht?</h2><p class="s-hint">Freie Session – unabhängig vom Plan.</p>
         <div class="opt-row">${Object.values(cat.sports).filter((s) => s.id !== 'strength').map((s) => html`
-          <button class="opt" onClick=${() => pickSport(s.id)}>${sportUi(s.id).emoji} ${s.name}</button>`)}</div>`;
+          <button class="opt" onClick=${() => pickSport(s.id)}><${SportGlyph} id=${s.id} /> ${s.name}</button>`)}</div>`;
     } else if (!ctx.planned) {
       body = html`${kicker}<h2>Keine geplante Einheit</h2>
         <div class="alt-row"><button class="alt-choice" onClick=${() => patch({ pickSport: true })}>Freie Session loggen</button></div>`;
     } else {
       const p = ctx.planned;
       body = html`${kicker}<h2>Einheit bestätigen</h2><p class="s-hint">Stimmt das? Ein Tap und weiter.</p>
-        <div class="session-card"><span class="sc-icon">${ui.emoji}</span>
+        <div class="session-card"><span class="sc-icon"><${SportGlyph} id=${ctx.sportId} size=${24} /></span>
           <div><div class="sc-t">${cat.sports[ctx.sportId].name}${p.unit ? ' · ' + p.unit : ''}</div>
           <div class="sc-s">${wdShort(p.date).toUpperCase()} · ${new Date(p.date).getHours()}:00${p.fixed ? ' · 📌 FIX' : ''}</div></div></div>
         <div class="alt-row">
@@ -156,13 +169,16 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
     const m = rpeMeta(ctx.sRPE);
     body = html`${kicker}<h2>Wie war's?</h2><p class="s-hint">Dauer${ctx.sportId === 'mountain_day' ? ' (reine Gehzeit)' : ''} und gefühlte Anstrengung.</p>
       <${Stepper} label="Dauer" display=${fmtDur(ctx.duration)} fillPct=${ctx.duration / md * 100}
-        onStep=${(dir) => patch({ duration: Math.max(15, Math.min(md, ctx.duration + dir * (ui.durStep || 15))) })} />
+        onStep=${(dir) => patch({ duration: Math.max(15, Math.min(md, ctx.duration + dir * (ui.durStep || 15))) })}
+        onScrub=${(f) => { const st = ui.durStep || 15; patch({ duration: Math.max(15, Math.min(md, Math.round((f * md) / st) * st)) }); }} />
       ${ctx.sportId === 'mountain_day' ? html`
         <${Stepper} label="Höhenmeter (Abstieg zählt für R4)" display=${ctx.hm + ' hm'} fillPct=${ctx.hm / 3000 * 100}
-          onStep=${(dir) => patch({ hm: Math.max(0, Math.min(3000, ctx.hm + dir * 100)) })} />` : ''}
+          onStep=${(dir) => patch({ hm: Math.max(0, Math.min(3000, ctx.hm + dir * 100)) })}
+          onScrub=${(f) => patch({ hm: Math.max(0, Math.min(3000, Math.round((f * 3000) / 100) * 100)) })} />` : ''}
       <${Stepper} label="sRPE · Anstrengung" fillPct=${ctx.sRPE * 10} fillColor=${m.c}
-        right=${html`<span style="display:flex;align-items:baseline;gap:9px"><span class="rpe-word">${m.w}</span><span class="ml-v" style="color:${m.c}">${ctx.sRPE} /10</span></span>`}
-        onStep=${(dir) => patch({ sRPE: Math.max(1, Math.min(10, ctx.sRPE + dir)) })} />`;
+        right=${html`<span style="display:flex;align-items:baseline;gap:9px"><span class="rpe-word">${m.w}</span><span class="ml-v" style="color:${m.c}">${ctx.sRPE}/10</span></span>`}
+        onStep=${(dir) => patch({ sRPE: Math.max(1, Math.min(10, ctx.sRPE + dir)) })}
+        onScrub=${(f) => patch({ sRPE: Math.max(1, Math.min(10, Math.round(f * 10))) })} />`;
   } else if (stepName === 'finger') {
     body = html`${kicker}<h2>Finger heute</h2><p class="s-hint">Nur ein Tap – wichtig für die Sehnen-Erholung (R3).</p>
       <div class="toggle-row"><div class="tr-body"><div class="tr-t">Harte Fingerbelastung</div><div class="tr-s">Leisten, Campus, Projekte am Limit</div></div>
@@ -203,7 +219,7 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
         </div>`}`;
   }
 
-  return html`<div class="overlay show" aria-hidden="false">
+  return html`<div class="overlay show" role="dialog" aria-modal="true" tabindex="-1" ref=${a11yRef} aria-hidden="false">
     <div class="ov-head">
       <button class="oh-close" onClick=${onClose} aria-label="Abbrechen">✕</button>
       <span class="oh-timer">⏱ <b style="color:${secs <= 60 ? 'var(--fresh)' : 'var(--caution)'}">${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}</b></span>

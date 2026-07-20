@@ -2,6 +2,7 @@
 // with per-exercise readiness for the CHOSEN day (live on day change),
 // readiness-aware prefill for new strength sessions.
 import { html } from './html.js';
+import { useOverlayA11y } from './overlayA11y.js';
 import { useState, useMemo } from 'preact/hooks';
 import { atHour, addDays, dOnly, WD, wdShort } from '../engine/time.js';
 import { REGION_LABELS, FAT_LABELS } from '../engine/texts.js';
@@ -9,7 +10,7 @@ import { catalogOf, SPLITS, UNIT_CATS } from '../engine/catalog.js';
 import { exerciseReadiness, READY_RANK } from '../engine/readiness.js';
 import { generateStrength } from '../engine/generator.js';
 import { passesConstraints } from '../engine/swap.js';
-import { sportUi } from './sportsUi.js';
+import { sportUi, SportGlyph } from './sportsUi.js';
 import { SLOT_HOUR, SLOT_LABEL } from './helpers.js';
 
 function prefillStrength(state, unit, when) {
@@ -18,6 +19,7 @@ function prefillStrength(state, unit, when) {
 }
 
 export function SessionEditor({ state, now, mode, sessionId, initDay = 1, initSlot = 'evening', onClose, onSave, toast }) {
+  const a11yRef = useOverlayA11y(onClose);
   const cat = catalogOf(state);
   const isAdd = mode === 'add';
   const p = isAdd ? null : state.planned.find((x) => x.id === sessionId);
@@ -103,20 +105,20 @@ export function SessionEditor({ state, now, mode, sessionId, initDay = 1, initSl
     </div>`;
   })() : '';
 
-  return html`<div class="overlay show" aria-hidden="false">
+  return html`<div class="overlay show" role="dialog" aria-modal="true" tabindex="-1" ref=${a11yRef} aria-hidden="false">
     <div class="ov-head"><button class="oh-close" onClick=${onClose} aria-label="Abbrechen">✕</button><span class="oh-title">${isAdd ? 'Einheit planen' : 'Einheit bearbeiten'}</span><span style="width:38px"></span></div>
     <div class="ov-body">
       ${isAdd ? html`
-        <div class="session-card" style="margin-bottom:20px"><span class="sc-icon">${sportUi(ctx.sportId).emoji}</span>
+        <div class="session-card" style="margin-bottom:20px"><span class="sc-icon"><${SportGlyph} id=${ctx.sportId} size=${24} /></span>
           <div><div class="sc-t">Neue Einheit</div><div class="sc-s">${WD[when.getDay()].toUpperCase()} ${when.getDate()}. · ${SLOT_LABEL[ctx.slot].toUpperCase()}</div></div></div>
         <div class="field"><div class="f-lbl">Sport</div><div class="opt-row">
-          ${Object.values(cat.sports).map((sp) => html`<button class="opt ${ctx.sportId === sp.id ? 'sel' : ''}" onClick=${() => reseed({ sportId: sp.id, unit: sp.id === 'strength' ? (availUnits[0] || null) : null, exercises: sp.id === 'strength' ? [] : null })}>${sportUi(sp.id).emoji} ${sp.name}</button>`)}
+          ${Object.values(cat.sports).map((sp) => html`<button class="opt ${ctx.sportId === sp.id ? 'sel' : ''}" onClick=${() => reseed({ sportId: sp.id, unit: sp.id === 'strength' ? (availUnits[0] || null) : null, exercises: sp.id === 'strength' ? [] : null })}><${SportGlyph} id=${sp.id} /> ${sp.name}</button>`)}
         </div></div>
         ${ctx.sportId === 'strength' ? html`<div class="field"><div class="f-lbl">Unit (${split.label})</div><div class="opt-row">
           ${availUnits.map((u) => html`<button class="opt ${ctx.unit === u ? 'sel' : ''}" onClick=${() => reseed({ unit: u })}>${u}</button>`)}
         </div></div>` : ''}`
       : html`
-        <div class="session-card" style="margin-bottom:20px"><span class="sc-icon">${sportUi(p.sportId).emoji}</span>
+        <div class="session-card" style="margin-bottom:20px"><span class="sc-icon"><${SportGlyph} id=${p.sportId} size=${24} /></span>
           <div><div class="sc-t">${cat.sports[p.sportId].name}${p.unit ? ' · ' + p.unit : ''}</div>
           <div class="sc-s">${p.status === 'removed' ? 'GESTRICHEN' : wdShort(p.date).toUpperCase() + ' · ' + new Date(p.date).getHours() + ':00'}</div></div></div>`}
       <div class="field"><div class="f-lbl">Tag</div><div class="opt-row">

@@ -1,9 +1,9 @@
 import { html } from './html.js';
 import { acwr } from '../engine/acwr.js';
 import { wdShort, isSameDay } from '../engine/time.js';
-import { REGION_LABELS, FAT_LABELS } from '../engine/texts.js';
+import { REGION_LABELS, FAT_LABELS, ACWR_CHIP_LABEL } from '../engine/texts.js';
 import { catalogOf } from '../engine/catalog.js';
-import { sportUi } from './sportsUi.js';
+import { sportUi, SportGlyph } from './sportsUi.js';
 import { nextLoggable, currentRegionStatus, upcomingSessions, ridgeData, MONTHS, zoneWording, needsOnboarding } from './helpers.js';
 
 function Ridge({ state, now }) {
@@ -16,7 +16,7 @@ function Ridge({ state, now }) {
           <linearGradient id="rf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C8F542" stop-opacity="0.22"/><stop offset="1" stop-color="#C8F542" stop-opacity="0"/></linearGradient>
           <linearGradient id="rs" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C8F542"/><stop offset="1" stop-color="#34D6A6"/></linearGradient>
         </defs>
-        <rect x="0" y=${r.top + 22} width=${r.W} height="40" fill="#34D6A6" opacity="0.06"/>
+        <rect x="0" y=${r.top + 22} width=${r.W} height="40" fill="#34D6A6" opacity="0.14"/>
         <path d=${r.area} fill="url(#rf)"/>
         <path d=${r.line} fill="none" stroke="url(#rs)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx=${tp[0].toFixed(0)} cy=${tp[1].toFixed(0)} r="4.5" fill="#0E1320" stroke="#34D6A6" stroke-width="2.5"/>
@@ -47,7 +47,7 @@ export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onA
     <div class="ridge-card">
       <div class="rc-head">
         <div><div class="rc-label">Wochenlast</div><h2>${zoneWord}</h2></div>
-        <button class="acwr-chip z-${zone}" onClick=${onAcwr} aria-label="Was ist ACWR?"><span class="v">${ratioLabel}</span><span class="l">ACWR ⓘ</span></button>
+        <button class="acwr-chip z-${zone}" onClick=${onAcwr} aria-label="Was ist ACWR?"><span class="v">${ratioLabel}</span><span class="l">${ACWR_CHIP_LABEL}</span></button>
       </div>
       <${Ridge} state=${state} now=${now} />
     </div>
@@ -82,7 +82,7 @@ export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onA
       const ui = sportUi(p.sportId);
       const cls = (p.fixed ? 'fixed ' : '') + (p.status === 'removed' ? 'removed ' : '') + (p.loggedId ? 'done ' : '');
       return html`<div class="mini-card ${cls}">
-        <span class="mc-emoji">${ui.emoji}</span>
+        <span class="mc-emoji"><${SportGlyph} id=${p.sportId} size=${22} /></span>
         <div class="mc-body"><div class="mc-t">${cat.sports[p.sportId].name}${p.unit ? ' · ' + p.unit : ''} ${p.reduced ? html`<span class="tag-reduced">reduziert</span>` : ''}</div>
         <div class="mc-s">${wdShort(p.date)} · ${new Date(p.date).getHours()}:00${p.status === 'removed' ? ' · gestrichen' : ''}</div></div>
         ${p.fixed ? html`<span class="pin">📌 fix</span>` : ''}

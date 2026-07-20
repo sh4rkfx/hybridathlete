@@ -1,6 +1,7 @@
 // Morning check-in (~30 s): fatigue traffic light only for regions with load
 // in the last 72 h (spec §6.3).
 import { html } from './html.js';
+import { useOverlayA11y } from './overlayA11y.js';
 import { useState, useMemo } from 'preact/hooks';
 import { hoursBetween } from '../engine/time.js';
 import { regionLoad } from '../engine/load.js';
@@ -8,6 +9,7 @@ import { REGION_LABELS, FAT_LABELS } from '../engine/texts.js';
 import { catalogOf } from '../engine/catalog.js';
 
 export function MorningCheckin({ state, now, onClose, onSave }) {
+  const a11yRef = useOverlayA11y(onClose);
   const cat = catalogOf(state);
   const regions = useMemo(() => {
     const set = new Set();
@@ -21,7 +23,7 @@ export function MorningCheckin({ state, now, onClose, onSave }) {
 
   const [levels, setLevels] = useState(() => Object.fromEntries(regions.map((r) => [r, 'fresh'])));
 
-  return html`<div class="overlay show" aria-hidden="false">
+  return html`<div class="overlay show" role="dialog" aria-modal="true" tabindex="-1" ref=${a11yRef} aria-hidden="false">
     <div class="ov-head"><button class="oh-close" onClick=${onClose} aria-label="Abbrechen">✕</button><span class="oh-title">Morgen-Check-in</span><span style="width:38px"></span></div>
     <div class="ov-body">
       <div class="step"><div class="s-k">Guten Morgen</div><h2>Wie fühlst du dich?</h2>

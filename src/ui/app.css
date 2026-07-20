@@ -39,3 +39,7 @@ body { display: block; padding: 0; background: var(--bg); }
 .acc-caret { color: var(--text-low); transition: transform .15s ease; flex: none; }
 .acc.open .acc-caret { transform: rotate(90deg); }
 .acc-body { padding: 2px 16px 16px; }
+
+/* Story #35: NRS pain scale as a 6-column grid with >=44 px targets */
+.nrs-scale { display: grid !important; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.nrs { min-height: 44px; min-width: 44px; }

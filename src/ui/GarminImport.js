@@ -5,7 +5,7 @@ import { html } from './html.js';
 import { useState } from 'preact/hooks';
 import { wdShort } from '../engine/time.js';
 import { catalogOf } from '../engine/catalog.js';
-import { sportUi } from './sportsUi.js';
+import { sportUi, SportGlyph } from './sportsUi.js';
 import { rpeMeta, fmtDur } from './helpers.js';
 import { parseFile, toDraftLog } from './garmin.js';
 import * as store from './store.js';
@@ -14,7 +14,7 @@ function DraftRow({ log, cat, onConfirm, onDiscard }) {
   const [sRPE, setSRPE] = useState(5);
   const m = rpeMeta(sRPE);
   return html`<div class="session-card" style="margin-bottom:10px;flex-wrap:wrap">
-    <span class="sc-icon">${sportUi(log.sportId).emoji}</span>
+    <span class="sc-icon"><${SportGlyph} id=${log.sportId} size=${22} /></span>
     <div style="flex:1;min-width:0">
       <div class="sc-t">${cat.sports[log.sportId].name} · Entwurf</div>
       <div class="sc-s">${wdShort(log.date)} · ${fmtDur(log.duration)}${log.elevationGain ? ' · ' + log.elevationGain + ' hm' : ''}${log.distance ? ' · ' + log.distance + ' km' : ''}</div>
