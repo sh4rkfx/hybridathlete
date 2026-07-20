@@ -7,8 +7,10 @@ is compatible with the other load axes (bouldering, running, mountain).
 
 The **app UI is German**; code, comments, commits and docs are English.
 
-> Status: scaffolding. The engine science gate (normative scenario tests T01–T17) is the
-> first milestone; UI follows once it is green.
+> Status: MVP feature-complete. The science gate (normative scenario tests T01–T17) is
+> green, all core screens (Home, Log, Inbox, Week, Rulebook, Settings), the offline PWA
+> shell and the Garmin file import are implemented. 88 tests, coverage engine 99 % /
+> rules 90 % / total 96 %.
 
 ## Scientific basis
 
@@ -49,9 +51,13 @@ Prerequisites: Node ≥ 20, npm.
 
 ```sh
 npm install        # dev dependencies only (vitest); the app itself is buildless
-npm test           # unit + scenario tests, writes test-report.js
-npx serve .        # any static server — ES modules need http(s), then open index.html
+npm test           # unit + scenario tests with coverage, writes test-report.js
+npx http-server .  # any static server — ES modules need http(s), then open index.html
 ```
+
+In the app, `Setup → Demo-Woche laden` loads the reference scenario (mountain day 30 h
+ago, hard finger session 20 h ago, a week planned "blind") — the engine then produces
+the three textbook suggestions (R3 reduce, R4 move, R7 remove).
 
 Open `test-dashboard.html` directly in a browser (works from `file://`) to see the
 test/science dashboard.
