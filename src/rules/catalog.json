@@ -18,6 +18,7 @@
         "nrsGreenMax": 2,
         "nrsYellowMax": 5,
         "redAbove": 5,
+        "painWindowHours": 36,
         "yellowAction": "reduce",
         "redAction": "block_region",
         "followDayMustReturnToBaseline": true,
@@ -79,6 +80,7 @@
         "resolveDays": [5, 7],
         "affectedRegions": ["quads", "posterior_chain", "calves"],
         "scaleByElevationGain": true,
+        "windowFormula": { "baseHours": 48, "maxExtraHours": 24, "hmBase": 600, "hmRange": 1200 },
         "typicalMoveSpacingHours": [48, 72],
         "repeatedBoutModeled": false,
         "strengthTrySwapFirst": true
