@@ -1,0 +1,26 @@
+/* Self-hosted fonts (offline requirement — no CDN). Latin subsets. */
+@font-face {
+  font-family: 'Archivo Black'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('../../vendor/fonts/archivo-black-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Barlow'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('../../vendor/fonts/barlow-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Barlow'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('../../vendor/fonts/barlow-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Barlow'; font-style: normal; font-weight: 700; font-display: swap;
+  src: url('../../vendor/fonts/barlow-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Barlow'; font-style: normal; font-weight: 800; font-display: swap;
+  src: url('../../vendor/fonts/barlow-800.woff2') format('woff2');
+}
+/* JetBrains Mono ships as a variable font covering 400–700 */
+@font-face {
+  font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url('../../vendor/fonts/jetbrains-mono-400.woff2') format('woff2');
+}

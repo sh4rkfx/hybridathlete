@@ -1,0 +1,14 @@
+/* App-specific overrides on top of the prototype stylesheet: the real PWA is
+   not a phone mockup — the .phone frame becomes the fluid app shell. */
+html, body { height: 100%; }
+body { display: block; padding: 0; background: var(--bg); }
+#app { height: 100%; }
+.phone {
+  width: 100%; max-width: 430px; height: 100dvh; margin: 0 auto;
+  border-radius: 0; border: none; box-shadow: none;
+}
+@media (min-width: 431px) {
+  .phone { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+}
+/* No fake status bar in the real app */
+.statusbar { display: none; }

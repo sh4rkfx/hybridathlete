@@ -1,0 +1,43 @@
+{
+  "nav": { "home": "Home", "week": "Woche", "inbox": "Inbox", "rules": "Regeln", "settings": "Setup" },
+  "common": {
+    "accept": "Übernehmen", "reject": "Ablehnen", "save": "Speichern", "next": "Weiter",
+    "done": "Fertig – speichern", "cancel": "Abbrechen", "understood": "Verstanden", "add": "＋ anlegen"
+  },
+  "home": {
+    "weeklyLoad": "Wochenlast", "logNow": "loggen", "plannedToday": "Heute geplant",
+    "allLogged": "Alles geloggt", "noOpenSession": "Keine offene Einheit",
+    "goodMorning": "Guten Morgen", "checkin": "Check-in · 30 Sekunden",
+    "recoveryToday": "Erholung heute", "thisWeek": "Diese Woche", "seeAll": "Alle ansehen"
+  },
+  "zones": { "sweet": "Im grünen Bereich", "under": "Untertrainiert", "elevated": "Erhöht – aufpassen", "over": "Überlast" },
+  "inbox": {
+    "eyebrow": "Vorschläge", "title": "Dein Coach meldet sich",
+    "fixedNote": "Fixe Einheiten (Boulderabende, Bergtag) werden nie verschoben oder gestrichen – höchstens abgeschwächt.",
+    "why": "Warum", "source": "Quelle", "hideSource": "Quelle ausblenden",
+    "out": "Raus", "in": "Rein", "stays": "Bleibt", "noReplacement": "keiner nötig – Einheit wird kürzer",
+    "reasonFit": "Fühle mich fit genug", "reasonFix": "Passt mir nicht", "reasonNc": "Nicht nachvollziehbar",
+    "emptyTitle": "Alles entschieden", "emptyText": "Neue Vorschläge erscheinen nach dem nächsten Log oder Check-in.",
+    "accepted": "Übernommen ✓ – Woche aktualisiert", "rejected": "Abgelehnt – Grund gespeichert"
+  },
+  "ops": { "swap": "Anpassen", "reduce": "Abschwächen", "move": "Verschieben", "remove": "Streichen" },
+  "week": {
+    "eyebrow": "Planung", "title": "Deine Woche",
+    "subtitle": "📌 Fixe Einheiten bleiben unangetastet. HybridAthlete plant nur darum herum.",
+    "planUnit": "＋ Einheit planen", "today": "HEUTE",
+    "hint": "Antippen = bearbeiten · Halten & Ziehen = verschieben · leerer Slot = neue Einheit",
+    "slots": { "morning": "morgens", "midday": "mittags", "evening": "abends" }
+  },
+  "rules": {
+    "eyebrow": "Vertrauen", "title": "Regelwerk",
+    "subtitle": "Jede Empfehlung kommt aus einer Regel mit Quelle und Evidenzgrad. Nichts ist erfunden.",
+    "votes": "Angenommen {up} · Abgelehnt {down}"
+  },
+  "settings": {
+    "eyebrow": "Setup", "title": "Dein Plan",
+    "subtitle": "Ziel und Split bestimmen, was der Generator baut – abgestimmt auf Bouldern, Berg und Laufen.",
+    "goal": "Ziel", "split": "Split", "disableUnits": "Einheiten abwählen", "constraints": "Constraints",
+    "regenerate": "Plan neu generieren", "export": "Als JSON exportieren", "reset": "Zurücksetzen", "demo": "Demo-Daten laden"
+  },
+  "fatigue": { "fresh": "frisch", "caution": "müde", "stop": "platt" }
+}
