@@ -4,8 +4,8 @@ import { html } from './html.js';
 import { useState } from 'preact/hooks';
 import { atHour, addDays, dOnly } from '../engine/time.js';
 import { REGION_LABELS } from '../engine/texts.js';
-import { catalogOf, GOAL_SCHEMES, SPLITS } from '../engine/catalog.js';
-import { generateStrength, splitCoverageGaps } from '../engine/generator.js';
+import { catalogOf, GOAL_SCHEMES, SPLITS, SPLIT_EVIDENCE } from '../engine/catalog.js';
+import { generateStrength, splitCoverageGaps, splitHint } from '../engine/generator.js';
 import { exerciseReadiness } from '../engine/readiness.js';
 import { GarminImport } from './GarminImport.js';
 
@@ -33,7 +33,10 @@ export function SettingsScreen({ state, now, actions, toast }) {
       </div></div>
       <div class="field"><div class="f-lbl">Split</div><div class="opt-row">
         ${Object.entries(SPLITS).map(([k, v]) => html`<button class="opt ${p.split === k ? 'sel' : ''}" onClick=${() => actions.setSplit(k)}>${v.label}</button>`)}
-      </div></div>
+      </div>
+      <p class="subtle" style="font-size:12px;margin-top:8px">Split-Wahl ist Präferenz: bei gleichem Wochenvolumen sind Split und Ganzkörper gleichwertig (Ramos-Campo 2024, Meta-Analyse). Zählen tun Volumen, Last und Anstrengung.</p>
+      ${(() => { const h = splitHint(p); return h ? html`<div class="gap-hint" style="margin-top:8px"><b>Frequenz-Hinweis:</b> ${h.text}<br/><span class="subtle" style="font-size:11.5px">${h.source}</span></div>` : ''; })()}
+      </div>
       <div class="field"><div class="f-lbl">Einheiten abwählen</div><div class="opt-row">
         ${SPLITS[p.split].units.map((u) => html`<button class="opt ${(p.disabledUnits || []).includes(u) ? 'sel-toggle' : ''}" onClick=${() => actions.toggleUnit(u)}>${u}</button>`)}
       </div></div>

@@ -6,11 +6,36 @@
 import sportsSeed from '../seed/sports.seed.json' with { type: 'json' };
 import exercisesSeed from '../seed/exercises.seed.json' with { type: 'json' };
 
+// Goal schemes carry source + evidenceLevel like the rule catalog (story #31).
+// Honest caveat: the underlying evidence comes from isolated resistance-training
+// studies (4–12 weeks); transfer to a multi-sport context is an assumption.
 export const GOAL_SCHEMES = {
-  kraftaufbau: { label: 'Kraftaufbau', sets: 5, reps: '3–5' },
-  hypertrophie: { label: 'Hypertrophie', sets: 4, reps: '8–12' },
-  erhalt: { label: 'Erhalt', sets: 2, reps: '6–10' },
-  sport_support: { label: 'Sport-Support', sets: 3, reps: '5–8' },
+  kraftaufbau: {
+    label: 'Kraftaufbau', sets: 5, reps: '3–5',
+    source: 'Schoenfeld/Grgic (2021), Repetition Continuum: Maximalkraft braucht schwere Lasten. Pelland et al. (2025), Dose-Response-Meta-Regression (67 Studien): Kraft profitiert von Frequenz, mit abnehmendem Grenznutzen.',
+    evidenceLevel: 'meta-analysis',
+  },
+  hypertrophie: {
+    label: 'Hypertrophie', sets: 4, reps: '8–12',
+    source: 'Pelland et al. (2025): Wochenvolumen ist der Haupttreiber. Schoenfeld et al. (2017), Low- vs. High-Load-Meta: Lastspektrum gleichwertig nahe Muskelversagen — 8–12 Wdh. sind eine valide Zone, nicht die einzige.',
+    evidenceLevel: 'meta-analysis',
+  },
+  erhalt: {
+    label: 'Erhalt', sets: 2, reps: '6–10',
+    source: 'Minimal-Dose-Reviews (Androulakis-Korakakis 2020; Übersicht 2024): schon ~1 harter Satz × 2–3/Woche erhält Kraft. Das Schema ist bewusst konservativ darüber.',
+    evidenceLevel: 'meta-analysis',
+  },
+  sport_support: {
+    label: 'Sport-Support', sets: 3, reps: '5–8',
+    source: 'Iversen et al. (2021), „No Time to Lift?": zeiteffiziente Programme — wenige harte Mehrgelenksätze, moderate Frequenz. Übertragung auf Multi-Sport-Wochen ist Extrapolation.',
+    evidenceLevel: 'expert-consensus',
+  },
+};
+
+// Split choice itself is preference at equated volume (story #31).
+export const SPLIT_EVIDENCE = {
+  source: 'Ramos-Campo et al. (2024), J Strength Cond Res, 14 RCTs (n=392): Split vs. Ganzkörper gleichwertig für Kraft und Muskelmasse bei gleichem Volumen — entscheidend sind Wochenvolumen, Last und Anstrengung, nicht das Etikett.',
+  evidenceLevel: 'meta-analysis',
 };
 
 export const SPLITS = {
