@@ -12,7 +12,7 @@
   "sports": [
     {
       "sportId": "bouldering",
-      "name": "Bouldering",
+      "name": "Bouldern",
       "frequency": "weekly",
       "typicallyFixed": true,
       "loadSource": "profile",
@@ -25,11 +25,29 @@
         "core": 2,
         "systemic": 2
       },
-      "flags": { "eccentric": false, "tendonHeavy": true },
+      "flags": {
+        "eccentric": false,
+        "tendonHeavy": true
+      },
       "metrics": [
-        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
-        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true },
-        { "id": "hardFingerLoad", "label": "Harte Fingerbelastung (Leisten/Limit/Campus)", "type": "bool", "required": false }
+        {
+          "id": "duration",
+          "label": "Dauer (min)",
+          "type": "int",
+          "required": true
+        },
+        {
+          "id": "sRPE",
+          "label": "sRPE (0–10)",
+          "type": "int",
+          "required": true
+        },
+        {
+          "id": "hardFingerLoad",
+          "label": "Harte Fingerbelastung (Leisten/Limit/Campus)",
+          "type": "bool",
+          "required": false
+        }
       ]
     },
     {
@@ -46,11 +64,29 @@
         "core": 1,
         "systemic": 3
       },
-      "flags": { "eccentric": true, "tendonHeavy": false },
+      "flags": {
+        "eccentric": true,
+        "tendonHeavy": false
+      },
       "metrics": [
-        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
-        { "id": "elevationGain", "label": "Höhenmeter (Aufstieg)", "type": "int", "required": true },
-        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true }
+        {
+          "id": "duration",
+          "label": "Dauer (min)",
+          "type": "int",
+          "required": true
+        },
+        {
+          "id": "elevationGain",
+          "label": "Höhenmeter (Aufstieg)",
+          "type": "int",
+          "required": true
+        },
+        {
+          "id": "sRPE",
+          "label": "sRPE (0–10)",
+          "type": "int",
+          "required": true
+        }
       ],
       "notes": "Abstieg = exzentrische Quad-/Waden-Last. elevationGain skaliert das R4-Erholungsfenster (assumption-Skalierung, so gekennzeichnet)."
     },
@@ -68,28 +104,64 @@
         "core": 1,
         "systemic": 2
       },
-      "flags": { "eccentric": false, "tendonHeavy": false },
+      "flags": {
+        "eccentric": false,
+        "tendonHeavy": false
+      },
       "metrics": [
-        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
-        { "id": "distance", "label": "Distanz (km)", "type": "float", "required": false },
-        { "id": "hrZone", "label": "HF-Zone (1–5)", "type": "int", "required": false },
-        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true }
+        {
+          "id": "duration",
+          "label": "Dauer (min)",
+          "type": "int",
+          "required": true
+        },
+        {
+          "id": "distance",
+          "label": "Distanz (km)",
+          "type": "float",
+          "required": false
+        },
+        {
+          "id": "hrZone",
+          "label": "HF-Zone (1–5)",
+          "type": "int",
+          "required": false
+        },
+        {
+          "id": "sRPE",
+          "label": "sRPE (0–10)",
+          "type": "int",
+          "required": true
+        }
       ],
       "notes": "Zone-2-Aufbau: meist niedrige Intensität, sRPE bildet das ab. Typische nicht-fixe Einheit, die ACWR-Reduktionsvorschläge (R7) zuerst betrifft."
     },
     {
       "sportId": "strength",
-      "name": "Krafttraining",
+      "name": "Kraft",
       "frequency": "weekly",
       "typicallyFixed": false,
       "loadSource": "exercises",
       "loadProfile": {
         "systemic": 1
       },
-      "flags": { "eccentric": false, "tendonHeavy": false },
+      "flags": {
+        "eccentric": false,
+        "tendonHeavy": false
+      },
       "metrics": [
-        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
-        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true }
+        {
+          "id": "duration",
+          "label": "Dauer (min)",
+          "type": "int",
+          "required": true
+        },
+        {
+          "id": "sRPE",
+          "label": "sRPE (0–10)",
+          "type": "int",
+          "required": true
+        }
       ],
       "notes": "Regionen-Last wird aus den geloggten Übungen (setLogs → exercise.loadProfile) aggregiert, NICHT aus diesem statischen Profil. loadProfile enthält nur eine systemische Basis; alles andere kommt aus dem Übungskatalog. Der Generator (§5) füllt intendedExercises abhängig von Split/Ziel/Constraints."
     },
@@ -107,13 +179,41 @@
         "core": 1,
         "systemic": 2
       },
-      "flags": { "eccentric": false, "tendonHeavy": false },
+      "flags": {
+        "eccentric": false,
+        "tendonHeavy": false
+      },
       "metrics": [
-        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
-        { "id": "distance", "label": "Distanz (km)", "type": "float", "required": false },
-        { "id": "elevationGain", "label": "Höhenmeter", "type": "int", "required": false },
-        { "id": "hrZone", "label": "HF-Zone (1–5)", "type": "int", "required": false },
-        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true }
+        {
+          "id": "duration",
+          "label": "Dauer (min)",
+          "type": "int",
+          "required": true
+        },
+        {
+          "id": "distance",
+          "label": "Distanz (km)",
+          "type": "float",
+          "required": false
+        },
+        {
+          "id": "elevationGain",
+          "label": "Höhenmeter",
+          "type": "int",
+          "required": false
+        },
+        {
+          "id": "hrZone",
+          "label": "HF-Zone (1–5)",
+          "type": "int",
+          "required": false
+        },
+        {
+          "id": "sRPE",
+          "label": "sRPE (0–10)",
+          "type": "int",
+          "required": true
+        }
       ],
       "notes": "Konkurriert mit Bergtag/Lauf/Bein-Kraft um die Bein-Achse, aber gelenkschonend (keine exzentrische Spitze). Optionaler Multi-Sport-Eintrag über das Referenz-Setup hinaus."
     }
