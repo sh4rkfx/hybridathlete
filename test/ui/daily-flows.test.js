@@ -1,6 +1,6 @@
 // Story #39: check-in persistence helpers + recovery strip signal-only logic.
 import { describe, it, expect } from 'vitest';
-import { checkinDoneToday, todayCheckinLevels, currentRegionStatus } from '../../src/ui/helpers.js';
+import { checkinDoneToday, todayCheckinLevels, currentRegionStatus, exerciseListSummary } from '../../src/ui/helpers.js';
 
 const NOW = new Date('2026-07-20T09:00:00');
 const ts = (h) => new Date(NOW.getTime() + h * 36e5).toISOString();
@@ -36,5 +36,23 @@ describe('currentRegionStatus — signal only', () => {
     const regs = currentRegionStatus(state, NOW);
     expect(regs.map((x) => x.r).sort()).toEqual(['calves', 'quads']);
     expect(regs.every((x) => x.level !== 'fresh')).toBe(true);
+  });
+});
+
+describe('exerciseListSummary (story #43) — the editor list names its role', () => {
+  it('all fresh -> positive check line naming the day and the signals', () => {
+    const s = exerciseListSummary(['fresh', 'fresh', 'fresh'], 'Sa 25.');
+    expect(s.tone).toBe('fresh');
+    expect(s.text).toBe('✓ Alle 3 machbar am Sa 25. – geprüft gegen Erholung, Schmerz & Constraints.');
+  });
+
+  it('restrictions -> count + swap hint; stop dominates the tone', () => {
+    const c = exerciseListSummary(['fresh', 'caution', 'fresh', 'caution'], 'heute');
+    expect(c).toEqual({ tone: 'caution', text: '2 von 4 am heute eingeschränkt – ⇄ schlägt eine freie Alternative vor.' });
+    expect(exerciseListSummary(['stop', 'caution'], 'Mo 27.').tone).toBe('stop');
+  });
+
+  it('empty list -> add hint', () => {
+    expect(exerciseListSummary([], 'Di 21.').text).toMatch(/Noch keine Übungen/);
   });
 });
