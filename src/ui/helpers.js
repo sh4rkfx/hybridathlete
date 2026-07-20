@@ -29,6 +29,14 @@ export function needsOnboarding(state) {
   return state.logs.length === 0 && !state.planned.some((p) => p.status !== 'removed');
 }
 
+// Setup guidance (story #36): with no strength sessions planned, the advisor
+// section opens as the guided default entry; otherwise everything starts
+// collapsed and the status card is the map.
+export function initialSetupSection(state) {
+  const hasStrength = state.planned.some((p) => p.sportId === 'strength' && p.status !== 'removed');
+  return hasStrength ? null : 'advisor';
+}
+
 export function nextLoggable(state, now) {
   const up = state.planned
     .filter((p) => p.status !== 'removed' && p.status !== 'skipped' && new Date(p.date) >= addDays(now, -0.3) && !p.loggedId)
