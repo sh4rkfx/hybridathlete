@@ -6,7 +6,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "test": "vitest run --coverage --reporter=default --reporter=json --outputFile=.vitest-report.json && node scripts/build-report.mjs",
+    "test": "vitest run --coverage --reporter=default --reporter=json --outputFile=.vitest-report.json; ec=$?; node scripts/build-report.mjs; exit $ec",
     "test:watch": "vitest",
     "coverage": "npm test"
   },
