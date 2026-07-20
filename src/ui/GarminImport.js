@@ -54,12 +54,8 @@ export function GarminImport({ state, toast }) {
     }
   };
 
-  return html`<div class="settings-card">
-    <div class="f-lbl">Garmin-Import (FIT / TCX / Export-ZIP)</div>
-    <p class="subtle" style="font-size:12.5px;margin-bottom:10px">
-      Aktivitäten landen als <b>Entwurf</b> – erst mit sRPE-Bestätigung zählen sie in die Load-Berechnung.
-      Der Komplettexport (DSGVO-ZIP) füllt die chronische Basis der letzten Wochen. Doppelimporte werden erkannt.
-    </p>
+  return html`<div>
+    <p class="subtle" style="font-size:12.5px;margin-bottom:10px">Aktivitäten landen als <b>Entwurf</b> – erst mit sRPE-Bestätigung zählen sie. Doppelimporte werden erkannt.</p>
     <label class="act-btn" style="display:block;text-align:center;cursor:pointer">
       ${busy ? 'Import läuft …' : 'Dateien wählen'}
       <input type="file" multiple accept=".fit,.tcx,.zip" style="display:none" onChange=${onFiles} disabled=${busy} />

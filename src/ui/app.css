@@ -12,3 +12,30 @@ body { display: block; padding: 0; background: var(--bg); }
 }
 /* No fake status bar in the real app */
 .statusbar { display: none; }
+
+/* Setup restructure (story #36): status card + accordion sections */
+.plan-status { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 18px; }
+.stat-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface-2); border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill); padding: 7px 13px;
+  color: var(--text-hi); font-size: 12.5px; font-weight: 600;
+  cursor: pointer; min-height: 34px;
+}
+.stat-chip .k { color: var(--text-low); font-weight: 400; }
+.stat-chip.warn { border-color: rgba(242, 184, 75, .45); }
+.acc {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: var(--r-lg); margin-bottom: 10px; overflow: hidden;
+}
+.acc.open { border-color: var(--border-strong); }
+.acc-head {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; padding: 14px 16px; background: none; border: none;
+  color: var(--text-hi); cursor: pointer; text-align: left; min-height: var(--tap);
+}
+.acc-t { font-weight: 700; font-size: 15px; }
+.acc-d { color: var(--text-low); font-size: 12px; margin-top: 2px; }
+.acc-caret { color: var(--text-low); transition: transform .15s ease; flex: none; }
+.acc.open .acc-caret { transform: rotate(90deg); }
+.acc-body { padding: 2px 16px 16px; }

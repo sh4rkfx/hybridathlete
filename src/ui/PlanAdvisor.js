@@ -21,9 +21,7 @@ export function PlanAdvisor({ state, now, actions, toast }) {
 
   const otherSports = Object.values(cat.sports).filter((s) => s.id !== 'strength');
 
-  return html`<div class="settings-card" style="margin-top:16px">
-    <div class="f-lbl">Plan-Berater</div>
-    <p class="subtle" style="font-size:12.5px;margin-bottom:10px">Sag, was du sonst machst und wie oft du Kraft trainieren kannst — die Empfehlung rechnet ein, was deine anderen Sportarten schon abdecken.</p>
+  return html`<div>
     <div class="field"><div class="f-lbl">Ich mache außerdem</div><div class="opt-row">
       ${otherSports.map((s) => html`<button class="opt ${active.includes(s.id) ? 'sel' : ''}" onClick=${() => { actions.toggleActiveSport(s.id); setRec(null); }}>${sportUi(s.id).emoji} ${s.name}</button>`)}
     </div></div>
