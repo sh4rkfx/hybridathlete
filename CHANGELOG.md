@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Plan advisor (Setup): pick goal, weekly strength days and other active sports — get a justified split recommendation (curated coverage: bouldering ≈ pull unit incl. rear-delt gap; endurance sports explicitly never count as leg-strength substitute) with sources and evidence levels, applied only on explicit accept.
+- Evidence metadata for goal schemes and split choice (source + evidenceLevel like R1–R8), split-preference note and strength-frequency hint in Setup.
 - First-run onboarding on Home: neutral weekly-load state ("Noch keine Daten") without a chronic base, and an "Erste Woche planen" block (generate strength plan / plan a session) replacing the dead-end empty screen.
 
 ### Fixed

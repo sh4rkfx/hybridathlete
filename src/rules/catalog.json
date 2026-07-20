@@ -165,7 +165,15 @@
           "bouldering": ["upper_back", "forearm", "fingers"]
         },
         "weaklyCovered": ["rear_shoulder", "horizontal_pull"],
-        "suggestedFixExerciseIds": ["rear_delt_fly_db", "band_pull_apart", "chest_supported_row_db"]
+        "suggestedFixExerciseIds": ["rear_delt_fly_db", "band_pull_apart", "chest_supported_row_db"],
+        "unitCoverage": {
+          "bouldering": {
+            "unit": "pull",
+            "note": "Lat, Unterarm und Griffkraft gut abgedeckt; hintere Schulter und horizontales Ziehen nur schwach",
+            "einstreu": ["rear_delt_fly_db", "band_pull_apart", "chest_supported_row_db"]
+          }
+        },
+        "enduranceNotStrength": ["running", "gravel_cycling", "mountain_day"]
       },
       "logic": "When a split unit is disabled (e.g. Pull), check which regions become uncovered vs. covered by other sports. Bouldering covers upper_back/forearm/fingers well, but horizontal pulling and rear shoulder only weakly -> hint: 'gap: rear shoulder / horizontal pull — add 1–2 exercises into Push?' with concrete suggestions the V1 catalog can actually deliver.",
       "source": {

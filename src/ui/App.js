@@ -1,6 +1,6 @@
 import { html } from './html.js';
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
-import { atHour, addDays, dOnly, WD, slotOfHour } from '../engine/time.js';
+import { atHour, addDays, dOnly, WD, slotOfHour, SLOT_HOUR as ENGINE_SLOT_HOUR } from '../engine/time.js';
 import { catalogOf, SPLITS } from '../engine/catalog.js';
 import { generateStrength } from '../engine/generator.js';
 import { REGION_LABELS } from '../engine/texts.js';
@@ -220,6 +220,28 @@ export function App() {
       setScreen('home');
     },
     resetData: async () => { await store.resetAll(); toast('Zurückgesetzt'); setScreen('home'); },
+    toggleActiveSport: (id) => store.update((st) => {
+      const a = st.profile.activeSports ?? [];
+      st.profile.activeSports = a.includes(id) ? a.filter((x) => x !== id) : [...a, id];
+    }, { reevaluate: false }),
+    setTrainingDays: (n) => store.update((st) => { st.profile.trainingDays = n; }, { reevaluate: false }),
+    // Story #32: accept an advisor recommendation — set split/units/days, then
+    // rebuild the strength week readiness-aware on the recommended day spread.
+    applyRecommendation: (rec) => {
+      store.update((st) => {
+        st.profile.split = rec.split;
+        st.profile.disabledUnits = rec.disabledUnits.slice();
+        st.profile.trainingDays = rec.trainingDays;
+        st.planned = st.planned.filter((p) => p.sportId !== 'strength');
+        rec.assignment.forEach((unitName, i) => {
+          const when = atHour(addDays(dOnly(now), rec.dayOffsets[i]), ENGINE_SLOT_HOUR.evening);
+          const gen = generateStrength(st.profile, st, when, now).find((u) => u.unit === unitName);
+          if (gen) st.planned.push({ id: store.uid(), sportId: 'strength', date: when.toISOString(), slot: 'evening', fixed: false, status: 'planned', reduced: false, unit: gen.unit, exercises: gen.exercises });
+        });
+      });
+      toast(`Empfehlung übernommen · ${rec.assignment.length} Einheit${rec.assignment.length === 1 ? '' : 'en'} geplant`);
+      setScreen('week');
+    },
   };
 
   const openEdit = (id) => { if (!suppressTapRef.current) setOverlay({ kind: 'edit', sessionId: id }); };

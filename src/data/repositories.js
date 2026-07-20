@@ -15,6 +15,7 @@ export const PROFILE_SEED = {
   trainingDays: 3,
   split: 'PPL',
   disabledUnits: ['pull'],
+  activeSports: ['bouldering', 'mountain_day', 'running', 'gravel_cycling'],
   constraints: [
     {
       id: 'knee_flexion',
