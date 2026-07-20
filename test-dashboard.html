@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HybridAthlete · Test-Dashboard</title>
+<style>
+:root{
+  --bg:#0E1320; --surface-1:#151B2B; --surface-2:#1B2333; --surface-3:#222C40;
+  --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.14);
+  --text-hi:#EEF2FB; --text-mid:#9BA6BD; --text-low:#6B7591;
+  --brand:#C8F542; --brand-hi:#D9FF6B; --brand-dim:rgba(200,245,66,.13);
+  --fresh:#34D6A6; --fresh-dim:rgba(52,214,166,.15);
+  --caution:#F2B84B; --caution-dim:rgba(242,184,75,.15);
+  --stop:#FF6188; --stop-dim:rgba(255,97,136,.15);
+  --r-sm:7px; --r-md:11px; --r-lg:14px;
+}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,#182236 0%,var(--bg) 55%);color:var(--text-hi);
+  font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh;padding:28px 16px 60px}
+.wrap{max-width:1060px;margin:0 auto}
+h1{font-size:26px;letter-spacing:.5px;text-transform:uppercase}
+h1 b{color:var(--brand)}
+.meta{color:var(--text-low);font-size:13px;margin:4px 0 20px}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.chip{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:10px 16px;display:flex;flex-direction:column;min-width:110px}
+.chip .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:700}
+.chip .l{font-size:11px;color:var(--text-mid);text-transform:uppercase;letter-spacing:.6px}
+.v.pass{color:var(--fresh)} .v.fail{color:var(--stop)} .v.skip{color:var(--caution)} .v.cov{color:var(--brand)}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-mid);margin:30px 0 10px}
+table{width:100%;border-collapse:collapse;background:var(--surface-1);border:1px solid var(--border);
+  border-radius:var(--r-lg);overflow:hidden;font-size:13.5px}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r-lg)}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-low);text-align:left;
+  padding:9px 12px;background:var(--surface-2);border-bottom:1px solid var(--border-strong)}
+td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr.fail td{background:var(--stop-dim)}
+.mark{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:7px}
+.m-pass{background:var(--fresh)} .m-fail{background:var(--stop);border-radius:2px} .m-skip{background:var(--caution);transform:rotate(45deg);border-radius:2px}
+.tid{font-family:ui-monospace,monospace;font-weight:700;color:var(--brand)}
+.ev{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;border:1px solid var(--border-strong);color:var(--text-mid);white-space:nowrap}
+.ev.rct{color:var(--fresh);border-color:var(--fresh)}
+.ev.cohort{color:var(--caution);border-color:var(--caution)}
+.dur{color:var(--text-low);font-family:ui-monospace,monospace;font-size:12px;text-align:right}
+.anchor{color:var(--text-mid);font-size:12.5px}
+.suite{margin-bottom:6px}
+.matrix td,.matrix th{text-align:center}
+.matrix td:first-child{text-align:left;font-family:ui-monospace,monospace;font-weight:700}
+.cov-cell{color:var(--fresh);font-family:ui-monospace,monospace;font-size:12px}
+.uncovered{color:var(--stop);font-weight:700}
+.note{color:var(--text-low);font-size:12.5px;margin-top:8px}
+#empty{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:26px;
+  color:var(--text-mid);display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><b>HYBRID</b>ATHLETE · Test-Dashboard</h1>
+  <div class="meta" id="meta">–</div>
+  <div class="chips" id="chips"></div>
+  <div id="empty">Kein Report gefunden. <code>npm test</code> ausführen — der Lauf schreibt <code>test-report.js</code> neben diese Datei.</div>
+  <div id="content"></div>
+</div>
+<script src="test-report.js"></script>
+<script>
+(function(){
+  const R = window.__TEST_REPORT__;
+  const $ = (id) => document.getElementById(id);
+  if(!R){ $('empty').style.display='block'; return; }
+
+  $('meta').textContent = 'Lauf: ' + new Date(R.generatedAt).toLocaleString('de-DE')
+    + ' · ' + R.totals.total + ' Tests · Suiten: ' + R.suites.map(s=>s.name).join(' / ');
+
+  const cov = R.coverage;
+  $('chips').innerHTML =
+    chip(R.totals.pass,'pass','Pass') + chip(R.totals.fail,'fail','Fail') + chip(R.totals.skip,'skip','Skip')
+    + (cov ? chip(cov.engine+'%','cov','Coverage engine') + chip(cov.rules+'%','cov','Coverage rules') + chip(cov.total+'%','cov','Coverage gesamt') : '');
+  function chip(v,cls,l){ return '<div class="chip"><span class="v '+cls+'">'+v+'</span><span class="l">'+l+'</span></div>'; }
+
+  const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const mark = (st) => '<span class="mark m-'+st+'"></span>';
+
+  let html = '';
+
+  // Scenario section first & prominent: T01–T17 with anchor + evidence.
+  const scen = R.suites.find(s=>s.name==='scenario');
+  if(scen){
+    const rows = scen.tests.map(t =>
+      '<tr class="'+(t.status==='fail'?'fail':'')+'"><td>'+mark(t.status)+'<span class="tid">'+esc(t.id)+'</span></td>'
+      + '<td>'+esc(t.title.replace(/^T\d{2}\s*—\s*/,''))+'</td>'
+      + '<td class="anchor">'+esc(t.anchor||'–')+'</td>'
+      + '<td><span class="ev '+esc(t.evidenceLevel||'')+'">'+esc(t.evidenceLevel||'–')+'</span></td>'
+      + '<td class="dur">'+t.durationMs+' ms</td></tr>').join('');
+    html += '<h2>Szenario-Tests T01–T17 (Wissenschafts-Gate)</h2><div class="tbl-wrap"><table>'
+      + '<tr><th>Test</th><th>Titel</th><th>Anker (AC + Literatur)</th><th>Evidenzgrad</th><th></th></tr>'
+      + rows + '</table></div>';
+
+    // R1–R8 coverage matrix from the scenario metadata.
+    const ruleIds = ['R1','R2','R3','R4','R5','R6','R7','R8'];
+    const covered = {};
+    scen.tests.forEach(t => (t.rules||[]).forEach(r => (covered[r] ??= []).push(t.id)));
+    // Unit suites cover R8 (generator tests) even without scenario ids:
+    const unitCover = { R8: ['generator.test'] };
+    const mrows = ruleIds.map(r => {
+      const ids = (covered[r]||[]).concat(unitCover[r]||[]);
+      return '<tr><td>'+r+'</td><td class="'+(ids.length?'cov-cell':'uncovered')+'">'
+        + (ids.length ? esc(ids.join(' · ')) : 'UNGETESTET') + '</td></tr>';
+    }).join('');
+    html += '<h2>Regel-Abdeckungs-Matrix</h2><div class="tbl-wrap"><table class="matrix">'
+      + '<tr><th>Regel</th><th>abgedeckt durch</th></tr>' + mrows + '</table></div>'
+      + '<div class="note">R2/R8 wirken als Filter im Generator und in der Ersatzsuche — zusätzlich abgedeckt durch die Unit-Suiten (test/engine/generator.test.js, test/engine/swap.test.js).</div>';
+  }
+
+  // All suites, grouped.
+  for(const s of R.suites){
+    const rows = s.tests.map(t =>
+      '<tr class="'+(t.status==='fail'?'fail':'')+'"><td style="width:60%">'+mark(t.status)+esc(t.title)+'</td>'
+      + '<td class="dur">'+t.durationMs+' ms</td></tr>').join('');
+    html += '<h2 class="suite">Suite · '+esc(s.name)+' ('+s.tests.length+')</h2><div class="tbl-wrap"><table>'+rows+'</table></div>';
+  }
+
+  $('content').innerHTML = html;
+})();
+</script>
+</body>
+</html>
