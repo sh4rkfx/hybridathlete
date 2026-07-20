@@ -96,7 +96,7 @@ export async function putSessionLogIdempotent(db, log) {
 // `rejected` and `ruleStats` are derived from the persisted suggestion history —
 // they are projections, not stores of their own.
 export async function loadEngineState(db) {
-  const [profile, planned, logs, fatigue, pain, suggestions, rules, sports, exercises] =
+  const [profile, planned, allLogs, fatigue, pain, suggestions, rules, sports, exercises] =
     await Promise.all([
       db.get('profile', PROFILE_KEY),
       db.getAll('plannedSessions'),
@@ -120,7 +120,12 @@ export async function loadEngineState(db) {
     }
   }
 
-  return { profile, planned, logs, fatigue, pain, suggestions, rules, sports, exercises, rejected, ruleStats };
+  // AC9: Garmin drafts enter the load model only after sRPE confirmation —
+  // the engine never sees them; the UI lists them separately.
+  const logs = allLogs.filter((l) => !l.draft);
+  const draftLogs = allLogs.filter((l) => l.draft);
+
+  return { profile, planned, logs, draftLogs, fatigue, pain, suggestions, rules, sports, exercises, rejected, ruleStats };
 }
 
 // Persist a fresh evaluation result: open (un-answered) suggestions are replaced

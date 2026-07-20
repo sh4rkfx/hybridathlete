@@ -52,7 +52,7 @@ async function sync() {
       for (const r of rows) await s.put(structuredClone({ ...r, [key]: r[key] ?? r.id }));
     };
     await writeAll('plannedSessions', state.planned, 'sessionId');
-    await writeAll('sessionLogs', state.logs, 'logId');
+    await writeAll('sessionLogs', [...state.logs, ...(state.draftLogs ?? [])], 'logId');
     await writeAll('fatigueEntries', state.fatigue, 'entryId');
     await writeAll('painEntries', state.pain, 'painId');
     await tx.done;
@@ -92,6 +92,39 @@ export function rejectSuggestion(key, reason) {
     st.rejected[key] = reason;
   });
   return s;
+}
+
+// Garmin import (AC9): add parsed activities as drafts; duplicates (same
+// garminActivityId, already imported as draft OR confirmed) are skipped.
+export function addDraftLogs(drafts) {
+  let added = 0;
+  update((st) => {
+    st.draftLogs ??= [];
+    const known = new Set([...st.logs, ...st.draftLogs].map((l) => l.garminActivityId).filter(Boolean));
+    for (const d of drafts) {
+      if (known.has(d.garminActivityId)) continue;
+      known.add(d.garminActivityId);
+      st.draftLogs.push(d);
+      added++;
+    }
+  }, { reevaluate: false });
+  return added;
+}
+
+export function confirmDraft(logId, sRPE) {
+  update((st) => {
+    const i = st.draftLogs.findIndex((l) => l.id === logId);
+    if (i === -1) return;
+    const log = { ...st.draftLogs[i], sRPE, draft: false };
+    st.draftLogs.splice(i, 1);
+    st.logs.push(log);
+  });
+}
+
+export function discardDraft(logId) {
+  update((st) => {
+    st.draftLogs = st.draftLogs.filter((l) => l.id !== logId);
+  }, { reevaluate: false });
 }
 
 export async function resetAll() {
