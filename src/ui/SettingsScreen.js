@@ -8,6 +8,7 @@ import { catalogOf, GOAL_SCHEMES, SPLITS, SPLIT_EVIDENCE } from '../engine/catal
 import { generateStrength, splitCoverageGaps, splitHint } from '../engine/generator.js';
 import { exerciseReadiness } from '../engine/readiness.js';
 import { GarminImport } from './GarminImport.js';
+import { PlanAdvisor } from './PlanAdvisor.js';
 
 export function SettingsScreen({ state, now, actions, toast }) {
   const cat = catalogOf(state);
@@ -62,6 +63,8 @@ export function SettingsScreen({ state, now, actions, toast }) {
       ${gaps.map((g) => html`<div class="gap-hint"><b>Lücke: ${g.label}</b><br/>${g.note} Vorschlag: ${g.fixIds.map((id) => cat.exById[id].name).join(', ')} in Push einstreuen.</div>`)}
       <button class="act-btn primary" onClick=${actions.regenerate}>Plan neu generieren</button>
     </div>
+    <div class="eyebrow" style="margin-top:24px">Berater</div>
+    <${PlanAdvisor} state=${state} now=${now} actions=${actions} toast=${toast} />
     <div class="eyebrow" style="margin-top:24px">Import</div>
     <${GarminImport} state=${state} toast=${toast} />
     <div class="eyebrow" style="margin-top:24px">Daten</div>
