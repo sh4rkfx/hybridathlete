@@ -43,6 +43,19 @@ export function generateStrength(profile, state, when, now = new Date()) {
   });
 }
 
+// Split advice (story #31): strength gains profit from per-lift frequency
+// (Pelland et al. 2025), so goal 'kraftaufbau' on a 1×/week-per-muscle split
+// gets a hint towards full-body/upper-lower. Returns null when nothing to say.
+export function splitHint(profile) {
+  if (profile.goal !== 'kraftaufbau') return null;
+  if (profile.split !== 'PPL' && profile.split !== 'push_pull') return null;
+  return {
+    text: 'Für Maximalkraft ist höhere Frequenz je Übung leicht überlegen — mit deinem Split trainierst du jede Übung nur ~1×/Woche. Full Body oder Upper/Lower erhöhen die Frequenz bei gleichem Volumen.',
+    source: 'Pelland et al. (2025), Dose-Response-Meta-Regression: Kraft steigt mit Frequenz (abnehmender Grenznutzen); Hypertrophie ist bei gleichem Volumen frequenzunabhängig (Schoenfeld 2019).',
+    evidenceLevel: 'meta-analysis',
+  };
+}
+
 // R8 — split coverage check (generator rule, not an in-week trigger): which
 // regions lose coverage when a unit is disabled, and what other sports still
 // cover. Suggested fixes are limited to what the V1 catalog can deliver.
