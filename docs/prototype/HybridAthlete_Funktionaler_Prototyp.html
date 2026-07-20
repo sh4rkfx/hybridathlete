@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HybridAthlete — Funktionaler Prototyp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1320; --surface-1:#151B2B; --surface-2:#1B2333; --surface-3:#222C40;
+  --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.14);
+  --text-hi:#EEF2FB; --text-mid:#9BA6BD; --text-low:#6B7591;
+  --brand:#C8F542; --brand-hi:#D9FF6B; --brand-dim:rgba(200,245,66,.13); --brand-line:rgba(200,245,66,.5);
+  --fresh:#34D6A6; --fresh-dim:rgba(52,214,166,.15);
+  --caution:#F2B84B; --caution-dim:rgba(242,184,75,.15);
+  --stop:#FF6188; --stop-dim:rgba(255,97,136,.15);
+  --font-display:'Archivo Black',system-ui,sans-serif;
+  --font-body:'Barlow',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --r-sm:7px; --r-md:11px; --r-lg:14px; --r-pill:999px;
+  --shadow:0 8px 30px rgba(0,0,0,.45); --tap:46px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-body);background:radial-gradient(1200px 600px at 50% -10%,#182236 0%,var(--bg) 55%);color:var(--text-hi);-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:24px}
+@media (max-width:480px){body{padding:0}}
+.phone{position:relative;width:100%;max-width:398px;height:min(844px,100dvh);background:var(--bg);border-radius:38px;border:1px solid var(--border-strong);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+@media (max-width:480px){.phone{border-radius:0;height:100dvh;border:none;max-width:none}}
+.statusbar{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:var(--font-mono);font-size:12px;color:var(--text-mid)}
+.statusbar .dots{display:flex;gap:5px}.statusbar .dots span{width:6px;height:6px;border-radius:50%;background:var(--text-low)}
+.viewport{flex:1;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:8px 20px 108px;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .28s ease,transform .28s ease}
+.screen.active{opacity:1;transform:none;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){.screen{transition:none}}
+.screen::-webkit-scrollbar{width:0}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-low);margin:14px 2px 6px}
+h1.title{font-family:var(--font-display);font-weight:400;font-size:22px;letter-spacing:.01em;text-transform:uppercase;margin:2px 0}
+.subtle{color:var(--text-mid);font-size:14px;line-height:1.5}
+.home-top{display:flex;align-items:baseline;justify-content:space-between;margin-top:6px}
+.brandmark{display:flex;align-items:center;gap:9px}
+.brandmark .name{font-family:var(--font-display);font-weight:400;font-size:14.5px;letter-spacing:.04em}
+.brandmark .name b{color:var(--brand);font-weight:400}
+.daytag{font-family:var(--font-mono);font-size:12px;color:var(--text-mid)}
+.ridge-card{margin-top:16px;background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 18px 12px;position:relative;overflow:hidden}
+.ridge-card .rc-head{display:flex;justify-content:space-between;align-items:flex-start}
+.ridge-card .rc-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-low)}
+.ridge-card h2{font-family:var(--font-display);font-weight:600;font-size:17px;margin-top:2px}
+.acwr-chip{display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:var(--r-pill);border:1px solid;background:none;cursor:pointer;font-family:var(--font-body)}
+.acwr-chip .v{font-family:var(--font-mono);font-weight:700;font-size:14px}
+.acwr-chip .l{font-size:11px;color:var(--text-mid)}
+.acwr-chip.z-fresh{background:var(--fresh-dim);border-color:rgba(52,214,166,.35)} .acwr-chip.z-fresh .v{color:var(--fresh)}
+.acwr-chip.z-caution{background:var(--caution-dim);border-color:rgba(242,184,75,.35)} .acwr-chip.z-caution .v{color:var(--caution)}
+.acwr-chip.z-stop{background:var(--stop-dim);border-color:rgba(255,97,136,.35)} .acwr-chip.z-stop .v{color:var(--stop)}
+.ridge-wrap{margin:14px -18px -12px;position:relative}
+.ridge-wrap svg{display:block;width:100%;height:118px}
+.ridge-days{display:flex;justify-content:space-between;padding:6px 18px 4px;font-family:var(--font-mono);font-size:10px;color:var(--text-low)}
+.ridge-days .today{color:var(--brand-hi)}
+.log-cta{margin-top:16px;width:100%;border:none;cursor:pointer;background:linear-gradient(120deg,var(--brand) 0%,#9BD32B 100%);color:#0b0f1a;border-radius:var(--r-lg);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 10px 24px rgba(200,245,66,.22);transition:transform .12s ease}
+.log-cta:active{transform:scale(.985)}
+.log-cta .lc-left{display:flex;flex-direction:column;gap:3px;text-align:left}
+.log-cta .lc-k{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.72}
+.log-cta .lc-t{font-family:var(--font-display);font-weight:600;font-size:19px}
+.log-cta .lc-sub{font-size:13px;opacity:.75}
+.log-cta .lc-icon{width:44px;height:44px;border-radius:50%;background:rgba(11,15,26,.16);display:grid;place-items:center;flex:none;font-size:22px;color:#0b0f1a}
+.ghost-cta{margin-top:10px;width:100%;border:1px solid var(--border-strong);background:var(--surface-1);color:var(--text-hi);border-radius:var(--r-md);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:var(--font-body);font-size:14.5px}
+.ghost-cta .g-k{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-low)}
+.ghost-cta:active{background:var(--surface-2)}
+.sec-title{display:flex;align-items:center;justify-content:space-between;margin:26px 2px 10px}
+.sec-title h3{font-family:var(--font-display);font-weight:600;font-size:15px}
+.sec-title .link{font-size:13px;color:var(--brand-hi);text-decoration:none;background:none;border:none;cursor:pointer;font-family:var(--font-body)}
+.mini-card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;display:flex;align-items:center;gap:13px;margin-bottom:10px}
+.mini-card .mc-emoji{font-size:19px;width:22px;text-align:center}
+.mini-card .mc-body{flex:1;min-width:0}
+.mini-card .mc-t{font-size:14.5px;font-weight:600}
+.mini-card .mc-s{font-size:12.5px;color:var(--text-mid);margin-top:1px}
+.mini-card .pin{font-size:11px;color:var(--text-low);font-family:var(--font-mono)}
+.mini-card.fixed{border-style:dashed;border-color:var(--border-strong)}
+.mini-card.done{opacity:.55}
+.mini-card.removed{opacity:.4;text-decoration:line-through}
+.tag-reduced{font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--caution);border:1px solid rgba(242,184,75,.4);padding:2px 6px;border-radius:var(--r-pill)}
+.region-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.rpill{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-pill);font-size:12.5px;color:var(--text-hi)}
+.mark{width:9px;height:9px;flex:none;display:inline-block}
+.mark.m-fresh{background:var(--fresh);border-radius:50%}
+.mark.m-caution{background:var(--caution);border-radius:2px;transform:rotate(45deg)}
+.mark.m-stop{background:var(--stop);border-radius:1px}
+.sug{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 16px 14px;margin-bottom:14px;position:relative;overflow:hidden}
+.sug::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--op-color,var(--brand))}
+.sug .op{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--op-color,var(--brand-hi))}
+.sug .op .dot{width:7px;height:7px;border-radius:50%;background:var(--op-color,var(--brand))}
+.sug .coach{font-size:15px;line-height:1.5;margin:10px 0 12px;color:var(--text-hi)}
+.sug .coach b{font-weight:700}
+.sug .why{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 12px;margin-bottom:13px}
+.sug .why .wl{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-low);margin-bottom:4px}
+.sug .why .wt{font-size:12.5px;color:var(--text-mid);line-height:1.5}
+.evi{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+.evi .rule{font-family:var(--font-mono);font-size:11px;color:var(--brand-hi)}
+.evi .lvl{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border-strong);color:var(--text-mid)}
+.evi .lvl.rct,.evi .lvl.meta,.evi .lvl.cohort{color:var(--fresh);border-color:rgba(52,214,166,.4)}
+.evi .lvl.assumption,.evi .lvl.expert{color:var(--caution);border-color:rgba(242,184,75,.4)}
+.src-toggle{background:none;border:none;color:var(--text-low);font-family:var(--font-mono);font-size:11px;cursor:pointer;padding:2px 0;text-decoration:underline dotted}
+.src-full{font-size:11.5px;color:var(--text-mid);line-height:1.5;margin-top:8px;display:none;font-style:italic}
+.src-full.show{display:block}
+.sug-actions{display:flex;gap:10px;margin-top:4px}
+.btn{flex:1;min-height:var(--tap);border-radius:var(--r-md);cursor:pointer;font-family:var(--font-body);font-weight:600;font-size:14.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s ease}
+.btn:active{transform:scale(.97)}
+.btn-accept{background:var(--brand);color:#0b0f1a;border:none}
+.btn-reject{background:transparent;color:var(--text-mid);border:1px solid var(--border-strong)}
+.reasons{display:none;gap:8px;flex-wrap:wrap;margin-top:12px}
+.reasons.show{display:flex}
+.reason-chip{padding:9px 13px;border-radius:var(--r-pill);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-mid);font-size:13px;cursor:pointer}
+.reason-chip:active{background:var(--surface-3)}
+.fixed-note{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:14px;border:1px dashed var(--border-strong);border-radius:var(--r-md);background:rgba(255,255,255,.02)}
+.fixed-note .fn-i{font-size:16px}
+.fixed-note .fn-t{font-size:12.5px;color:var(--text-mid);line-height:1.45}
+.fixed-note .fn-t b{color:var(--text-hi)}
+.empty{text-align:center;color:var(--text-low);padding:52px 20px;display:none}
+.empty.show{display:block}
+.empty .e-i{font-size:34px;margin-bottom:12px}
+.empty .e-t{font-family:var(--font-display);font-size:16px;color:var(--text-mid)}
+.empty .e-s{font-size:13px;margin-top:6px}
+.week-grid{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+.day-row{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.day-row .dr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.day-row .dr-day{font-family:var(--font-display);font-weight:600;font-size:14px}
+.day-row.today{border-color:var(--brand-line);box-shadow:0 0 0 1px var(--brand-dim) inset}
+.day-row .dr-day .td{font-family:var(--font-mono);font-size:10px;color:var(--brand-hi);margin-left:8px}
+.slots{display:flex;gap:7px}
+.slot{flex:1;min-height:52px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);padding:7px 8px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.slot.empty-slot{background:transparent;border-style:dashed;opacity:.4}
+.slot .s-sport{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:4px}
+.slot .s-meta{font-family:var(--font-mono);font-size:9px;color:var(--text-low)}
+.slot.b-boulder{border-left:3px solid var(--brand)}
+.slot.b-mountain{border-left:3px solid var(--fresh)}
+.slot.b-strength{border-left:3px solid var(--caution)}
+.slot.b-run{border-left:3px solid var(--stop)}
+.slot.b-cycle{border-left:3px solid #7dd3fc}
+.slot.removed{opacity:.35}
+.rule-item{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 15px;margin-bottom:10px}
+.rule-item .ri-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rule-item .ri-id{font-family:var(--font-mono);font-size:11px;color:var(--brand-hi)}
+.rule-item .ri-name{font-family:var(--font-display);font-weight:600;font-size:14.5px;margin-top:3px}
+.rule-item .ri-src{font-size:12px;color:var(--text-mid);line-height:1.5;margin-top:7px}
+.rule-item .ri-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.vote{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:12px;color:var(--text-low)}
+.vote b{color:var(--text-mid)}
+.lvl-badge{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border-strong)}
+.lvl-badge.rct,.lvl-badge.meta,.lvl-badge.cohort{color:var(--fresh);border-color:rgba(52,214,166,.4)}
+.lvl-badge.expert,.lvl-badge.assumption{color:var(--caution);border-color:rgba(242,184,75,.4)}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:78px;background:linear-gradient(to top,var(--bg) 62%,rgba(14,19,32,0));display:flex;align-items:center;justify-content:space-around;padding:0 8px 18px;z-index:20}
+.tab{background:none;border:none;cursor:pointer;flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--text-low);font-family:var(--font-body);font-size:10px;padding:8px 0;min-height:var(--tap);position:relative}
+.tab.active{color:var(--brand-hi)}
+.tab .ti{width:23px;height:23px;display:grid;place-items:center}
+.tab .badge{position:absolute;transform:translate(13px,-6px);background:var(--stop);color:#0b0f1a;font-family:var(--font-mono);font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:grid;place-items:center;padding:0 4px}
+.overlay{position:absolute;inset:0;z-index:40;background:var(--bg);transform:translateY(100%);transition:transform .34s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column}
+.overlay.show{transform:none}
+@media (prefers-reduced-motion:reduce){.overlay{transition:none}}
+.ov-head{flex:none;padding:16px 20px 10px;display:flex;align-items:center;justify-content:space-between}
+.ov-head .oh-close{background:var(--surface-2);border:1px solid var(--border);color:var(--text-mid);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:18px}
+.ov-head .oh-timer{font-family:var(--font-mono);font-size:13px;color:var(--text-low)}
+.ov-head .oh-timer b{color:var(--fresh)}
+.ov-head .oh-title{font-family:var(--font-display);font-weight:600;font-size:15px}
+.progress{flex:none;height:3px;background:var(--surface-2);margin:0 20px;border-radius:2px;overflow:hidden}
+.progress .bar{height:100%;width:20%;background:var(--brand);transition:width .3s ease}
+.ov-body{flex:1;overflow-y:auto;padding:20px}
+.ov-body::-webkit-scrollbar{width:0}
+.step .s-k{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-low)}
+.step h2{font-family:var(--font-display);font-weight:400;font-size:19px;margin:6px 0 4px;letter-spacing:.01em;text-transform:uppercase}
+.step .s-hint{color:var(--text-mid);font-size:14px;line-height:1.5;margin-bottom:22px}
+.session-card{background:var(--surface-1);border:1px solid var(--border-strong);border-radius:var(--r-lg);padding:20px;display:flex;align-items:center;gap:16px}
+.session-card .sc-icon{width:52px;height:52px;border-radius:16px;background:var(--brand-dim);display:grid;place-items:center;font-size:24px;flex:none}
+.session-card .sc-t{font-family:var(--font-display);font-weight:600;font-size:18px}
+.session-card .sc-s{font-size:13px;color:var(--text-mid);margin-top:2px;font-family:var(--font-mono)}
+.metric{margin-bottom:22px}
+.metric .m-label{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.metric .m-label .ml-t{font-size:15px;font-weight:600}
+.metric .m-label .ml-v{font-family:var(--font-mono);font-weight:700;font-size:22px;color:var(--brand-hi)}
+.metric .m-label .ml-v small{font-size:13px;color:var(--text-low);font-weight:400}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper .sbtn{width:52px;height:52px;flex:none;border-radius:16px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-hi);font-size:24px;cursor:pointer;display:grid;place-items:center;transition:background .15s ease,transform .1s ease}
+.stepper .sbtn:active{transform:scale(.94);background:var(--surface-3)}
+.stepper .track{flex:1;height:8px;border-radius:4px;background:var(--surface-2);position:relative;overflow:hidden}
+.stepper .track .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--brand),var(--brand-hi));border-radius:4px}
+.toggle-row{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface-1);margin-bottom:8px}
+.toggle-row .tr-body{flex:1}
+.toggle-row .tr-t{font-size:15px;font-weight:600}
+.toggle-row .tr-s{font-size:12.5px;color:var(--text-mid);margin-top:2px;line-height:1.4}
+.switch{width:52px;height:31px;border-radius:16px;background:var(--surface-3);border:1px solid var(--border-strong);position:relative;cursor:pointer;flex:none;transition:background .2s ease}
+.switch .knob{position:absolute;top:2px;left:2px;width:25px;height:25px;border-radius:50%;background:var(--text-mid);transition:transform .2s ease,background .2s ease}
+.switch.on{background:var(--brand-dim);border-color:var(--brand-line)}
+.switch.on .knob{transform:translateX(21px);background:var(--brand-hi)}
+.region-block{margin-bottom:15px}
+.region-block .rb-name{font-size:14.5px;font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.region-block .rb-name .rb-hint{font-family:var(--font-mono);font-size:10px;color:var(--text-low);font-weight:400}
+.segmented{display:flex;gap:8px}
+.seg{flex:1;min-height:var(--tap);border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border);background:var(--surface-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:border-color .15s ease,background .15s ease,transform .1s ease}
+.seg:active{transform:scale(.97)}
+.seg .seg-mark{width:13px;height:13px}
+.seg .seg-lbl{font-size:11.5px;color:var(--text-mid)}
+.seg-mark.m-fresh{background:var(--fresh);border-radius:50%}
+.seg-mark.m-caution{background:var(--caution);border-radius:3px;transform:rotate(45deg)}
+.seg-mark.m-stop{background:var(--stop);border-radius:2px}
+.seg.sel.v-fresh{border-color:var(--fresh);background:var(--fresh-dim)} .seg.sel.v-fresh .seg-lbl{color:var(--fresh)}
+.seg.sel.v-caution{border-color:var(--caution);background:var(--caution-dim)} .seg.sel.v-caution .seg-lbl{color:var(--caution)}
+.seg.sel.v-stop{border-color:var(--stop);background:var(--stop-dim)} .seg.sel.v-stop .seg-lbl{color:var(--stop)}
+.more-region{background:none;border:1px dashed var(--border-strong);color:var(--text-mid);width:100%;min-height:var(--tap);border-radius:var(--r-md);cursor:pointer;font-family:var(--font-body);font-size:13.5px;margin-top:6px}
+.pain-launch{width:100%;min-height:var(--tap);border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border-strong);background:var(--surface-1);color:var(--text-mid);font-family:var(--font-body);font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:4px}
+.pain-panel{display:none;margin-top:14px}
+.pain-panel.show{display:block}
+.nrs-scale{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.nrs{width:calc((100% - 50px)/11);min-width:26px;aspect-ratio:1;border-radius:9px;border:1px solid var(--border);background:var(--surface-1);color:var(--text-mid);font-family:var(--font-mono);font-size:13px;cursor:pointer;display:grid;place-items:center}
+.nrs.sel{background:var(--stop-dim);border-color:var(--stop);color:var(--stop);font-weight:700}
+.nrs-legend{display:flex;justify-content:space-between;font-size:11px;color:var(--text-low);margin-top:6px;font-family:var(--font-mono)}
+.set-row{display:flex;align-items:center;gap:8px;background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px}
+.set-row .ex-name{flex:1;font-size:13.5px;font-weight:600}
+.set-row .ex-scheme{font-family:var(--font-mono);font-size:11px;color:var(--text-low)}
+.set-row .ex-tag{font-family:var(--font-mono);font-size:9px;padding:2px 6px;border-radius:var(--r-pill);border:1px solid var(--border-strong);color:var(--text-mid)}
+.ov-foot{flex:none;padding:14px 20px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--bg)}
+.next-btn{width:100%;min-height:54px;border-radius:var(--r-md);border:none;cursor:pointer;background:var(--brand);color:#0b0f1a;font-family:var(--font-display);font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .1s ease,background .2s ease}
+.next-btn:active{transform:scale(.99)}
+.next-btn.done{background:var(--fresh)}
+.toast{position:absolute;left:20px;right:20px;bottom:96px;z-index:60;background:var(--surface-3);border:1px solid var(--border-strong);border-radius:var(--r-md);padding:13px 16px;display:flex;align-items:center;gap:11px;box-shadow:var(--shadow);transform:translateY(160%);opacity:0;visibility:hidden;pointer-events:none;transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .25s ease,visibility 0s linear .35s}
+.toast.show{transform:none;opacity:1;visibility:visible;transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .2s ease}
+.toast .t-i{width:26px;height:26px;border-radius:50%;background:var(--fresh-dim);display:grid;place-items:center;font-size:14px;flex:none}
+.toast .t-t{font-size:13.5px;color:var(--text-hi)}
+.toast .t-t b{color:var(--fresh)}
+.alt-row{display:flex;gap:10px;margin-top:14px}
+.alt-choice{flex:1;min-height:46px;border-radius:var(--r-md);border:1px solid var(--border-strong);background:transparent;color:var(--text-mid);font-family:var(--font-body);font-size:13.5px;cursor:pointer;padding:10px 12px;transition:background .15s ease}
+.alt-choice:active{background:var(--surface-2)}
+.slot .s-meta.skipped{color:var(--text-low);text-decoration:line-through}
+.swap-box{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.sw-row{display:flex;gap:10px;font-size:12.5px;color:var(--text-mid);line-height:1.45}
+.sw-row .sw-k{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-low);min-width:44px;padding-top:2px}
+.sw-row.out span:last-child{text-decoration:line-through;color:var(--text-low)}
+.sw-row.in span:last-child{color:var(--fresh)}
+.acwr-math{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.am-row{display:grid;grid-template-columns:76px 64px 1fr;gap:10px;align-items:baseline}
+.am-row .am-k{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-low)}
+.am-row .am-v{font-family:var(--font-mono);font-weight:700;font-size:16px;color:var(--text-hi)}
+.am-row .am-d{font-size:11.5px;color:var(--text-mid);line-height:1.4}
+.am-row.total{border-top:1px solid var(--border);padding-top:9px}
+.am-row.total .am-v{color:var(--brand-hi);font-size:19px}
+.zone-row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;color:var(--text-mid)}
+.zone-row .z-range{font-family:var(--font-mono);font-size:12px;color:var(--text-hi);min-width:64px}
+.zone-row .mark{width:10px;height:10px;flex:none}
+.slot-head{display:grid;grid-template-columns:0px 1fr 1fr 1fr;gap:7px;padding:0 14px;margin:14px 0 6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-low)}
+.slot-head span{text-align:center}
+.drag-ghost{position:fixed;z-index:90;pointer-events:none;opacity:.92;transform:scale(1.04) rotate(1.5deg);box-shadow:0 14px 34px rgba(0,0,0,.55);border-radius:var(--r-sm)}
+.slot.drag-src{opacity:.3;border-style:dashed}
+.slot.drop-hint{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-dim) inset;background:var(--brand-dim)}
+.back-btn{width:54px;min-height:54px;flex:none;border-radius:var(--r-md);border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-mid);font-size:22px;cursor:pointer}
+.back-btn:active{background:var(--surface-3)}
+.exr{display:flex;align-items:center;gap:11px;background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 12px;margin-bottom:8px}
+.exr .mark{width:11px;height:11px;flex:none}
+.exr-b{flex:1;min-width:0}
+.exr-n{font-size:14px;font-weight:600}
+.exr-n.blocked{color:var(--text-mid);text-decoration:line-through}
+.exr-r{font-size:11.5px;color:var(--text-low);margin-top:1px;font-weight:400}
+.exr-btn{background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-mid);width:42px;height:42px;border-radius:11px;cursor:pointer;font-size:16px;flex:none}
+.exr-btn:active{background:var(--surface-3)}
+.rpe-word{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-mid)}
+.set-row .mark{width:10px;height:10px}
+.c-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:11px}
+.c-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 8px 7px 12px;border-radius:var(--r-pill);font-size:12.5px;border:1px solid var(--border-strong);color:var(--text-hi)}
+.c-chip.yellow{background:var(--caution-dim);border-color:rgba(242,184,75,.45)}
+.c-chip.red{background:var(--stop-dim);border-color:rgba(255,97,136,.45)}
+.c-chip .c-del{background:none;border:none;color:var(--text-mid);cursor:pointer;font-size:12px;padding:2px 4px}
+.c-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.csel{background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-hi);border-radius:var(--r-md);padding:10px 12px;font-family:var(--font-body);font-size:13.5px;min-height:44px}
+.field{margin-bottom:18px}
+.field .f-lbl{font-size:13px;font-weight:600;margin-bottom:9px;color:var(--text-hi)}
+.opt-row{display:flex;gap:8px;flex-wrap:wrap}
+.opt{padding:11px 14px;border-radius:var(--r-md);background:var(--surface-1);border:1px solid var(--border);color:var(--text-mid);font-size:13.5px;cursor:pointer;font-family:var(--font-body)}
+.opt.sel{border-color:var(--brand);background:var(--brand-dim);color:var(--brand-hi)}
+.opt.sel-toggle{border-color:var(--stop);background:var(--stop-dim);color:var(--stop);text-decoration:line-through}
+.settings-card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:14px}
+.gen-preview{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;margin-top:8px;font-size:12.5px;color:var(--text-mid);line-height:1.6}
+.gen-preview b{color:var(--text-hi)}
+.gap-hint{border:1px solid rgba(242,184,75,.4);background:var(--caution-dim);border-radius:var(--r-md);padding:11px 13px;margin-top:10px;font-size:12.5px;color:var(--text-hi);line-height:1.5}
+.gap-hint b{color:var(--caution)}
+.import-area{width:100%;min-height:100px;background:var(--surface-1);border:1px dashed var(--border-strong);border-radius:var(--r-md);color:var(--text-hi);font-family:var(--font-mono);font-size:11px;padding:12px;resize:vertical}
+.act-btn{width:100%;min-height:var(--tap);border-radius:var(--r-md);border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-hi);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;margin-top:10px}
+.act-btn.primary{background:var(--brand);color:#0b0f1a;border:none}
+.act-btn.danger{color:var(--stop);border-color:rgba(255,97,136,.4)}
+.proto-note{text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--text-low);padding:8px 0 4px}
+:focus-visible{outline:2px solid var(--brand-hi);outline-offset:2px;border-radius:6px}
+</style>
+</head>
+<body>
+<div class="phone" role="application" aria-label="HybridAthlete">
+  <div class="statusbar"><span id="clock">9:41</span><div class="dots"><span></span><span></span><span></span></div></div>
+  <div class="viewport">
+    <section class="screen active" id="screen-home"></section>
+    <section class="screen" id="screen-week"></section>
+    <section class="screen" id="screen-inbox"></section>
+    <section class="screen" id="screen-rules"></section>
+    <section class="screen" id="screen-settings"></section>
+  </div>
+  <nav class="tabbar" role="tablist" aria-label="Navigation">
+    <button class="tab active" id="tab-home" role="tab" onclick="go('home')"><span class="ti" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 12l8-8 8 8M5 10v8h4v-5h4v5h4v-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Home</button>
+    <button class="tab" id="tab-week" role="tab" onclick="go('week')"><span class="ti" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="4" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 8h16M8 2v4M14 2v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>Woche</button>
+    <button class="tab" id="tab-inbox" role="tab" onclick="go('inbox')"><span class="ti" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V6z" stroke="currentColor" stroke-width="1.8"/><path d="M3 8l8 5 8-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="badge" id="nav-badge" style="display:none">0</span></span>Inbox</button>
+    <button class="tab" id="tab-rules" role="tab" onclick="go('rules')"><span class="ti" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 3h9l4 4v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 3v5h5M7 12h8M7 15h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>Regeln</button>
+    <button class="tab" id="tab-settings" role="tab" onclick="go('settings')"><span class="ti" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M11 2v3M11 17v3M2 11h3M17 11h3M4.5 4.5l2 2M15.5 15.5l2 2M17.5 4.5l-2 2M6.5 15.5l-2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>Setup</button>
+  </nav>
+  <div class="overlay" id="log-overlay" aria-hidden="true">
+    <div class="ov-head"><button class="oh-close" onclick="closeLog()" aria-label="Abbrechen">✕</button><span class="oh-timer">⏱ <b id="log-timer">0:00</b></span></div>
+    <div class="progress"><div class="bar" id="log-bar"></div></div>
+    <div class="ov-body" id="log-body"></div>
+    <div class="ov-foot" style="display:flex;gap:10px"><button class="back-btn" id="log-back" onclick="prevStep()" aria-label="Zurück">‹</button><button class="next-btn" id="log-next" onclick="nextStep()" style="flex:1">Weiter</button></div>
+  </div>
+  <div class="overlay" id="checkin-overlay" aria-hidden="true">
+    <div class="ov-head"><button class="oh-close" onclick="closeCheckin()" aria-label="Abbrechen">✕</button><span class="oh-title">Morgen-Check-in</span><span style="width:38px"></span></div>
+    <div class="ov-body" id="checkin-body"></div>
+    <div class="ov-foot"><button class="next-btn" onclick="saveCheckin()">Fertig</button></div>
+  </div>
+  <div class="overlay" id="edit-overlay" aria-hidden="true">
+    <div class="ov-head"><button class="oh-close" onclick="closeEdit()" aria-label="Abbrechen">✕</button><span class="oh-title">Einheit bearbeiten</span><span style="width:38px"></span></div>
+    <div class="ov-body" id="edit-body"></div>
+    <div class="ov-foot"><button class="next-btn" id="edit-save" onclick="saveEdit()">Speichern</button></div>
+  </div>
+  <div class="overlay" id="acwr-overlay" aria-hidden="true">
+    <div class="ov-head"><button class="oh-close" onclick="closeAcwr()" aria-label="Schließen">✕</button><span class="oh-title">Wochenlast · ACWR</span><span style="width:38px"></span></div>
+    <div class="ov-body" id="acwr-body"></div>
+    <div class="ov-foot"><button class="next-btn" onclick="closeAcwr()">Verstanden</button></div>
+  </div>
+  <div class="toast" id="toast"><span class="t-i" id="toast-icon">✓</span><span class="t-t" id="toast-text"></span></div>
+</div>
+<script>
+/* ============================================================
+   LOADR — Funktionaler Prototyp
+   Datenschicht + Load-Modell + Regel-Engine + Generator + UI
+   Persistenz: localStorage mit Fallback auf In-Memory.
+   ============================================================ */
+"use strict";
+
+/* ---------- Persistence ---------- */
+const STORE_KEY = "hybridathlete_v1";
+let memoryStore = null;
+function persist(db){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(db)); }
+  catch(e){ memoryStore = JSON.parse(JSON.stringify(db)); }
+}
+function loadStore(){
+  try{ const s = localStorage.getItem(STORE_KEY); if(s) return JSON.parse(s); }
+  catch(e){ if(memoryStore) return JSON.parse(JSON.stringify(memoryStore)); }
+  return null;
+}
+
+/* ---------- Time helpers (anchored to real now) ---------- */
+const NOW = new Date();
+function atHour(d,h){ const x=new Date(d); x.setHours(h,0,0,0); return x; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function dOnly(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function hoursBetween(a,b){ return Math.abs(new Date(a)-new Date(b))/36e5; }
+function mondayOf(d){ const x=dOnly(d); const wd=(x.getDay()+6)%7; return addDays(x,-wd); }
+const WD=["So","Mo","Di","Mi","Do","Fr","Sa"];
+function wdShort(d){ return WD[new Date(d).getDay()]; }
+function isSameDay(a,b){ return dOnly(a).getTime()===dOnly(b).getTime(); }
+function slotOfHour(h){ return h<12?"morning":h<18?"midday":"evening"; }
+
+/* ---------- Seed catalogs (subset of the repo seed files) ---------- */
+const SPORTS = {
+  bouldering:{id:"bouldering",name:"Bouldern",emoji:"🧗",loadSource:"profile",
+    loadProfile:{fingers:3,forearm:3,elbow:2,shoulder:2,upper_back:2,core:2,systemic:2},
+    painRegions:["fingers","forearm","elbow","shoulder"],maxDur:240,durStep:15,
+    flags:{eccentric:false,tendonHeavy:true}},
+  mountain_day:{id:"mountain_day",name:"Bergtag",emoji:"⛰️",loadSource:"profile",
+    loadProfile:{quads:3,posterior_chain:2,calves:2,knee:2,core:1,systemic:3},
+    painRegions:["knee","quads","calves","lower_back"],maxDur:720,durStep:30,
+    flags:{eccentric:true,tendonHeavy:false}},
+  running:{id:"running",name:"Laufen",emoji:"🏃",loadSource:"profile",
+    loadProfile:{quads:2,posterior_chain:2,calves:2,knee:1,core:1,systemic:2},
+    painRegions:["knee","calves","quads","lower_back"],maxDur:300,durStep:15,
+    flags:{eccentric:false,tendonHeavy:false}},
+  strength:{id:"strength",name:"Kraft",emoji:"🏋️",loadSource:"exercises",
+    loadProfile:{systemic:1},maxDur:180,durStep:15,
+    flags:{eccentric:false,tendonHeavy:false}},
+  gravel_cycling:{id:"gravel_cycling",name:"Gravel-Rad",emoji:"🚴",loadSource:"profile",
+    loadProfile:{quads:2,posterior_chain:1,calves:1,knee:1,core:1,systemic:2},
+    painRegions:["knee","lower_back","quads","forearm"],maxDur:480,durStep:30,
+    flags:{eccentric:false,tendonHeavy:false}}
+};
+
+const EXERCISES = [
+  {id:"barbell_bench_press",name:"Barbell Bench Press",cat:"push",load:{chest:3,triceps:2,shoulder:2},knee:null},
+  {id:"incline_db_press",name:"Incline Dumbbell Press",cat:"push",load:{chest:3,shoulder:2,triceps:1},knee:null},
+  {id:"overhead_press",name:"Overhead Barbell Press",cat:"push",load:{shoulder:3,triceps:2,core:1},knee:null},
+  {id:"db_floor_press",name:"Dumbbell Floor Press",cat:"push",load:{chest:2,triceps:2},knee:null},
+  {id:"lateral_raise",name:"Dumbbell Lateral Raise",cat:"push",load:{shoulder:2},knee:null},
+  {id:"close_grip_bench",name:"Close-Grip Bench Press",cat:"push",load:{triceps:3,chest:2},knee:null},
+  {id:"rear_delt_fly_db",name:"Dumbbell Rear Delt Fly",cat:"pull",load:{shoulder:2,upper_back:1},knee:null,r8fix:true},
+  {id:"chest_supported_row_db",name:"Chest-Supported Row",cat:"pull",load:{upper_back:3,shoulder:1},knee:null,r8fix:true},
+  {id:"barbell_row",name:"Barbell Bent-Over Row",cat:"pull",load:{upper_back:3,lower_back:2,forearm:1},knee:null},
+  {id:"single_arm_row",name:"Single-Arm Dumbbell Row",cat:"pull",load:{upper_back:3,forearm:1},knee:null},
+  {id:"barbell_curl",name:"Barbell Curl",cat:"pull",load:{elbow:2,forearm:2},knee:null},
+  {id:"back_squat",name:"Back Squat",cat:"legs",load:{quads:3,posterior_chain:2,lower_back:2,core:1},knee:"deep"},
+  {id:"front_squat",name:"Front Squat",cat:"legs",load:{quads:3,core:2},knee:"deep"},
+  {id:"box_squat",name:"Box Squat",cat:"legs",load:{quads:2,posterior_chain:2},knee:"mid"},
+  {id:"goblet_squat",name:"Goblet Squat",cat:"legs",load:{quads:2,core:1},knee:"mid"},
+  {id:"romanian_deadlift",name:"Romanian Deadlift",cat:"legs",load:{posterior_chain:3,lower_back:2,forearm:1},knee:"low"},
+  {id:"hip_thrust",name:"Barbell Hip Thrust",cat:"legs",load:{posterior_chain:3,quads:1},knee:"low"},
+  {id:"bulgarian_split",name:"Bulgarian Split Squat",cat:"legs",load:{quads:3,posterior_chain:2},knee:"deep"},
+  {id:"good_morning",name:"Barbell Good Morning",cat:"legs",load:{posterior_chain:3,lower_back:3},knee:"low"},
+  {id:"calf_raise",name:"Standing Calf Raise",cat:"legs",load:{calves:3},knee:"low"},
+  {id:"plank",name:"Plank",cat:"core",load:{core:3},knee:null},
+  {id:"hanging_leg_raise",name:"Hanging Leg Raise",cat:"core",load:{core:3,forearm:1},knee:null},
+  {id:"ab_wheel",name:"Ab Wheel Rollout",cat:"core",load:{core:3,lower_back:1},knee:null},
+  {id:"pallof_press",name:"Pallof Press",cat:"core",load:{core:2},knee:null}
+];
+const EX_BY_ID = Object.fromEntries(EXERCISES.map(e=>[e.id,e]));
+
+const FAT_LABELS = {fresh:"frisch",caution:"müde",stop:"platt"};
+const REGION_LABELS = {fingers:"Finger",forearm:"Unterarm",elbow:"Ellbogen",shoulder:"Schulter",
+  chest:"Brust",triceps:"Trizeps",upper_back:"Oberer Rücken",lower_back:"Unterer Rücken",core:"Core",
+  quads:"Quadrizeps",posterior_chain:"Hintere Kette",calves:"Waden",knee:"Knie",systemic:"Systemisch"};
+
+const RULES = [
+  {id:"R1",name:"Schmerz-Ampel",lvl:"rct",lvlLabel:"RCT",
+   src:"Silbernagel et al. (2007), Am J Sports Med — Pain-Monitoring-Model. Training bis NRS ≤5 zulässig, wenn danach nicht steigend und am Folgetag zurück auf Ausgangswert."},
+  {id:"R2",name:"Dauerhafte Constraints",lvl:"expert",lvlLabel:"Experten-Konsens",
+   src:"Nutzerdefinierte Einschränkung (z. B. Knieflexion 80–90° unter Last). Substitutions-Mechanik = Standard-Load-Management."},
+  {id:"R3",name:"Sehnen/Pulley-Erholung",lvl:"expert",lvlLabel:"Experten-Konsens",
+   src:"Low S., ‚Rehabbing injured pulleys‘; The Climbing Doctor; Hooper's Beta. ~48 h zwischen harten Finger-Reizen. Kein validierter Wert für gesunde Ringbänder — bewusst konservativ."},
+  {id:"R4",name:"Exzentrische Erholung",lvl:"cohort",lvlLabel:"Kohorte",
+   src:"DOMS-Reviews (Physiopedia; ScienceDirect 2026); Eston et al. (1995). Peak 24–72 h nach exzentrischer Last. hm-Skalierung als Annahme gekennzeichnet."},
+  {id:"R5",name:"Muskuläre Erholung",lvl:"expert",lvlLabel:"Experten-Konsens",
+   src:"Allgemeine Trainingsphysiologie (MPS-Fenster, DOMS-Verlauf). Kombiniert Ampel-Input mit regionaler Last."},
+  {id:"R6",name:"Kraft/Ausdauer-Interferenz",lvl:"meta",lvlLabel:"Meta-Analyse",
+   src:"Hickson (1980); Schumann et al. (2022), 43 Studien — Interferenz geringer als früher angenommen. Kraft vor Ausdauer, ≥6 h Abstand. Niedrige Priorität."},
+  {id:"R7",name:"ACWR-Wochenlast",lvl:"cohort",lvlLabel:"Kohorte · umstritten",
+   src:"Gabbett (2016), Br J Sports Med 50(5):273–280. Sweet Spot 0,8–1,3; >1,5 erhöhtes Risiko. Kritik offen: coupling (Lolli 2019), Sensitivität (Impellizzeri 2020)."}
+];
+const RULE_BY_ID = Object.fromEntries(RULES.map(r=>[r.id,r]));
+
+const GOAL_SCHEMES = {
+  kraftaufbau:{label:"Kraftaufbau",sets:5,reps:"3–5"},
+  hypertrophie:{label:"Hypertrophie",sets:4,reps:"8–12"},
+  erhalt:{label:"Erhalt",sets:2,reps:"6–10"},
+  sport_support:{label:"Sport-Support",sets:3,reps:"5–8"}
+};
+const SPLITS = {
+  full_body:{label:"Full Body",units:["full"]},
+  upper_lower:{label:"Upper / Lower",units:["upper","lower"]},
+  push_pull:{label:"Push / Pull",units:["push","pull"]},
+  PPL:{label:"Push / Pull / Legs",units:["push","pull","legs"]}
+};
+const UNIT_CATS = {full:["push","pull","legs","core"],upper:["push","pull"],lower:["legs"],
+  push:["push"],pull:["pull"],legs:["legs","core"]};
+
+/* ============================================================
+   SEED — realistic history so the engine fires on first open
+   ============================================================ */
+function seed(){
+  const profile = {goal:"sport_support",days:3,split:"PPL",disabledUnits:["pull"],
+    constraints:[{id:"knee_flexion",region:"knee",level:"yellow",note:"Linkes Knie, ~80–90° Flexion unter Last"}]};
+  const logs=[]; const fatigue=[];
+  // 28 Tage reduzierte Grundlast (Reha-Rückkehr-Szenario): kurze, moderate Einheiten,
+  // kein Bergtag im Chronik-Fenster -> niedrige chronische Basis. Die geplante große
+  // Woche erzeugt dann einen ECHTEN ACWR-Spike (Lehrbuchfall: Rampe nach Pause).
+  for(let i=28;i>=3;i--){
+    const day=addDays(NOW,-i);
+    const wd=day.getDay();
+    if(wd===2||wd===4){ logs.push(mkLog("bouldering",atHour(day,18),75,6,{})); }
+    if(wd===1){ logs.push(mkLog("running",atHour(day,7),40,4,{distance:7})); }
+    if(wd===6){ logs.push(mkLog("gravel_cycling",atHour(day,10),120,5,{distance:55})); }
+  }
+  // Recent, engine-relevant events — precise hour offsets so R3/R4 windows are active:
+  const hAgo=(h)=>new Date(NOW.getTime()-h*36e5);
+  logs.push(mkLog("mountain_day",hAgo(30),330,7,{elevationGain:1150})); // R4: eccentric, 30h ago
+  logs.push(mkLog("bouldering",hAgo(20),90,7,{hardFingerLoad:true}));    // R3: hard fingers, 20h ago
+  fatigue.push(mkFat("quads","caution",hAgo(28)));
+  fatigue.push(mkFat("calves","caution",hAgo(28)));
+  fatigue.push(mkFat("fingers","caution",hAgo(18)));
+
+  const db={profile,logs,fatigue,pain:[],planned:[],suggestions:[],
+    ruleStats:{R1:{up:12,down:1},R2:{up:6,down:0},R3:{up:9,down:2},R4:{up:8,down:3},R5:{up:7,down:1},R6:{up:4,down:2},R7:{up:5,down:4}},
+    rejected:{}};
+  db.planned = buildWeek(db);
+  return db;
+}
+function recentWeekday(targetWd){ // most recent past day with given weekday
+  let d=dOnly(NOW);
+  for(let i=0;i<7;i++){ if(d.getDay()===targetWd && d<dOnly(NOW)) return d; d=addDays(d,-1); }
+  return addDays(dOnly(NOW),-7);
+}
+let _idc=1; function uid(){ return "id"+(_idc++)+"_"+Math.random().toString(36).slice(2,6); }
+function mkLog(sportId,when,dur,sRPE,extra){
+  return Object.assign({id:uid(),sportId,date:new Date(when).toISOString(),slot:slotOfHour(new Date(when).getHours()),
+    duration:dur,sRPE,source:"manual",sets:[]},extra);
+}
+function mkFat(region,level,when){ return {id:uid(),region,level,ts:new Date(when).toISOString(),context:"post_session"}; }
+
+/* ============================================================
+   PLAN GENERATOR (§5) — builds this week's strength + fixed units
+   ============================================================ */
+function buildWeek(db){
+  // Rolling schedule anchored at NOW — guarantees future sessions the engine can evaluate.
+  const planned=[];
+  const hr=h=>{ const x=new Date(NOW); x.setMinutes(0,0,0); x.setHours(x.getHours()+h); return x; };
+  const at=(dOff,hour)=>atHour(addDays(dOnly(NOW),dOff),hour);
+
+  // 1) Bouldern HEUTE, fix, in ~3 h — Log-CTA + R3-Ziel (reduce), da Fingerlast
+  const boulderToday=hr(3);
+  planned.push(mkPlanned("bouldering",boulderToday,slotOfHour(boulderToday.getHours()),true));
+
+  // 2) Kraft aus Generator (PPL ohne Pull -> push + legs)
+  const strength=generateStrength(db.profile);
+  const legsUnit=strength.find(u=>u.unit==="legs");
+  const pushUnit=strength.find(u=>u.unit==="push");
+
+  // Legs in ~12 h, NICHT fix, midday — R4-Ziel (move): Bergtag war vor 30 h -> Abstand 42 h < 48 h
+  if(legsUnit){
+    const legsAt=hr(12);
+    planned.push(mkPlanned("strength",legsAt,"midday",false,{unit:"legs",exercises:legsUnit.exercises}));
+  }
+  // Push in 2 Tagen abends, nicht fix
+  if(pushUnit){
+    planned.push(mkPlanned("strength",at(2,17),"evening",false,{unit:"push",exercises:pushUnit.exercises}));
+  }
+
+  // 3) Zweites Bouldern in 2 Tagen, fix
+  planned.push(mkPlanned("bouldering",at(2,18),"evening",true));
+
+  // 4) Lauf in 3 Tagen, nicht fix — R7-Kandidat
+  planned.push(mkPlanned("running",at(3,7),"morning",false,{distance:10}));
+
+  // 5) Nächster Bergtag in 5 Tagen, fix — Demo: fixe Einheit bleibt unangetastet
+  planned.push(mkPlanned("mountain_day",at(5,9),"morning",true,{hm:1200}));
+
+  return planned;
+}
+function mkPlanned(sportId,when,slot,fixed,extra){
+  return Object.assign({id:uid(),sportId,date:new Date(when).toISOString(),slot,fixed:!!fixed,
+    status:"planned",reduced:false},extra||{});
+}
+function generateStrength(profile,db,when){
+  // db+when optional: dann wählt der Generator readiness-aware für den Zieltag
+  // (frisch zuerst, müde nachrangig, gesperrt fliegt raus) — Planungsphase kennt
+  // damit die aktuelle Ermüdungs- und Verletzungslage.
+  const split=SPLITS[profile.split]||SPLITS.PPL;
+  const units=split.units.filter(u=>!(profile.disabledUnits||[]).includes(u));
+  return units.map(unit=>{
+    const cats=UNIT_CATS[unit]||[unit];
+    let pool=EXERCISES.filter(e=>cats.includes(e.cat));
+    // R2 — Constraints: Knie nutzt Beugetiefe (Flexion-Tag), alle anderen Regionen die Load-Matrix.
+    // gelb = Alternative wählen (schwere Loader >=3 raus), rot = Region sperren (Loader >=2 raus).
+    (profile.constraints||[]).forEach(c=>{
+      if(c.region==="knee"){
+        if(c.level==="red") pool=pool.filter(e=>e.knee===null);
+        else pool=pool.filter(e=>e.knee!=="deep");
+      } else {
+        const thr=c.level==="red"?2:3;
+        pool=pool.filter(e=>(e.load[c.region]||0)<thr);
+      }
+    });
+    if(db&&when){
+      const ready=Object.fromEntries(pool.map(e=>[e.id,exerciseReadiness(e.id,when,db).level]));
+      pool=pool.filter(e=>ready[e.id]!=="stop");
+      pool=pool.slice().sort((a,b)=>READY_RANK[ready[a.id]]-READY_RANK[ready[b.id]]);
+    }
+    // pick up to 4, prefer variety of primary regions
+    const picks=[]; const usedPrimary=new Set();
+    for(const e of pool){
+      const primary=Object.keys(e.load).sort((a,b)=>e.load[b]-e.load[a])[0];
+      if(!usedPrimary.has(primary)||picks.length<2){ picks.push(e); usedPrimary.add(primary); }
+      if(picks.length>=4) break;
+    }
+    return {unit,exercises:picks.map(e=>e.id)};
+  });
+}
+function splitCoverageGaps(profile){
+  // R8: which regions become uncovered by disabling units
+  const disabled=profile.disabledUnits||[];
+  const gaps=[];
+  if(disabled.includes("pull")){
+    gaps.push({label:"Hintere Schulter & horizontales Ziehen",
+      note:"Bouldern deckt Lat/Unterarm ab, aber nicht die hintere Schulter.",
+      fixIds:["rear_delt_fly_db","chest_supported_row_db"]});
+  }
+  return gaps;
+}
+
+/* ============================================================
+   LOAD MODEL (§3.1)
+   ============================================================ */
+function srpeTL(log){ return (log.sRPE||0)*(log.duration||0); }
+function regionLoad(log){
+  const sport=SPORTS[log.sportId]; const out={};
+  if(!sport) return out;
+  const scale=(log.sRPE/10)*(log.duration/60);
+  if(sport.loadSource==="exercises"){
+    (log.sets||[]).forEach(s=>{ const ex=EX_BY_ID[s.exerciseId]; if(!ex)return;
+      for(const r in ex.load){ out[r]=(out[r]||0)+ex.load[r]*scale*0.4; } });
+    out.systemic=(out.systemic||0)+1*scale;
+  } else {
+    for(const r in sport.loadProfile){ out[r]=(out[r]||0)+sport.loadProfile[r]*scale; }
+  }
+  return out;
+}
+
+/* ============================================================
+   ACWR (§R7) — systemic, rolling average
+   ============================================================ */
+function acwr(logs, refDate){
+  const ref=refDate||NOW;
+  let acute=0, chronic=0;
+  logs.forEach(l=>{ const h=hoursBetween(l.date,ref); const tl=srpeTL(l);
+    if(new Date(l.date)<=ref){ if(h<=24*7) acute+=tl; if(h<=24*28) chronic+=tl; } });
+  const chronicWk=chronic/4;
+  const ratio=chronicWk>0?acute/chronicWk:0;
+  return {acute,chronicWk,ratio};
+}
+function acwrZone(r){ return r<0.8?"caution":r<=1.3?"fresh":r<=1.5?"caution":"stop"; }
+
+/* ============================================================
+   RULE ENGINE (§4) — pure evaluate(db) -> suggestions[]
+   ============================================================ */
+function latestFatigue(db,region){
+  const rel=db.fatigue.filter(f=>f.region===region && hoursBetween(f.ts,NOW)<=72)
+    .sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  return rel[0]||null;
+}
+function sessionLoadsRegion(p,region){
+  const sport=SPORTS[p.sportId];
+  if(sport.loadSource==="exercises"){
+    return (p.exercises||[]).some(id=>EX_BY_ID[id] && EX_BY_ID[id].load[region]>=2);
+  }
+  return (sport.loadProfile[region]||0)>=2;
+}
+function isHeavyLowerBody(p){
+  const sport=SPORTS[p.sportId];
+  if(p.sportId==="strength") return (p.exercises||[]).some(id=>{const e=EX_BY_ID[id];return e&&e.cat==="legs"&&(e.load.quads>=2||e.load.posterior_chain>=3);});
+  return (sport.loadProfile.quads||0)>=2;
+}
+function futurePlanned(db){
+  return db.planned.filter(p=>p.status!=="removed" && p.status!=="logged" && p.status!=="skipped"
+      && new Date(p.date)>=dOnly(NOW))
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+}
+function evaluate(db){
+  const sugs=[]; const now=NOW;
+  const rejected=db.rejected||{};
+  const push=(s)=>{ const key=s.ruleId+"|"+s.targetId; if(rejected[key])return;
+    const t=db.planned.find(p=>p.id===s.targetId);
+    if(t){ if(t.status==="removed") return;               // gestrichen -> nichts mehr vorschlagen
+           if(s.operation==="reduce" && t.reduced) return;   // schon reduziert -> Intervention erledigt
+           if(s.operation==="swap" && t.adjusted) return; }  // schon umgebaut -> Intervention erledigt
+    s.id=s.id||uid(); s.key=key; sugs.push(s); };
+
+  // R1 — pain
+  db.pain.filter(p=>hoursBetween(p.ts,now)<=36).forEach(p=>{
+    const region=p.region, nrs=p.nrs;
+    if(nrs<=2) return;
+    futurePlanned(db).forEach(pl=>{
+      if(!sessionLoadsRegion(pl,region)) return;
+      // Übungsebene zuerst: bei Kraft die schmerzenden Übungen rausplanen, Rest behalten
+      if(pl.sportId==="strength"){
+        const sw=swapProposal(pl,[region],db.profile);
+        if(sw){
+          push(sug("R1",1,"swap",pl,
+            nrs>5
+              ? `Dein `+REGION_LABELS[region]+` meldet klaren Schmerz (NRS `+nrs+`). `+exNames(sw.drop)+` fliegt aus dem Plan`+(sw.repl.length?` – dafür `+exNames(sw.repl):``)+`. `+exNames(sw.keep)+` kannst du schmerzfrei trainieren.`
+              : `Dein `+REGION_LABELS[region]+` zwickt (NRS `+nrs+`). Plan `+exNames(sw.drop)+` diesmal raus`+(sw.repl.length?`, dafür `+exNames(sw.repl):``)+` – der Rest der Einheit ist frei.`,
+            (nrs>5?`Über NRS 5 ist die Region für Belastung gesperrt (Pain-Monitoring-Model). `:`NRS 3–5 ist im Rahmen, solange der Schmerz nicht steigt. `)+`Nur Übungen, die `+REGION_LABELS[region]+` schwer belasten, werden getauscht.`,
+            {exercises:sw.proposed,adjusted:true},sw));
+          return;
+        }
+      }
+      if(nrs>5){
+        if(pl.fixed){ push(sug("R1",1,"reduce",pl,
+          `Dein `+REGION_LABELS[region]+` meldet klaren Schmerz (NRS `+nrs+`). `+SPORTS[pl.sportId].name+` ist fix – geh's heute deutlich zurück, große Griffe, kein Limit.`,
+          `NRS >5 bedeutet: die Region rausnehmen. Da die Einheit fix ist, statt streichen: stark abschwächen.`)); }
+        else { push(sug("R1",1,"remove",pl,
+          `Bei NRS `+nrs+` im `+REGION_LABELS[region]+` gehört diese Einheit gestrichen. Gib der Struktur Ruhe, bevor du sie wieder belastest.`,
+          `Über NRS 5 ist die Region für Belastung gesperrt (Pain-Monitoring-Model).`)); }
+      } else {
+        push(sug("R1",1,"reduce",pl,
+          `Dein `+REGION_LABELS[region]+` zwickt leicht (NRS `+nrs+`). Trainier ruhig, aber halt's unter der Schmerzgrenze – und schau, dass es morgen nicht schlimmer ist.`,
+          `NRS 3–5 ist im Rahmen, solange der Schmerz danach nicht steigt und am Folgetag zurück ist.`));
+      }
+    });
+  });
+
+  // R3 — pulley: last hard-finger boulder within 48h, planned high-finger session within window
+  const lastFinger=db.logs.filter(l=>SPORTS[l.sportId].flags.tendonHeavy && l.hardFingerLoad)
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if(lastFinger){
+    futurePlanned(db).forEach(pl=>{
+      const loadsFingers = sessionLoadsRegion(pl,"fingers");
+      if(!loadsFingers) return;
+      const gap=hoursBetween(pl.date,lastFinger.date);
+      if(gap<48){
+        if(pl.fixed){ push(sug("R3",4,"reduce",pl,
+          `Deine Finger hatten gestern harte Last und sind noch müde. `+SPORTS[pl.sportId].name+` bleibt (fix) – aber mach eine Volumen-Session statt am Limit zu crimpen. Offene Hand, große Griffe.`,
+          `Sehnen/Ringbänder erholen langsamer als Muskeln. Zwischen zwei harten Finger-Reizen sollten ~48 h liegen (`+Math.round(gap)+` h geplant).`)); }
+        else { push(sug("R3",4,"move",pl,
+          `Zwischen deiner harten Finger-Session gestern und dieser hier liegen nur `+Math.round(gap)+` h. Schieb sie etwas nach hinten, damit die Ringbänder nachkommen.`,
+          `~48 h Erholung zwischen harten Finger-Reizen (konservativer Praxis-Richtwert).`)); }
+      }
+    });
+  }
+
+  // R4 — eccentric: last eccentric log within scaled window; heavy lower-body planned in window
+  const lastEcc=db.logs.filter(l=>SPORTS[l.sportId].flags.eccentric)
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if(lastEcc){
+    const hm=lastEcc.elevationGain||600;
+    const windowH=48+Math.min(24, (hm-600)/1200*24); // 48–72h scaled by hm (assumption)
+    const sinceEcc=hoursBetween(now,lastEcc.date);
+    if(sinceEcc<=windowH){
+      futurePlanned(db).forEach(pl=>{
+        if(pl.sportId!=="strength"||!isHeavyLowerBody(pl)) return;
+        const afterEcc=hoursBetween(pl.date,lastEcc.date);
+        if(afterEcc<48){
+          const legRegs=["quads","posterior_chain","calves"];
+          const sw=swapProposal(pl,legRegs,db.profile);
+          if(sw){
+            push(sug("R4",4,"swap",pl,
+              `Dein Bergtag (`+hm+` hm) steckt noch in den Beinen. Lass `+exNames(sw.drop)+` diesmal weg`+(sw.repl.length?` – dafür `+exNames(sw.repl):``)+`. Der Rest der Einheit bleibt, wie er ist.`,
+              `Exzentrischer Abstieg trifft vor allem Quads, hintere Kette und Waden (Peak 24–72 h). Statt die ganze Einheit zu verschieben, tauscht HybridAthlete nur die betroffenen Übungen.`,
+              {exercises:sw.proposed,adjusted:true},sw));
+          }
+          else if(!pl.fixed){ push(sug("R4",4,"move",pl,
+            `Dein Bergtag (`+hm+` hm) steckt noch in den Beinen. Leg die schwere Beineinheit auf ≥48 h nach dem Abstieg – deine Quads brauchen das Fenster wirklich.`,
+            `Exzentrischer Abstieg verursacht Muskelschaden mit Peak 24–72 h. Training obendrauf bringt wenig und erhöht das Risiko.`)); }
+          else { push(sug("R4",4,"reduce",pl,
+            `Nach `+hm+` hm Abstieg sind die Beine noch nicht erholt. Diese Einheit ist fix – nimm Volumen und Last runter.`,
+            `DOMS peakt 24–72 h nach exzentrischer Last.`)); }
+        }
+      });
+    }
+  }
+
+  // R5 — muscular fatigue: region red/yellow + planned session loading it heavily
+  ["quads","posterior_chain","shoulder","upper_back","fingers","forearm"].forEach(region=>{
+    const f=latestFatigue(db,region);
+    if(!f||f.level==="fresh") return;
+    futurePlanned(db).forEach(pl=>{
+      if(hoursBetween(pl.date,f.ts) > (f.level==="stop"?72:48)) return;
+      if(!sessionLoadsRegion(pl,region)) return;
+      if(sugs.some(s=>s.targetId===pl.id)) return; // dedupe with higher tiers
+      // Übungsebene zuerst: betroffene Übungen tauschen statt die Einheit anfassen
+      if(pl.sportId==="strength"){
+        const sw=swapProposal(pl,[region],db.profile);
+        if(sw){
+          const lvlWord=f.level==="stop"?"platt":"müde";
+          push(sug("R5",4,"swap",pl,
+            `Dein `+REGION_LABELS[region]+` ist noch `+lvlWord+`. Bau die Einheit leicht um: `+exNames(sw.drop)+` raus`+(sw.repl.length?`, dafür `+exNames(sw.repl):``)+`. Timing und Rest bleiben.`,
+            (f.level==="stop"?`Platt = die Region braucht 48–72 h. `:`Müde = 24–48 h mit reduzierter Last. `)+`Nur die Übungen, die `+REGION_LABELS[region]+` schwer belasten, werden getauscht.`,
+            {exercises:sw.proposed,adjusted:true},sw));
+          return;
+        }
+      }
+      if(pl.fixed) return; // fixed handled by R3/R4 reduce paths
+      if(f.level==="stop"){ push(sug("R5",4,"move",pl,
+        `Dein `+REGION_LABELS[region]+` ist noch platt. Gib der Region 2–3 Tage, bevor du sie wieder schwer belastest – schieb die Einheit.`,
+        `Platt = die Region braucht 48–72 h, bevor sie wieder schwer belastet wird.`)); }
+      else { push(sug("R5",4,"reduce",pl,
+        `Dein `+REGION_LABELS[region]+` ist noch müde. Diese Einheit belastet ihn – nimm heute das Volumen etwas raus.`,
+        `Müde = 24–48 h mit reduzierter Last wiederbelasten.`)); }
+    });
+  });
+
+  // R6 — interference: same-day strength + endurance, <6h apart or same slot
+  const byDay={};
+  futurePlanned(db).forEach(pl=>{ const k=dOnly(pl.date).getTime(); (byDay[k]=byDay[k]||[]).push(pl); });
+  Object.values(byDay).forEach(list=>{
+    const str=list.find(p=>p.sportId==="strength"&&isHeavyLowerBody(p));
+    const end=list.find(p=>p.sportId==="running"||p.sportId==="gravel_cycling");
+    if(str&&end&&!str.fixed){
+      const gap=hoursBetween(str.date,end.date);
+      if(gap<6 && !sugs.some(s=>s.targetId===str.id)){
+        push(sug("R6",5,"move",str,
+          `Beinkraft und Ausdauer liegen heute nah beieinander (`+Math.round(gap)+` h). Zieh die Krafteinheit in einen früheren Slot oder mach sie zuerst – das schützt die Kraftanpassung.`,
+          `Interferenz tritt v. a. bei enger, gleichtägiger Kombination auf; ≥6 h Abstand und Kraft vor Ausdauer mildern das.`));
+      }
+    }
+  });
+
+  // R7 — ACWR: projizierte Ratio am Horizontende (heute+6d), korrektes 7-Tage-Fenster
+  // (Logs, die dann noch im Fenster liegen, + geplante Last bis Horizontende)
+  const base=acwr(db.logs, now);
+  const horizonEnd=atHour(addDays(dOnly(now),6),23);
+  let projAcute=0;
+  db.logs.forEach(l=>{ const h=hoursBetween(l.date,horizonEnd);
+    if(new Date(l.date)<=horizonEnd && h<=24*7) projAcute+=srpeTL(l); });
+  futurePlanned(db).forEach(pl=>{ if(new Date(pl.date)<=horizonEnd && pl.status!=="removed"){
+    projAcute += estPlannedTL(pl); } });
+  const projRatio=base.chronicWk>0?projAcute/base.chronicWk:0;
+  if(projRatio>1.5){
+    const run=futurePlanned(db).find(p=>(p.sportId==="running")&&!p.fixed);
+    if(run){ push(sug("R7",6,"remove",run,
+      `Deine Woche läuft nach der ruhigen Phase heiß: prognostizierte ACWR ≈ `+projRatio.toFixed(2)+` (Sweet Spot 0.8–1.3). Bergtag und Boulderabende sind fix – der Lauf am `+wdShort(run.date)+` ist der einzige frei bewegliche Baustein. Streich ihn diese Woche und halte den Rest moderat.`,
+      `Sweet Spot mit niedrigstem Risiko: 0,8–1,3. Über 1,5 steigt das Risiko deutlich (mit bekannter methodischer Kritik).`)); }
+  }
+
+  // Priority + minimal intervention: keep one suggestion per target (lowest tier wins),
+  // and among same tier prefer reduce > move > remove.
+  const opRank={swap:0,reduce:1,move:2,remove:3};
+  const byTarget={};
+  sugs.forEach(s=>{ const t=byTarget[s.targetId];
+    if(!t || s.tier<t.tier || (s.tier===t.tier && opRank[s.operation]<opRank[t.operation])) byTarget[s.targetId]=s; });
+  return Object.values(byTarget).sort((a,b)=>a.tier-b.tier);
+}
+function estPlannedTL(pl){
+  const sport=SPORTS[pl.sportId];
+  const durGuess = pl.sportId==="mountain_day"?360:pl.sportId==="running"?45:pl.sportId==="bouldering"?90:60;
+  const rpeGuess = pl.sportId==="mountain_day"?8:pl.sportId==="strength"?6:6;
+  return (pl.reduced?0.5:1)*durGuess*rpeGuess;
+}
+function sug(ruleId,tier,operation,target,coach,why,proposedOverride,swapDetail){
+  const r=RULE_BY_ID[ruleId];
+  return {ruleId,tier,operation,targetId:target.id,coach,why,
+    ruleName:r.name,src:r.src,lvl:r.lvl,lvlLabel:r.lvlLabel,
+    proposed:proposedOverride||proposeChange(operation,target),
+    swap:swapDetail||null};
+}
+function proposeChange(op,target){
+  if(op==="move"){
+    // move to +2 days, keep slot; if that lands on a fixed day, +1 more
+    let nd=addDays(new Date(target.date),2);
+    return {date:nd.toISOString()};
+  }
+  if(op==="reduce") return {reduced:true};
+  if(op==="remove") return {status:"removed"};
+  return {};
+}
+/* ---------- Übungsebene: Substitution statt ganze Einheit anfassen ---------- */
+function passesConstraints(e,profile){
+  return (profile.constraints||[]).every(c=>{
+    if(c.region==="knee") return c.level==="red" ? e.knee===null : e.knee!=="deep";
+    return (e.load[c.region]||0) < (c.level==="red"?2:3);
+  });
+}
+function swapProposal(pl,regions,profile){
+  const ids=pl.exercises||[]; if(ids.length<2) return null;
+  const hits=id=>{ const e=EX_BY_ID[id]; return !!e&&regions.some(r=>(e.load[r]||0)>=2); };
+  const drop=ids.filter(hits), keep=ids.filter(id=>!hits(id));
+  if(!drop.length) return null;
+  if(drop.length>keep.length) return null; // Session wäre ausgehöhlt -> move/reduce ist die ehrlichere Intervention
+  const unitCats=UNIT_CATS[pl.unit]||[pl.unit];
+  const taken=new Set(keep); const repl=[];
+  drop.forEach(id=>{
+    const orig=EX_BY_ID[id];
+    const ok=x=>!regions.some(r=>(x.load[r]||0)>=2)&&!taken.has(x.id)&&x.id!==id&&passesConstraints(x,profile);
+    const cand=EXERCISES.find(x=>x.cat===orig.cat&&ok(x)) || EXERCISES.find(x=>unitCats.includes(x.cat)&&ok(x));
+    if(cand){ repl.push(cand.id); taken.add(cand.id); }
+  });
+  return {drop,keep,repl,proposed:[...keep,...repl]};
+}
+function exNames(ids){ return ids.map(id=>EX_BY_ID[id]?EX_BY_ID[id].name:id).join(", "); }
+/* ---------- Machbarkeit pro Übung: was geht HEUTE (bzw. am gewählten Tag)? ----------
+   Speist sich aus denselben Signalen wie die Regeln: R2 Constraints, R1 Schmerz,
+   R5 Ermüdung, R4 Exzentrik-Fenster. level: fresh|caution|stop + Gründe. */
+const READY_RANK={fresh:0,caution:1,stop:2};
+function lastEccLog(db){ return db.logs.filter(l=>SPORTS[l.sportId].flags.eccentric)
+  .sort((a,b)=>new Date(b.date)-new Date(a.date))[0]||null; }
+function exerciseReadiness(exId,when,db){
+  const e=EX_BY_ID[exId]; if(!e) return {level:"fresh",reasons:[]};
+  let level="fresh"; const reasons=[];
+  const bump=(lv,why)=>{ if(READY_RANK[lv]>READY_RANK[level]) level=lv; reasons.push(why); };
+  // R2 — Constraints (strukturell, zeitunabhängig)
+  (db.profile.constraints||[]).forEach(c=>{
+    if(c.region==="knee"){
+      if(e.knee==null) return;
+      if(c.level==="red") bump("stop","Knie gesperrt (Constraint)");
+      else if(e.knee==="deep") bump("stop","Beugetiefe zu tief fürs Knie");
+      else bump("caution","Knie-Constraint: moderate Beugetiefe");
+    } else {
+      const L=e.load[c.region]||0;
+      if(L>=2&&c.level==="red") bump("stop",REGION_LABELS[c.region]+" gesperrt (Constraint)");
+      else if(L>=3&&c.level==="yellow") bump("caution",REGION_LABELS[c.region]+"-Constraint (gelb)");
+    }
+  });
+  // R1 — Schmerz (36-h-Fenster)
+  db.pain.filter(p=>hoursBetween(p.ts,NOW)<=36).forEach(p=>{
+    const L=e.load[p.region]||0; if(L<2) return;
+    if(p.nrs>5) bump("stop","Schmerz "+REGION_LABELS[p.region]+" (NRS "+p.nrs+")");
+    else if(p.nrs>=3) bump("caution","Schmerz "+REGION_LABELS[p.region]+" (NRS "+p.nrs+")");
+  });
+  // R5 — Ermüdung (müde 48 h / platt 72 h relativ zum Zieltermin)
+  Object.keys(e.load).forEach(region=>{
+    if((e.load[region]||0)<2||region==="systemic") return;
+    const f=latestFatigue(db,region); if(!f||f.level==="fresh") return;
+    const h=hoursBetween(when,f.ts);
+    if(f.level==="stop"&&h<=72) bump("stop",REGION_LABELS[region]+" platt");
+    else if(f.level==="caution"&&h<=48) bump("caution",REGION_LABELS[region]+" müde");
+  });
+  // R4 — Exzentrik-Fenster (Bergtag): Beinregionen bis 48 h nach Abstieg
+  const ecc=lastEccLog(db);
+  if(ecc){
+    const after=(new Date(when)-new Date(ecc.date))/36e5;
+    if(after>=0&&after<48){
+      const legL=Math.max(e.load.quads||0,e.load.posterior_chain||0,e.load.calves||0);
+      if(legL>=3) bump("stop","Bergtag vor "+Math.round(after)+" h – Beine im DOMS-Fenster");
+      else if(legL>=2) bump("caution","Bergtag vor "+Math.round(after)+" h");
+    }
+  }
+  return {level,reasons};
+}
+
+/* ============================================================
+   APP STATE + RENDER
+   ============================================================ */
+let DB = loadStore() || seed();
+function save(){ persist(DB); }
+function recompute(){ DB.suggestions = evaluate(DB); save(); }
+recompute();
+
+const screens=["home","week","inbox","rules","settings"];
+function go(name){
+  screens.forEach(s=>{
+    document.getElementById("screen-"+s).classList.toggle("active", s===name);
+    document.getElementById("tab-"+s).classList.toggle("active", s===name);
+  });
+  render(name);
+  document.getElementById("screen-"+name).scrollTop=0;
+}
+function render(name){
+  if(name==="home") renderHome();
+  else if(name==="week") renderWeek();
+  else if(name==="inbox") renderInbox();
+  else if(name==="rules") renderRules();
+  else if(name==="settings") renderSettings();
+  updateBadge();
+}
+function updateBadge(){
+  const open=DB.suggestions.length;
+  const b=document.getElementById("nav-badge");
+  if(open>0){ b.style.display="grid"; b.textContent=open; } else b.style.display="none";
+}
+
+/* ---------- HOME ---------- */
+function todaysPlanned(){
+  return DB.planned.filter(p=>p.status!=="removed" && isSameDay(p.date,NOW))
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+}
+function nextLoggable(){
+  // next planned session today or upcoming that isn't logged yet
+  const up=DB.planned.filter(p=>p.status!=="removed" && p.status!=="skipped" && new Date(p.date)>=addDays(NOW,-0.3) && !p.loggedId)
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+  return up[0]||null;
+}
+function currentRegionStatus(){
+  const regions=["shoulder","fingers","quads","core","upper_back","posterior_chain"];
+  return regions.map(r=>{ const f=latestFatigue(DB,r); return {r,level:f?f.level:"fresh"}; })
+    .filter(x=>x.level!=="fresh").concat(
+      regions.map(r=>{const f=latestFatigue(DB,r);return{r,level:f?f.level:"fresh"};}).filter(x=>x.level==="fresh").slice(0,2)
+    ).slice(0,4);
+}
+function renderHome(){
+  const a=acwr(DB.logs,NOW); const zone=acwrZone(a.ratio);
+  const zoneWord={fresh:"Im grünen Bereich",caution:a.ratio<0.8?"Untertrainiert":"Erhöht – aufpassen",stop:"Überlast"}[zone];
+  const next=nextLoggable();
+  const ridge=ridgeSVG();
+  const regs=currentRegionStatus();
+  const el=document.getElementById("screen-home");
+  el.innerHTML=`
+    <div class="home-top">
+      <div class="brandmark">
+        <span aria-hidden="true"><svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="2" y="8" width="4" height="10" rx="1.2" fill="#C8F542"/><rect x="20" y="8" width="4" height="10" rx="1.2" fill="#C8F542"/><path d="M6 13 L10 13 L12 8 L14 18 L16 13 L20 13" stroke="#EEF2FB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="name">HYBRID<b>ATHLETE</b></span>
+      </div>
+      <span class="daytag">${wdShort(NOW).toUpperCase()} · ${NOW.getDate()}. ${["JAN","FEB","MÄR","APR","MAI","JUN","JUL","AUG","SEP","OKT","NOV","DEZ"][NOW.getMonth()]}</span>
+    </div>
+    <div class="ridge-card">
+      <div class="rc-head">
+        <div><div class="rc-label">Wochenlast</div><h2>${zoneWord}</h2></div>
+        <button class="acwr-chip z-${zone}" onclick="openAcwr()" aria-label="Was ist ACWR?"><span class="v">${a.ratio.toFixed(2)}</span><span class="l">ACWR ⓘ</span></button>
+      </div>
+      <div class="ridge-wrap">${ridge.svg}</div>
+      <div class="ridge-days">${ridge.days}</div>
+    </div>
+    ${next?`
+    <button class="log-cta" onclick="openLog('${next.id}')">
+      <div class="lc-left">
+        <span class="lc-k">${isSameDay(next.date,NOW)?"Heute geplant":wdShort(next.date)+" geplant"}</span>
+        <span class="lc-t">${SPORTS[next.sportId].name} loggen</span>
+        <span class="lc-sub">${new Date(next.date).getHours()}:00${next.fixed?" · 📌 fix":""}${next.unit?" · "+next.unit:""}</span>
+      </div>
+      <span class="lc-icon" aria-hidden="true">+</span>
+    </button>`:`<div class="mini-card" style="margin-top:16px"><span class="mc-emoji">✓</span><div class="mc-body"><div class="mc-t">Alles geloggt</div><div class="mc-s">Keine offene Einheit</div></div></div>`}
+    <button class="ghost-cta" onclick="openCheckin()">
+      <div style="text-align:left"><div class="g-k">Guten Morgen</div><div>Check-in · 30 Sekunden</div></div>
+      <span>→</span>
+    </button>
+    <div class="sec-title"><h3>Erholung heute</h3></div>
+    <div class="region-strip">
+      ${regs.map(x=>`<span class="rpill"><span class="mark m-${x.level}"></span>${REGION_LABELS[x.r]} · ${FAT_LABELS[x.level]}</span>`).join("")}
+    </div>
+    <div class="sec-title"><h3>Diese Woche</h3><button class="link" onclick="go('week')">Alle ansehen</button></div>
+    ${homeSessions()}
+    <div class="proto-note">HYBRIDATHLETE · FUNKTIONALER PROTOTYP · echte Engine · lokale Daten</div>
+  `;
+}
+function homeSessions(){
+  const up=DB.planned.filter(p=>new Date(p.date)>=dOnly(NOW))
+    .sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,4);
+  return up.map(p=>{
+    const s=SPORTS[p.sportId];
+    const cls=(p.fixed?"fixed ":"")+(p.status==="removed"?"removed ":"")+(p.loggedId?"done ":"");
+    return `<div class="mini-card ${cls}">
+      <span class="mc-emoji">${s.emoji}</span>
+      <div class="mc-body"><div class="mc-t">${s.name}${p.unit?" · "+p.unit:""} ${p.reduced?'<span class="tag-reduced">reduziert</span>':""}</div>
+      <div class="mc-s">${wdShort(p.date)} · ${new Date(p.date).getHours()}:00${p.status==="removed"?" · gestrichen":""}</div></div>
+      ${p.fixed?'<span class="pin">📌 fix</span>':""}
+    </div>`;
+  }).join("");
+}
+function ridgeSVG(){
+  // build ridge from last 7 days of daily sRPE-TL
+  const days=[];
+  for(let i=6;i>=-1;i--){ const d=addDays(dOnly(NOW),-i); days.push(d); }
+  const vals=days.map(d=>{
+    let tl=0; DB.logs.forEach(l=>{ if(isSameDay(l.date,d)) tl+=srpeTL(l); });
+    DB.planned.forEach(p=>{ if(p.status!=="removed"&&isSameDay(p.date,d)&&new Date(p.date)>NOW) tl+=estPlannedTL(p); });
+    return tl;
+  });
+  const max=Math.max(...vals,1);
+  const W=340,H=118,top=18,bot=100;
+  const pts=vals.map((v,i)=>{ const x=(i/(vals.length-1))*W; const y=bot-(v/max)*(bot-top); return [x,y]; });
+  const line=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(0)+","+p[1].toFixed(0)).join(" ");
+  const area=line+` L${W},${H} L0,${H} Z`;
+  const todayIdx=6;
+  const tp=pts[todayIdx];
+  const svg=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Wochenlast Höhenprofil">
+    <defs>
+      <linearGradient id="rf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C8F542" stop-opacity="0.22"/><stop offset="1" stop-color="#C8F542" stop-opacity="0"/></linearGradient>
+      <linearGradient id="rs" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C8F542"/><stop offset="1" stop-color="#34D6A6"/></linearGradient>
+    </defs>
+    <rect x="0" y="${top+22}" width="${W}" height="40" fill="#34D6A6" opacity="0.06"/>
+    <path d="${area}" fill="url(#rf)"/>
+    <path d="${line}" fill="none" stroke="url(#rs)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${tp[0].toFixed(0)}" cy="${tp[1].toFixed(0)}" r="4.5" fill="#0E1320" stroke="#34D6A6" stroke-width="2.5"/>
+  </svg>`;
+  const dayLbls=days.map((d,i)=>`<span class="${i===todayIdx?"today":""}">${wdShort(d)}</span>`).join("");
+  return {svg,days:dayLbls};
+}
+
+/* ---------- WEEK ---------- */
+function renderWeek(){
+  // Rollierende 7-Tage-Sicht ab heute (nicht Kalender-Montag)
+  const rows=[];
+  const wdNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
+  for(let i=0;i<7;i++){
+    const day=addDays(dOnly(NOW),i);
+    const items=DB.planned.filter(p=>isSameDay(p.date,day)).sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const slots={morning:null,midday:null,evening:null};
+    items.forEach(p=>slots[p.slot]=p);
+    const isToday=i===0;
+    const dlbl=wdNames[day.getDay()]+" "+day.getDate()+"."+(day.getMonth()+1)+".";
+    rows.push(`<div class="day-row ${isToday?"today":""}">
+      <div class="dr-head"><span class="dr-day">${dlbl}${isToday?'<span class="td">HEUTE</span>':""}</span></div>
+      <div class="slots">${["morning","midday","evening"].map(sl=>slotCell(slots[sl],i,sl)).join("")}</div>
+    </div>`);
+  }
+  document.getElementById("screen-week").innerHTML=`
+    <div class="eyebrow">Planung</div><h1 class="title">Deine Woche</h1>
+    <p class="subtle">📌 Fixe Einheiten bleiben unangetastet. HybridAthlete plant nur darum herum.</p>
+    <div class="slot-head"><span></span><span>morgens</span><span>mittags</span><span>abends</span></div>
+    <div class="week-grid">${rows.join("")}</div>
+    <button class="alt-choice" style="width:100%;margin-top:12px" onclick="openAdd(1,'evening')">＋ Einheit planen</button>
+    <div class="proto-note">Antippen = bearbeiten · Halten & Ziehen = verschieben · leerer Slot = neue Einheit</div>`;
+}
+function slotCell(p,dayOff,sl){
+  if(!p) return `<div class="slot empty-slot" data-day="${dayOff}" data-slot="${sl}" onclick="openAdd(${dayOff},'${sl}')" style="cursor:pointer" title="Einheit planen"><span class="s-meta" style="text-align:center;opacity:.55">＋</span></div>`;
+  const s=SPORTS[p.sportId];
+  const b={bouldering:"b-boulder",mountain_day:"b-mountain",strength:"b-strength",running:"b-run",gravel_cycling:"b-cycle"}[p.sportId];
+  const editable=p.status!=="logged";
+  return `<div class="slot ${b} ${(p.status==="removed"||p.status==="skipped")?"removed":""}" data-day="${dayOff}" data-slot="${sl}" ${editable?`data-pid="${p.id}" onclick="openEdit('${p.id}')" style="cursor:pointer"`:""}>
+    <span class="s-sport">${s.emoji} ${s.name}${p.fixed?" 📌":""}</span>
+    <span class="s-meta ${p.status==="skipped"?"skipped":""}">${p.unit?p.unit+" · ":""}${p.status==="logged"?"✓ geloggt":p.status==="skipped"?"ausgefallen":p.status==="removed"?"gestrichen":(new Date(p.date).getHours()+":00")+(p.reduced?" · reduziert":"")+(p.adjusted?" · angepasst":"")}</span>
+  </div>`;
+}
+
+/* ---------- INBOX ---------- */
+function renderInbox(){
+  const el=document.getElementById("screen-inbox");
+  const sugs=DB.suggestions;
+  const opColor={swap:"var(--fresh)",reduce:"var(--caution)",move:"var(--brand)",remove:"var(--stop)"};
+  const opLabel={swap:"Anpassen",reduce:"Abschwächen",move:"Verschieben",remove:"Streichen"};
+  el.innerHTML=`
+    <div class="eyebrow">Vorschläge</div><h1 class="title">Dein Coach meldet sich</h1>
+    <p class="subtle">${sugs.length} Anpassung${sugs.length===1?"":"en"} für den Rest der Woche. Jede mit Begründung – du entscheidest.</p>
+    <div class="fixed-note"><span class="fn-i">📌</span><span class="fn-t"><b>Fixe Einheiten</b> (Boulderabende, Bergtag) werden nie verschoben oder gestrichen – höchstens abgeschwächt.</span></div>
+    <div id="sug-list">
+      ${sugs.map(s=>{
+        const target=DB.planned.find(p=>p.id===s.targetId);
+        const when=target?wdShort(target.date):"";
+        return `<article class="sug" style="--op-color:${opColor[s.operation]}" data-key="${s.key}">
+          <span class="op"><span class="dot"></span>${opLabel[s.operation]}${when?" · "+when:""}</span>
+          <p class="coach">${s.coach}</p>
+          ${s.swap?`<div class="swap-box">
+            <div class="sw-row out"><span class="sw-k">Raus</span><span>${exNames(s.swap.drop)}</span></div>
+            ${s.swap.repl.length?`<div class="sw-row in"><span class="sw-k">Rein</span><span>${exNames(s.swap.repl)}</span></div>`:`<div class="sw-row"><span class="sw-k">Ersatz</span><span>keiner nötig – Einheit wird kürzer</span></div>`}
+            <div class="sw-row"><span class="sw-k">Bleibt</span><span>${exNames(s.swap.keep)}</span></div>
+          </div>`:""}
+          <div class="why"><div class="wl">Warum</div><div class="wt">${s.why}</div>
+            <div class="evi"><span class="rule">${s.ruleId} · ${s.ruleName}</span>
+              <span class="lvl ${s.lvl}">${s.lvlLabel}</span>
+              <button class="src-toggle" onclick="toggleSrc(this)">Quelle</button></div>
+            <div class="src-full">${s.src}</div>
+          </div>
+          <div class="sug-actions">
+            <button class="btn btn-accept" onclick="acceptSug('${s.key}')">Übernehmen</button>
+            <button class="btn btn-reject" onclick="showReasons(this)">Ablehnen</button>
+          </div>
+          <div class="reasons">
+            <span class="reason-chip" onclick="rejectSug('${s.key}','fit')">Fühle mich fit genug</span>
+            <span class="reason-chip" onclick="rejectSug('${s.key}','fix')">Passt mir nicht</span>
+            <span class="reason-chip" onclick="rejectSug('${s.key}','nc')">Nicht nachvollziehbar</span>
+          </div>
+        </article>`;
+      }).join("")}
+    </div>
+    <div class="empty ${sugs.length===0?"show":""}"><div class="e-i">✓</div><div class="e-t">Alles entschieden</div><div class="e-s">Neue Vorschläge erscheinen nach dem nächsten Log oder Check-in.</div></div>`;
+}
+function toggleSrc(btn){
+  const full=btn.closest(".evi").parentElement.querySelector(".src-full");
+  full.classList.toggle("show");
+  btn.textContent=full.classList.contains("show")?"Quelle ausblenden":"Quelle";
+}
+function showReasons(btn){ btn.closest(".sug").querySelector(".reasons").classList.add("show"); }
+function acceptSug(key){
+  const s=DB.suggestions.find(x=>x.key===key); if(!s) return;
+  const target=DB.planned.find(p=>p.id===s.targetId);
+  if(target) Object.assign(target,s.proposed);
+  DB.ruleStats[s.ruleId].up++;
+  animateOut(key, "Übernommen ✓ – Woche aktualisiert");
+  DB.suggestions=DB.suggestions.filter(x=>x.key!==key);
+  save();
+  setTimeout(()=>{ recompute(); render("inbox"); },330);
+}
+function rejectSug(key,reason){
+  const s=DB.suggestions.find(x=>x.key===key); if(!s) return;
+  DB.ruleStats[s.ruleId].down++;
+  DB.rejected[key]=reason;
+  animateOut(key, "Abgelehnt – Grund gespeichert");
+  DB.suggestions=DB.suggestions.filter(x=>x.key!==key);
+  save();
+  setTimeout(()=>{ render("inbox"); },330);
+}
+function animateOut(key,msg){
+  const card=document.querySelector('.sug[data-key="'+key.replace(/"/g,'\\"')+'"]');
+  if(card){ card.style.transition="opacity .3s ease, transform .3s ease"; card.style.opacity="0"; card.style.transform="translateX(40px)"; }
+  toast(msg);
+  updateBadge();
+}
+
+/* ---------- RULES ---------- */
+function renderRules(){
+  const el=document.getElementById("screen-rules");
+  el.innerHTML=`
+    <div class="eyebrow">Vertrauen</div><h1 class="title">Regelwerk</h1>
+    <p class="subtle">Jede Empfehlung kommt aus einer Regel mit Quelle und Evidenzgrad. Nichts ist erfunden.</p>
+    <div style="margin-top:16px">
+      ${RULES.map(r=>{
+        const st=DB.ruleStats[r.id]||{up:0,down:0};
+        return `<div class="rule-item">
+          <div class="ri-head"><span class="ri-id">${r.id}</span><span class="lvl-badge ${r.lvl}">${r.lvlLabel}</span></div>
+          <div class="ri-name">${r.name}</div>
+          <div class="ri-src">${r.src}</div>
+          <div class="ri-foot"><span class="vote">Angenommen <b>${st.up}</b> · Abgelehnt <b>${st.down}</b></span></div>
+        </div>`;
+      }).join("")}
+    </div>`;
+}
+
+/* ---------- SETTINGS / GENERATOR / IMPORT ---------- */
+function renderSettings(){
+  const p=DB.profile;
+  const el=document.getElementById("screen-settings");
+  const gaps=splitCoverageGaps(p);
+  el.innerHTML=`
+    <div class="eyebrow">Setup</div><h1 class="title">Dein Plan</h1>
+    <p class="subtle">Ziel und Split bestimmen, was der Generator baut – abgestimmt auf Bouldern, Berg und Laufen.</p>
+    <div class="settings-card" style="margin-top:16px">
+      <div class="field"><div class="f-lbl">Ziel</div><div class="opt-row">
+        ${Object.entries(GOAL_SCHEMES).map(([k,v])=>`<button class="opt ${p.goal===k?"sel":""}" onclick="setGoal('${k}')">${v.label}</button>`).join("")}
+      </div></div>
+      <div class="field"><div class="f-lbl">Split</div><div class="opt-row">
+        ${Object.entries(SPLITS).map(([k,v])=>`<button class="opt ${p.split===k?"sel":""}" onclick="setSplit('${k}')">${v.label}</button>`).join("")}
+      </div></div>
+      <div class="field"><div class="f-lbl">Einheiten abwählen</div><div class="opt-row">
+        ${(SPLITS[p.split].units).map(u=>`<button class="opt ${(p.disabledUnits||[]).includes(u)?"sel-toggle":""}" onclick="toggleUnit('${u}')">${u}</button>`).join("")}
+      </div></div>
+      <div class="field"><div class="f-lbl">Constraints</div>
+        <div class="c-list">${(p.constraints||[]).length?(p.constraints||[]).map(c=>
+          `<span class="c-chip ${c.level}">${REGION_LABELS[c.region]}${c.region==="knee"?" (Beugetiefe)":""} · ${c.level==="red"?"rot":"gelb"}
+            <button class="c-del" onclick="delConstraint('${c.id}')" aria-label="entfernen">✕</button></span>`).join(""):
+          `<span class="subtle" style="font-size:12.5px">keine – Generator nutzt alle Übungen</span>`}</div>
+        <div class="c-add">
+          <select id="c-region" class="csel">${Object.entries(REGION_LABELS).filter(([k])=>k!=="systemic").map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
+          <button class="opt ${newCLevel==="yellow"?"sel":""}" onclick="setNewCL('yellow')">gelb</button>
+          <button class="opt ${newCLevel==="red"?"sel":""}" onclick="setNewCL('red')">rot</button>
+          <button class="opt" onclick="addConstraint()">＋ anlegen</button>
+        </div>
+        <p class="subtle" style="font-size:12px;margin-top:8px">gelb = Alternative wählen (schwer belastende Übungen raus) · rot = Region sperren. Knie berücksichtigt zusätzlich die Beugetiefe der Übungen.</p>
+      </div>
+      <div class="gen-preview">${genPreview()}</div>
+      ${gaps.map(g=>`<div class="gap-hint"><b>Lücke: ${g.label}</b><br>${g.note} Vorschlag: ${g.fixIds.map(id=>EX_BY_ID[id].name).join(", ")} in Push einstreuen.</div>`).join("")}
+      <button class="act-btn primary" onclick="regenerate()">Plan neu generieren</button>
+    </div>
+    <div class="eyebrow" style="margin-top:24px">Import</div>
+    <div class="settings-card">
+      <div class="f-lbl">Aktivität importieren (Garmin-Ersatz)</div>
+      <p class="subtle" style="font-size:12.5px;margin-bottom:10px">JSON-Array wie beim FIT-Import: type (running/mountain_day/gravel_cycling), duration (min), elevationGain, distance. Landet als Entwurf – sRPE ergänzt du beim Loggen.</p>
+      <textarea class="import-area" id="import-json">[{"type":"running","duration":50,"distance":9},{"type":"mountain_day","duration":300,"elevationGain":800}]</textarea>
+      <button class="act-btn" onclick="importActivities()">Importieren</button>
+    </div>
+    <div class="eyebrow" style="margin-top:24px">Daten</div>
+    <div class="settings-card">
+      <div class="f-lbl">Daten</div>
+      <button class="act-btn" onclick="exportData()">Als JSON exportieren</button>
+      <button class="act-btn danger" onclick="resetData()">Zurücksetzen (Seed neu laden)</button>
+    </div>`;
+}
+let newCLevel="yellow";
+function setNewCL(lv){
+  const sel=document.getElementById("c-region"); const v=sel?sel.value:null;
+  newCLevel=lv; renderSettings();
+  if(v){ const s2=document.getElementById("c-region"); if(s2) s2.value=v; }
+}
+function addConstraint(){
+  const region=document.getElementById("c-region").value;
+  DB.profile.constraints=(DB.profile.constraints||[]).filter(c=>c.region!==region); // Region ersetzt, nicht doppelt
+  DB.profile.constraints.push({id:uid(),region,level:newCLevel});
+  save(); recompute(); renderSettings();
+  toast(REGION_LABELS[region]+" · "+(newCLevel==="red"?"rot":"gelb")+" angelegt – Generator angepasst");
+}
+function delConstraint(id){
+  DB.profile.constraints=(DB.profile.constraints||[]).filter(c=>c.id!==id);
+  save(); recompute(); renderSettings();
+}
+function genPreview(){
+  const when=atHour(addDays(dOnly(NOW),1),17);
+  const units=generateStrength(DB.profile,DB,when);
+  const sc=GOAL_SCHEMES[DB.profile.goal];
+  const mk=id=>{ const lv=exerciseReadiness(id,when,DB).level; return lv==="fresh"?"●":lv==="caution"?"◆":"■"; };
+  return `<b>${units.length} Krafteinheit${units.length===1?"":"en"}</b> · ${sc.sets}×${sc.reps} (${sc.label}) · geplant für morgen, berücksichtigt aktuelle Ermüdung & Schmerz<br>`+
+    units.map(u=>`<b>${u.unit}:</b> ${u.exercises.map(id=>mk(id)+" "+EX_BY_ID[id].name).join(", ")}`).join("<br>");
+}
+function setGoal(k){ DB.profile.goal=k; save(); renderSettings(); }
+function setSplit(k){ DB.profile.split=k; DB.profile.disabledUnits=(DB.profile.disabledUnits||[]).filter(u=>SPLITS[k].units.includes(u)); save(); renderSettings(); }
+function toggleUnit(u){ const d=DB.profile.disabledUnits||[]; DB.profile.disabledUnits=d.includes(u)?d.filter(x=>x!==u):[...d,u]; save(); renderSettings(); }
+function regenerate(){
+  // keep fixed + endurance, rebuild strength — readiness-aware für den jeweiligen Zieltag
+  DB.planned=DB.planned.filter(p=>p.sportId!=="strength");
+  const dayOff=[1,3,5]; // morgen, +3, +5 — Engine kann sie danach noch verschieben
+  const split=SPLITS[DB.profile.split]||SPLITS.PPL;
+  const units=split.units.filter(u=>!(DB.profile.disabledUnits||[]).includes(u));
+  units.forEach((unitName,i)=>{
+    const day=addDays(dOnly(NOW),dayOff[i%dayOff.length]);
+    const when=atHour(day,i===2?12:17);
+    const gen=generateStrength(DB.profile,DB,when).find(u=>u.unit===unitName);
+    if(gen) DB.planned.push(mkPlanned("strength",when,i===2?"midday":"evening",false,{unit:gen.unit,exercises:gen.exercises}));
+  });
+  recompute(); toast("Plan neu generiert · berücksichtigt aktuelle Ermüdung & Schmerz"); go("week");
+}
+function importActivities(){
+  let arr; try{ arr=JSON.parse(document.getElementById("import-json").value); }catch(e){ toast("JSON ungültig","stop"); return; }
+  if(!Array.isArray(arr)){ toast("Erwartet: JSON-Array","stop"); return; }
+  let n=0;
+  arr.forEach(a=>{ if(!SPORTS[a.type]) return;
+    const when=atHour(addDays(dOnly(NOW),-1),8);
+    DB.logs.push(Object.assign(mkLog(a.type,when,a.duration||45,0,{}),{source:"garmin",draft:true,distance:a.distance,elevationGain:a.elevationGain}));
+    n++; });
+  recompute(); toast(n+" Aktivität(en) importiert – sRPE beim Loggen ergänzen"); 
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download="hybridathlete-export.json"; a.click(); URL.revokeObjectURL(url);
+  toast("Export gestartet");
+}
+function resetData(){ DB=seed(); recompute(); toast("Zurückgesetzt"); go("home"); }
+
+/* ============================================================
+   LOG FLOW (dynamic, sport-aware) — the <60s hero interaction
+   ============================================================ */
+let logCtx=null, logStep=1, logTimerInt=null, logStart=0;
+function openLog(plannedId){
+  const p=DB.planned.find(x=>x.id===plannedId)||nextLoggable();
+  if(!p){ toast("Keine Einheit zum Loggen"); return; }
+  const sport=SPORTS[p.sportId];
+  logCtx={planned:p,sport,duration:defaultDur(p),sRPE:6,hardFingerLoad:false,hm:sport.id==="mountain_day"?800:0,
+    fatigue:{},pain:null,sets:{},steps:buildSteps(sport)};
+  logStep=1; renderLogStep();
+  const nb=document.getElementById("log-next"); if(nb) nb.style.visibility="visible";
+  const ov=document.getElementById("log-overlay"); ov.classList.add("show"); ov.setAttribute("aria-hidden","false");
+  logStart=Date.now(); logTimerInt=setInterval(updLogTimer,1000); updLogTimer();
+}
+function defaultDur(p){ return p.sportId==="mountain_day"?360:p.sportId==="running"?45:p.sportId==="strength"?60:90; }
+function buildSteps(sport){
+  const steps=["confirm","effort"];
+  if(sport.id==="bouldering") steps.push("finger");
+  if(sport.loadSource==="exercises") steps.push("sets");
+  steps.push("fatigue","pain");
+  return steps;
+}
+function closeLog(){
+  const ov=document.getElementById("log-overlay"); ov.classList.remove("show"); ov.setAttribute("aria-hidden","true");
+  clearInterval(logTimerInt); logCtx=null;
+}
+function updLogTimer(){
+  const s=Math.floor((Date.now()-logStart)/1000);
+  const el=document.getElementById("log-timer");
+  el.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+  el.style.color=s<=60?"var(--fresh)":"var(--caution)";
+}
+function painRegionsFor(ctx){
+  const sport=ctx.sport;
+  if(sport.loadSource==="exercises"){
+    // aus den tatsächlich gemachten (oder geplanten) Übungen ableiten + Knie als Gelenk
+    const ids=Object.keys(ctx.sets).length?Object.keys(ctx.sets):((ctx.planned&&ctx.planned.exercises)||[]);
+    const set=new Set();
+    ids.forEach(id=>{ const e=EX_BY_ID[id]; if(e) Object.keys(e.load).forEach(r=>{ if(e.load[r]>=2) set.add(r); }); });
+    set.add("knee"); set.delete("systemic");
+    return [...set].slice(0,5);
+  }
+  return sport.painRegions||["knee","shoulder"];
+}
+function loadedRegions(sport,ctx){
+  if(sport.loadSource==="exercises"){
+    const set=new Set();
+    Object.keys(ctx.sets).forEach(id=>{ const e=EX_BY_ID[id]; if(e) Object.keys(e.load).forEach(r=>{if(e.load[r]>=2)set.add(r);}); });
+    set.add("systemic");
+    return [...set].filter(r=>r!=="systemic");
+  }
+  return Object.keys(sport.loadProfile).filter(r=>sport.loadProfile[r]>=2 && r!=="systemic" && r!=="knee");
+}
+function renderLogStep(){
+  const ctx=logCtx; const step=ctx.steps[logStep-1];
+  const total=ctx.steps.length;
+  document.getElementById("log-bar").style.width=(logStep/total*100)+"%";
+  const body=document.getElementById("log-body");
+  const kicker=`<div class="s-k">Schritt ${logStep} / ${total}</div>`;
+  let html="";
+  if(step==="confirm"){
+    const p=ctx.planned;
+    if(ctx.pickSport){
+      html=kicker+`<h2>Was hast du gemacht?</h2><p class="s-hint">Freie Session – unabhängig vom Plan.</p>
+        <div class="opt-row">${Object.values(SPORTS).filter(s=>s.id!=="strength").map(s=>
+          `<button class="opt" onclick="pickSport('${s.id}')">${s.emoji} ${s.name}</button>`).join("")}</div>`;
+    } else {
+      html=kicker+`<h2>Einheit bestätigen</h2><p class="s-hint">Stimmt das? Ein Tap und weiter.</p>
+        <div class="session-card"><span class="sc-icon">${ctx.sport.emoji}</span>
+        <div><div class="sc-t">${ctx.sport.name}${p.unit?" · "+p.unit:""}</div>
+        <div class="sc-s">${wdShort(p.date).toUpperCase()} · ${new Date(p.date).getHours()}:00${p.fixed?" · 📌 FIX":""}</div></div></div>
+        <div class="alt-row">
+          <button class="alt-choice" onclick="skipSession()">Nicht gemacht – ausgefallen</button>
+          <button class="alt-choice" onclick="chooseOtherSport()">Was anderes gemacht</button>
+        </div>`;
+    }
+  } else if(step==="effort"){
+    const md=ctx.sport.maxDur||180;
+    html=kicker+`<h2>Wie war's?</h2><p class="s-hint">Dauer${ctx.sport.id==="mountain_day"?" (reine Gehzeit)":""} und gefühlte Anstrengung.</p>
+      <div class="metric"><div class="m-label"><span class="ml-t">Dauer</span><span class="ml-v" id="dur-v">${fmtDur(ctx.duration)}</span></div>
+        <div class="stepper"><button class="sbtn" onclick="stepM('dur',-1)">−</button><div class="track"><div class="fill" id="dur-fill"></div></div><button class="sbtn" onclick="stepM('dur',1)">+</button></div></div>
+      ${ctx.sport.id==="mountain_day"?`<div class="metric"><div class="m-label"><span class="ml-t">Höhenmeter (Abstieg zählt für R4)</span><span class="ml-v" id="hm-v">${ctx.hm}<small> hm</small></span></div>
+        <div class="stepper"><button class="sbtn" onclick="stepM('hm',-1)">−</button><div class="track"><div class="fill" id="hm-fill"></div></div><button class="sbtn" onclick="stepM('hm',1)">+</button></div></div>`:""}
+      <div class="metric"><div class="m-label"><span class="ml-t">sRPE · Anstrengung</span><span style="display:flex;align-items:baseline;gap:9px"><span class="rpe-word" id="rpe-w">${rpeMeta(ctx.sRPE).w}</span><span class="ml-v" id="rpe-v" style="color:${rpeMeta(ctx.sRPE).c}">${ctx.sRPE}<small> /10</small></span></span></div>
+        <div class="stepper"><button class="sbtn" onclick="stepM('rpe',-1)">−</button><div class="track"><div class="fill" id="rpe-fill" style="background:${rpeMeta(ctx.sRPE).c}"></div></div><button class="sbtn" onclick="stepM('rpe',1)">+</button></div></div>`;
+  } else if(step==="finger"){
+    html=kicker+`<h2>Finger heute</h2><p class="s-hint">Nur ein Tap – wichtig für die Sehnen-Erholung (R3).</p>
+      <div class="toggle-row"><div class="tr-body"><div class="tr-t">Harte Fingerbelastung</div><div class="tr-s">Leisten, Campus, Projekte am Limit</div></div>
+      <div class="switch ${ctx.hardFingerLoad?"on":""}" id="finger-switch" onclick="toggleFinger()" role="switch" aria-checked="${ctx.hardFingerLoad}" tabindex="0"><span class="knob"></span></div></div>`;
+  } else if(step==="sets"){
+    const exs=(ctx.planned.exercises||[]).map(id=>EX_BY_ID[id]).filter(Boolean);
+    const sc=GOAL_SCHEMES[DB.profile.goal];
+    html=kicker+`<h2>Übungen</h2><p class="s-hint">Tippe an, was du gemacht hast. Die Ampel zeigt, was von Ermüdung & Verletzung her heute frei ist.</p>`+
+      exs.map(e=>{ const r=exerciseReadiness(e.id,NOW,DB);
+        return `<div class="set-row" onclick="toggleSet('${e.id}')" style="cursor:pointer">
+        <span class="mark m-${r.level}" style="flex:none" title="${r.reasons[0]||"frei"}"></span>
+        <span class="ex-name">${e.name}${r.level!=="fresh"?`<span class="exr-r" style="display:block">${r.reasons.join(" · ")}</span>`:""}</span>
+        <span class="ex-scheme" id="set-${e.id}">${ctx.sets[e.id]?"✓ "+sc.sets+"×"+sc.reps:"antippen"}</span></div>`; }).join("");
+  } else if(step==="fatigue"){
+    const regs=loadedRegions(ctx.sport,ctx);
+    html=kicker+`<h2>Ermüdung</h2><p class="s-hint">Nur die belasteten Regionen. <b>müde</b> → nächste Einheit lockerer · <b>platt</b> → Region erst mal raus.</p>`+
+      regs.map(r=>fatigueBlock(r)).join("")+
+      `<button class="more-region" onclick="toast('Weitere Region – im Prototyp deaktiviert')">+ Weitere Region</button>`;
+  } else if(step==="pain"){
+    html=kicker+`<h2>Schmerz?</h2><p class="s-hint">Optional. Nur wenn wirklich was zwickt – das behandelt HybridAthlete strenger als Ermüdung (R1).</p>
+      <button class="pain-launch" id="pain-launch" onclick="showPain()"><span>＋</span> Schmerz melden</button>
+      <div class="pain-panel" id="pain-panel">
+        <div class="region-block"><div class="rb-name">Region</div><div class="segmented" id="pain-regions">
+          ${painRegionsFor(ctx).map(r=>`<div class="seg" onclick="selPainRegion('${r}',this)"><span class="seg-lbl">${REGION_LABELS[r]}</span></div>`).join("")}
+        </div></div>
+        <div class="region-block" style="margin-top:14px"><div class="rb-name">Intensität <span class="rb-hint">NRS 0–10</span></div>
+          <div class="nrs-scale" id="nrs-scale"></div>
+          <div class="nrs-legend"><span>0 · kein</span><span>5</span><span>10 · stark</span></div></div>
+      </div>`;
+  }
+  body.innerHTML=html;
+  if(step==="effort"){ updFill("dur",ctx.duration,ctx.sport.maxDur||180); updFill("rpe",ctx.sRPE,10); if(ctx.sport.id==="mountain_day") updFill("hm",ctx.hm,3000); }
+  if(step==="pain") buildNrs();
+  const btn=document.getElementById("log-next");
+  if(logStep===total){ btn.textContent="Fertig – speichern"; btn.classList.add("done"); }
+  else { btn.textContent="Weiter"; btn.classList.remove("done"); }
+  const bb=document.getElementById("log-back");
+  if(bb) bb.style.visibility=(logStep>1||(ctx&&ctx.pickSport))?"visible":"hidden";
+  const sw=document.getElementById("finger-switch"); if(sw) sw.addEventListener("keydown",e=>{ if(e.key===" "||e.key==="Enter"){e.preventDefault();toggleFinger();} });
+  document.getElementById("log-body").scrollTop=0;
+}
+function fatigueBlock(r){
+  const states=["fresh","caution","stop"].map(v=>[v,FAT_LABELS[v]]);
+  const cur=logCtx.fatigue[r]|| (r==="fingers"||r==="quads"?"caution":"fresh");
+  logCtx.fatigue[r]=cur;
+  return `<div class="region-block"><div class="rb-name">${REGION_LABELS[r]}</div><div class="segmented">${
+    states.map(([v,lbl])=>`<div class="seg ${cur===v?"sel v-"+v:""}" onclick="selFat('${r}','${v}',this)"><span class="seg-mark m-${v}"></span><span class="seg-lbl">${lbl}</span></div>`).join("")
+  }</div></div>`;
+}
+function selFat(r,v,el){ logCtx.fatigue[r]=v; const seg=el.closest(".segmented"); seg.querySelectorAll(".seg").forEach(s=>s.className="seg"); el.className="seg sel v-"+v; }
+function rpeMeta(v){
+  if(v<=3) return {c:"var(--fresh)",w:"locker"};
+  if(v<=6) return {c:"var(--brand-hi)",w:"moderat"};
+  if(v<=8) return {c:"var(--caution)",w:"hart"};
+  return {c:"var(--stop)",w:v>=10?"maximal":"sehr hart"};
+}
+function fmtDur(min){ return min>=120 ? (Math.floor(min/60)+":"+String(min%60).padStart(2,"0")+"<small> h</small>") : (min+"<small> min</small>"); }
+function stepM(key,dir){
+  const sp=logCtx.sport;
+  if(key==="dur"){
+    const st=sp.durStep||15, max=sp.maxDur||180;
+    logCtx.duration=Math.max(15,Math.min(max,logCtx.duration+dir*st));
+    document.getElementById("dur-v").innerHTML=fmtDur(logCtx.duration); updFill("dur",logCtx.duration,max);
+  } else if(key==="hm"){
+    logCtx.hm=Math.max(0,Math.min(3000,logCtx.hm+dir*100));
+    document.getElementById("hm-v").innerHTML=logCtx.hm+"<small> hm</small>"; updFill("hm",logCtx.hm,3000);
+  } else {
+    logCtx.sRPE=Math.max(1,Math.min(10,logCtx.sRPE+dir));
+    const m=rpeMeta(logCtx.sRPE);
+    const v=document.getElementById("rpe-v"); v.innerHTML=logCtx.sRPE+"<small> /10</small>"; v.style.color=m.c;
+    const wEl=document.getElementById("rpe-w"); if(wEl) wEl.textContent=m.w;
+    const f=document.getElementById("rpe-fill"); if(f) f.style.background=m.c;
+    updFill("rpe",logCtx.sRPE,10);
+  }
+}
+function updFill(key,val,max){ const f=document.getElementById(key+"-fill"); if(f) f.style.width=(val/max*100)+"%"; }
+function toggleFinger(){ logCtx.hardFingerLoad=!logCtx.hardFingerLoad; const sw=document.getElementById("finger-switch"); sw.classList.toggle("on",logCtx.hardFingerLoad); sw.setAttribute("aria-checked",logCtx.hardFingerLoad); }
+function toggleSet(id){ if(logCtx.sets[id]) delete logCtx.sets[id]; else logCtx.sets[id]=true; const sc=GOAL_SCHEMES[DB.profile.goal]; const el=document.getElementById("set-"+id); if(el) el.textContent=logCtx.sets[id]?"✓ "+sc.sets+"×"+sc.reps:"antippen"; }
+function showPain(){ document.getElementById("pain-panel").classList.add("show"); document.getElementById("pain-launch").style.display="none"; logCtx.pain={region:null,nrs:null}; }
+function selPainRegion(r,el){ logCtx.pain.region=r; const seg=el.closest(".segmented"); seg.querySelectorAll(".seg").forEach(s=>s.className="seg"); el.className="seg sel v-stop"; }
+function buildNrs(){ const sc=document.getElementById("nrs-scale"); sc.innerHTML="";
+  for(let i=0;i<=10;i++){ const b=document.createElement("button"); b.className="nrs"; b.textContent=i;
+    b.onclick=()=>{ logCtx.pain.nrs=i; sc.querySelectorAll(".nrs").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); }; sc.appendChild(b); } }
+function nextStep(){ if(logCtx&&logCtx.pickSport) return; if(logStep<logCtx.steps.length){ logStep++; renderLogStep(); } else finishLog(); }
+function prevStep(){
+  if(logCtx&&logCtx.pickSport){ logCtx.pickSport=false;
+    const nb=document.getElementById("log-next"); if(nb) nb.style.visibility="visible";
+    renderLogStep(); return; }
+  if(logStep>1){ logStep--; renderLogStep(); }
+}
+function skipSession(){
+  const p=logCtx.planned;
+  p.status="skipped";
+  save(); closeLog(); recompute(); render("home"); render("week"); render("inbox"); go("inbox");
+  const n=DB.suggestions.length;
+  setTimeout(()=>toast("Als ausgefallen markiert · "+(n?n+" Vorschläge für den Rest der Woche":"Woche neu bewertet")),350);
+}
+function chooseOtherSport(){
+  logCtx.pickSport=true; renderLogStep();
+  const btn=document.getElementById("log-next"); btn.style.visibility="hidden";
+}
+function pickSport(sportId){
+  const sport=SPORTS[sportId];
+  logCtx.pickSport=false;
+  logCtx.planned=null;              // freie Session, kein Plan-Bezug
+  logCtx.sport=sport;
+  logCtx.duration=defaultDur({sportId});
+  logCtx.hm=sportId==="mountain_day"?800:0;
+  logCtx.hardFingerLoad=false; logCtx.sets={}; logCtx.fatigue={};
+  logCtx.steps=buildSteps(sport);
+  logStep=2;                        // confirm ist damit erledigt
+  const btn=document.getElementById("log-next"); btn.style.visibility="visible";
+  renderLogStep();
+}
+function finishLog(){
+  const ctx=logCtx; const p=ctx.planned; const secs=Math.floor((Date.now()-logStart)/1000);
+  // write sessionLog
+  const log=mkLog(ctx.sport.id,new Date(),ctx.duration,ctx.sRPE,{});
+  if(ctx.sport.id==="bouldering") log.hardFingerLoad=ctx.hardFingerLoad;
+  if(ctx.sport.id==="mountain_day") log.elevationGain=ctx.hm;
+  if(ctx.sport.loadSource==="exercises") log.sets=Object.keys(ctx.sets).map(id=>({exerciseId:id}));
+  log.date=new Date().toISOString();
+  DB.logs.push(log);
+  if(p){ p.loggedId=log.id; p.status="logged"; }
+  // fatigue
+  Object.entries(ctx.fatigue).forEach(([r,lvl])=>{ DB.fatigue.push(mkFat(r,lvl,new Date())); });
+  // pain
+  if(ctx.pain&&ctx.pain.region&&ctx.pain.nrs!=null){ DB.pain.push({id:uid(),region:ctx.pain.region,nrs:ctx.pain.nrs,ts:new Date().toISOString()}); }
+  save(); closeLog();
+  recompute();
+  go("inbox");
+  const n=DB.suggestions.length;
+  setTimeout(()=>toast("Log in <b>"+secs+" s</b> gespeichert · "+(n?n+" neue Vorschläge":"keine neuen Vorschläge")),350);
+}
+
+/* ============================================================
+   ACWR-EXPLAINER — Erklärung am Ort der Nutzung
+   ============================================================ */
+function openAcwr(){
+  const a=acwr(DB.logs,NOW); const zone=acwrZone(a.ratio);
+  document.getElementById("acwr-body").innerHTML=`
+    <div class="s-k">Acute : Chronic Workload Ratio</div>
+    <h2>Wie heiß läuft deine Woche?</h2>
+    <p class="s-hint" style="margin-bottom:16px">Der ACWR vergleicht, was du <b>zuletzt</b> gemacht hast, mit dem, was dein Körper <b>gewohnt</b> ist.</p>
+    <div class="acwr-math">
+      <div class="am-row"><span class="am-k">Akut</span><span class="am-v">${Math.round(a.acute)}</span><span class="am-d">Trainingslast der letzten 7 Tage (Σ sRPE × Minuten)</span></div>
+      <div class="am-row"><span class="am-k">Chronisch</span><span class="am-v">${Math.round(a.chronicWk)}</span><span class="am-d">Ø Wochenlast der letzten 28 Tage – deine „Gewöhnung"</span></div>
+      <div class="am-row total"><span class="am-k">ACWR</span><span class="am-v">${a.ratio.toFixed(2)}</span><span class="am-d">= Akut ÷ Chronisch</span></div>
+    </div>
+    <div class="field" style="margin-top:18px"><div class="f-lbl">Die Zonen</div>
+      <div class="zone-row"><span class="mark m-caution"></span><span class="z-range">&lt; 0.8</span><span class="z-t">Untertrainiert – Fitness bröckelt langsam</span></div>
+      <div class="zone-row"><span class="mark m-fresh"></span><span class="z-range">0.8 – 1.3</span><span class="z-t">Sweet Spot – niedrigstes Verletzungsrisiko</span></div>
+      <div class="zone-row"><span class="mark m-caution"></span><span class="z-range">1.3 – 1.5</span><span class="z-t">Erhöht – bewusst steuern</span></div>
+      <div class="zone-row"><span class="mark m-stop"></span><span class="z-range">&gt; 1.5</span><span class="z-t">Deutlich erhöhtes Risiko – Rampe zu steil</span></div>
+    </div>
+    <p class="s-hint" style="margin-top:14px">Auf dem Home-Screen ist der Sweet Spot als <b>grünes Band</b> hinter der Lastkurve eingezeichnet. Regel R7 prüft die <b>prognostizierte</b> ACWR am Ende der Planungswoche – also inklusive allem, was noch ansteht – und meldet sich erst über 1.5.</p>
+    <p class="s-hint" style="margin-top:10px;font-size:12.5px">Typischer Fall nach einer ruhigen Phase (Urlaub, Reha): Die chronische Basis ist niedrig, eine normale Woche wirkt plötzlich wie eine steile Rampe – genau das Szenario, in dem sich die meisten Verletzungen anbahnen.</p>
+    <div class="evi" style="margin-top:12px"><span class="rule">R7 · Quelle</span><span class="lvl assumption">Kohorte · umstritten</span></div>
+    <p class="s-hint" style="margin-top:6px;font-size:12px">Gabbett (2016), Br J Sports Med. Methodische Kritik (Lolli 2019: mathematical coupling; Impellizzeri 2020: Sensitivität) ist bekannt – deshalb hat R7 in HybridAthlete die niedrigste Priorität und schlägt nur den beweglichsten Baustein zum Streichen vor.</p>`;
+  const ov=document.getElementById("acwr-overlay"); ov.classList.add("show"); ov.setAttribute("aria-hidden","false");
+}
+function closeAcwr(){ const ov=document.getElementById("acwr-overlay"); ov.classList.remove("show"); ov.setAttribute("aria-hidden","true"); }
+
+/* ============================================================
+   DRAG & DROP — Woche: halten, ziehen, fallen lassen (Touch + Maus)
+   ============================================================ */
+let drag=null, suppressTap=false;
+function initWeekDnD(){
+  const sec=document.getElementById("screen-week");
+  sec.addEventListener("pointerdown",dndDown);
+  sec.addEventListener("pointermove",dndMove,{passive:false});
+  sec.addEventListener("pointerup",dndUp);
+  sec.addEventListener("pointercancel",dndCancel);
+}
+function blockScroll(e){ if(drag&&drag.lifted) e.preventDefault(); }
+function dndDown(e){
+  const cell=e.target.closest(".slot[data-pid]"); if(!cell) return;
+  drag={pid:cell.dataset.pid,cell,x:e.clientX,y:e.clientY,lifted:false,
+    timer:setTimeout(liftDrag,280)};
+}
+function liftDrag(){
+  if(!drag) return;
+  drag.lifted=true;
+  document.addEventListener("touchmove",blockScroll,{passive:false});
+  const g=drag.cell.cloneNode(true);
+  g.classList.add("drag-ghost");
+  g.style.width=drag.cell.offsetWidth+"px";
+  document.body.appendChild(g); drag.ghost=g;
+  placeGhost(drag.x,drag.y);
+  drag.cell.classList.add("drag-src");
+}
+function placeGhost(x,y){ drag.ghost.style.left=(x-drag.ghost.offsetWidth/2)+"px"; drag.ghost.style.top=(y-26)+"px"; }
+function dndTarget(x,y){
+  if(!drag.ghost) return null;
+  drag.ghost.style.display="none";
+  const el=document.elementFromPoint(x,y);
+  drag.ghost.style.display="";
+  const t=el&&el.closest(".slot[data-day]");
+  return (t&&t!==drag.cell)?t:null;
+}
+function dndMove(e){
+  if(!drag) return;
+  if(!drag.lifted){
+    if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>10){ clearTimeout(drag.timer); drag=null; }
+    return;
+  }
+  e.preventDefault();
+  placeGhost(e.clientX,e.clientY);
+  document.querySelectorAll(".drop-hint").forEach(x=>x.classList.remove("drop-hint"));
+  const t=dndTarget(e.clientX,e.clientY);
+  if(t) t.classList.add("drop-hint");
+}
+function dndUp(e){
+  if(!drag) return;
+  clearTimeout(drag.timer);
+  if(!drag.lifted){ drag=null; return; } // normaler Tap -> onclick übernimmt
+  const t=dndTarget(e.clientX,e.clientY);
+  const pid=drag.pid;
+  cleanupDrag();
+  suppressTap=true; setTimeout(()=>{suppressTap=false;},260);
+  if(!t){ render("week"); return; }
+  moveSession(pid,+t.dataset.day,t.dataset.slot,t.dataset.pid||null);
+}
+function dndCancel(){ if(drag){ clearTimeout(drag.timer); cleanupDrag(); render("week"); } }
+function cleanupDrag(){
+  document.removeEventListener("touchmove",blockScroll);
+  if(drag&&drag.ghost) drag.ghost.remove();
+  document.querySelectorAll(".drag-src,.drop-hint").forEach(x=>x.classList.remove("drag-src","drop-hint"));
+  drag=null;
+}
+function moveSession(pid,dayOff,slot,otherPid){
+  const p=DB.planned.find(x=>x.id===pid); if(!p) return;
+  const newDate=atHour(addDays(dOnly(NOW),dayOff),SLOT_HOUR[slot]).toISOString();
+  let msg;
+  if(otherPid&&otherPid!==pid){
+    const o=DB.planned.find(x=>x.id===otherPid);
+    if(!o||o.status==="logged"){ toast("Slot belegt – Ziel nicht verschiebbar","stop"); render("week"); return; }
+    const pd=p.date, ps=p.slot;
+    p.date=newDate; p.slot=slot;
+    o.date=pd; o.slot=ps;
+    msg=SPORTS[p.sportId].name+" ⇄ "+SPORTS[o.sportId].name+" getauscht";
+  } else {
+    p.date=newDate; p.slot=slot;
+    msg=SPORTS[p.sportId].name+" → "+WD[new Date(newDate).getDay()]+" "+SLOT_LABEL[slot];
+  }
+  save(); recompute(); render("week"); render("home"); render("inbox");
+  const n=DB.suggestions.length;
+  toast(msg+(n?" · "+n+" Vorschlag"+(n===1?"":"e"):""));
+}
+
+/* ============================================================
+   SESSION EDITOR — Tag/Slot/Fix manuell zuordnen (Woche)
+   ============================================================ */
+let editCtx=null;
+const SLOT_HOUR={morning:8,midday:12,evening:18};
+const SLOT_LABEL={morning:"morgens",midday:"mittags",evening:"abends"};
+function openAdd(dayOff,slot){
+  if(suppressTap) return;
+  editCtx={mode:"add",dayOff:Math.max(0,Math.min(6,dayOff)),slot:slot||"evening",fixed:false,
+    sportId:"strength",unit:null,exercises:null};
+  seedAddStrength();
+  renderEdit();
+  const ov=document.getElementById("edit-overlay"); ov.classList.add("show"); ov.setAttribute("aria-hidden","false");
+}
+function seedAddStrength(){
+  // Planungsphase: Generator wählt readiness-aware für den gewählten Termin
+  const split=SPLITS[DB.profile.split]||SPLITS.PPL;
+  const avail=split.units.filter(u=>!(DB.profile.disabledUnits||[]).includes(u));
+  if(!editCtx.unit||!avail.includes(editCtx.unit)) editCtx.unit=avail[0]||split.units[0];
+  const when=atHour(addDays(dOnly(NOW),editCtx.dayOff),SLOT_HOUR[editCtx.slot]);
+  const gen=generateStrength(DB.profile,DB,when).find(u=>u.unit===editCtx.unit);
+  editCtx.exercises=gen?gen.exercises.slice():[];
+}
+function setAddSport(id){
+  editCtx.sportId=id;
+  if(id==="strength") seedAddStrength(); else { editCtx.unit=null; editCtx.exercises=null; }
+  renderEdit();
+}
+function setAddUnit(u){ editCtx.unit=u; seedAddStrength(); renderEdit(); }
+function openEdit(id){
+  if(suppressTap) return;
+  const p=DB.planned.find(x=>x.id===id); if(!p||p.status==="logged") return;
+  const dayOff=Math.round((dOnly(p.date)-dOnly(NOW))/864e5);
+  editCtx={id,dayOff:Math.max(0,Math.min(6,dayOff)),slot:p.slot,fixed:!!p.fixed,
+    exercises:p.exercises?p.exercises.slice():null};
+  renderEdit();
+  const ov=document.getElementById("edit-overlay"); ov.classList.add("show"); ov.setAttribute("aria-hidden","false");
+}
+function closeEdit(){ const ov=document.getElementById("edit-overlay"); ov.classList.remove("show"); ov.setAttribute("aria-hidden","true"); editCtx=null; }
+function renderEdit(){
+  const isAdd=editCtx.mode==="add";
+  const p=isAdd?null:DB.planned.find(x=>x.id===editCtx.id);
+  const sportId=isAdd?editCtx.sportId:p.sportId;
+  const when=atHour(addDays(dOnly(NOW),editCtx.dayOff),SLOT_HOUR[editCtx.slot]);
+  const days=[...Array(7)].map((_,i)=>{ const d=addDays(dOnly(NOW),i);
+    return `<button class="opt ${editCtx.dayOff===i?"sel":""}" onclick="setEditDay(${i})">${i===0?"Heute":WD[d.getDay()]+" "+d.getDate()+"."}</button>`; }).join("");
+  const slots=Object.keys(SLOT_HOUR).map(sl=>`<button class="opt ${editCtx.slot===sl?"sel":""}" onclick="setEditSlot('${sl}')">${SLOT_LABEL[sl]}</button>`).join("");
+  let headCard, sportSection="";
+  if(isAdd){
+    const s=SPORTS[sportId];
+    headCard=`<div class="session-card" style="margin-bottom:20px"><span class="sc-icon">${s.emoji}</span>
+      <div><div class="sc-t">Neue Einheit</div><div class="sc-s">${WD[when.getDay()].toUpperCase()} ${when.getDate()}. · ${SLOT_LABEL[editCtx.slot].toUpperCase()}</div></div></div>`;
+    sportSection=`<div class="field"><div class="f-lbl">Sport</div><div class="opt-row">
+        ${Object.values(SPORTS).map(sp=>`<button class="opt ${sportId===sp.id?"sel":""}" onclick="setAddSport('${sp.id}')">${sp.emoji} ${sp.name}</button>`).join("")}
+      </div></div>`;
+    if(sportId==="strength"){
+      const split=SPLITS[DB.profile.split]||SPLITS.PPL;
+      const avail=split.units.filter(u=>!(DB.profile.disabledUnits||[]).includes(u));
+      sportSection+=`<div class="field"><div class="f-lbl">Unit (${split.label})</div><div class="opt-row">
+        ${avail.map(u=>`<button class="opt ${editCtx.unit===u?"sel":""}" onclick="setAddUnit('${u}')">${u}</button>`).join("")}
+      </div></div>`;
+    }
+  } else {
+    const s=SPORTS[p.sportId];
+    headCard=`<div class="session-card" style="margin-bottom:20px"><span class="sc-icon">${s.emoji}</span>
+      <div><div class="sc-t">${s.name}${p.unit?" · "+p.unit:""}</div>
+      <div class="sc-s">${p.status==="removed"?"GESTRICHEN":wdShort(p.date).toUpperCase()+" · "+new Date(p.date).getHours()+":00"}</div></div></div>`;
+  }
+  let exSection="";
+  if(sportId==="strength"&&editCtx.exercises){
+    const rs=editCtx.exercises.map(id=>({id,r:exerciseReadiness(id,when,DB)}));
+    const nOk=rs.filter(x=>x.r.level==="fresh").length;
+    const dayLbl=editCtx.dayOff===0?"heute":WD[when.getDay()]+" "+when.getDate()+".";
+    exSection=`<div class="field"><div class="f-lbl">Übungen · was geht ${dayLbl}? <span style="color:var(--text-low);text-transform:none;letter-spacing:0">(${nOk}/${rs.length} frei)</span></div>
+      ${rs.map((x,i)=>{ const e=EX_BY_ID[x.id]; const lv=x.r.level;
+        return `<div class="exr">
+          <span class="mark m-${lv}" title="${FAT_LABELS[lv]||lv}"></span>
+          <div class="exr-b"><div class="exr-n ${lv==="stop"?"blocked":""}">${e.name}</div>
+            <div class="exr-r">${x.r.reasons.length?x.r.reasons.join(" · "):"frei – keine Einschränkung"}</div></div>
+          ${lv!=="fresh"?`<button class="exr-btn" onclick="swapExEdit(${i})" title="Alternative suchen">⇄</button>`:""}
+          <button class="exr-btn" onclick="dropExEdit(${i})" title="entfernen">✕</button>
+        </div>`; }).join("")}
+      <div class="c-add" style="margin-top:8px">
+        <select id="add-ex" class="csel" style="flex:1">${addableExercises({unit:editCtx.unit||(p&&p.unit)},when).map(e=>`<option value="${e.id}">${e.mark} ${e.name}</option>`).join("")}</select>
+        <button class="opt" onclick="addExEdit()">＋</button>
+      </div>
+      <p class="subtle" style="font-size:12px;margin-top:8px">Machbarkeit gilt für den gewählten Tag – wechsle den Tag und schau, wie sich die Ampeln ändern (z. B. wenn das Bergtag-Fenster abläuft).</p>
+    </div>`;
+  }
+  document.getElementById("edit-save").textContent=isAdd?"Zur Woche hinzufügen":"Speichern";
+  document.getElementById("edit-body").innerHTML=`
+    ${headCard}
+    ${sportSection}
+    <div class="field"><div class="f-lbl">Tag</div><div class="opt-row">${days}</div></div>
+    <div class="field"><div class="f-lbl">Slot</div><div class="opt-row">${slots}</div></div>
+    ${exSection}
+    <div class="toggle-row"><div class="tr-body"><div class="tr-t">📌 Fixe Einheit</div><div class="tr-s">Fix = die Engine schlägt höchstens Abschwächen oder Anpassen vor, nie Verschieben oder Streichen.</div></div>
+      <div class="switch ${editCtx.fixed?"on":""}" onclick="toggleEditFix(this)" role="switch" aria-checked="${editCtx.fixed}" tabindex="0"><span class="knob"></span></div></div>
+    ${isAdd?"":`<button class="alt-choice" style="width:100%;margin-top:14px" onclick="toggleRemovePlanned()">${p.status==="removed"?"Wiederherstellen":"Einheit streichen"}</button>`}`;
+}
+function setEditDay(i){ editCtx.dayOff=i; if(editCtx.mode==="add"&&editCtx.sportId==="strength") seedAddStrength(); renderEdit(); }
+function setEditSlot(sl){ editCtx.slot=sl; if(editCtx.mode==="add"&&editCtx.sportId==="strength") seedAddStrength(); renderEdit(); }
+function addableExercises(ctx,when){
+  const cats=UNIT_CATS[ctx.unit]||[ctx.unit];
+  return EXERCISES.filter(e=>cats.includes(e.cat)&&!editCtx.exercises.includes(e.id)&&passesConstraints(e,DB.profile))
+    .map(e=>{ const r=exerciseReadiness(e.id,when,DB); return {id:e.id,name:e.name,lv:r.level,
+      mark:r.level==="fresh"?"●":r.level==="caution"?"◆":"■"}; })
+    .sort((a,b)=>READY_RANK[a.lv]-READY_RANK[b.lv]);
+}
+function swapExEdit(i){
+  const unit=editCtx.mode==="add"?editCtx.unit:(DB.planned.find(x=>x.id===editCtx.id)||{}).unit;
+  const when=atHour(addDays(dOnly(NOW),editCtx.dayOff),SLOT_HOUR[editCtx.slot]);
+  const orig=EX_BY_ID[editCtx.exercises[i]];
+  const cats=UNIT_CATS[unit]||[unit];
+  const ok=e=>!editCtx.exercises.includes(e.id)&&passesConstraints(e,DB.profile)&&exerciseReadiness(e.id,when,DB).level==="fresh";
+  const cand=EXERCISES.find(e=>e.cat===orig.cat&&ok(e))||EXERCISES.find(e=>cats.includes(e.cat)&&ok(e));
+  if(!cand){ toast("Keine freie Alternative gefunden","stop"); return; }
+  editCtx.exercises[i]=cand.id; renderEdit();
+  toast(orig.name+" → "+cand.name);
+}
+function dropExEdit(i){ editCtx.exercises.splice(i,1); renderEdit(); }
+function addExEdit(){
+  const sel=document.getElementById("add-ex"); if(!sel||!sel.value) return;
+  editCtx.exercises.push(sel.value); renderEdit();
+}
+function toggleEditFix(el){ editCtx.fixed=!editCtx.fixed; renderEdit(); }
+function toggleRemovePlanned(){
+  const p=DB.planned.find(x=>x.id===editCtx.id);
+  p.status=p.status==="removed"?"planned":"removed";
+  save(); recompute(); render("week"); render("home"); render("inbox"); closeEdit();
+  toast(p.status==="removed"?"Einheit gestrichen":"Einheit wiederhergestellt");
+}
+function saveEdit(){
+  const when=atHour(addDays(dOnly(NOW),editCtx.dayOff),SLOT_HOUR[editCtx.slot]);
+  if(editCtx.mode==="add"){
+    const extra=editCtx.sportId==="strength"?{unit:editCtx.unit,exercises:(editCtx.exercises||[]).slice()}:{};
+    if(editCtx.sportId==="strength"&&!extra.exercises.length){ toast("Mindestens eine Übung wählen","stop"); return; }
+    DB.planned.push(mkPlanned(editCtx.sportId,when,editCtx.slot,editCtx.fixed,extra));
+    save(); recompute(); render("week"); render("home"); render("inbox"); closeEdit(); go("week");
+    const n=DB.suggestions.length;
+    toast("Einheit geplant · "+(n?n+" Vorschlag"+(n===1?"":"e")+" – Coach hat die Woche geprüft":"keine Konflikte"));
+    return;
+  }
+  const p=DB.planned.find(x=>x.id===editCtx.id);
+  p.date=when.toISOString();
+  p.slot=editCtx.slot; p.fixed=editCtx.fixed;
+  if(editCtx.exercises&&p.exercises&&editCtx.exercises.join()!==p.exercises.join()){
+    p.exercises=editCtx.exercises.slice(); p.adjusted=true;
+  }
+  save(); recompute(); render("week"); render("home"); render("inbox"); closeEdit();
+  const n=DB.suggestions.length;
+  toast("Gespeichert · "+(n?n+" Vorschlag"+(n===1?"":"e")+" – Coach hat die Woche geprüft":"keine Konflikte"));
+}
+
+/* ============================================================
+   MORNING CHECK-IN
+   ============================================================ */
+let checkinState={};
+function openCheckin(){
+  checkinState={};
+  const regions=recentlyLoadedRegions();
+  const body=document.getElementById("checkin-body");
+  body.innerHTML=`<div class="step"><div class="s-k">Guten Morgen</div><h2>Wie fühlst du dich?</h2>
+    <p class="s-hint">Nur Regionen mit Last aus den letzten 72 h. Ein Tap pro Region.</p>
+    ${regions.length?regions.map(r=>{ checkinState[r]="fresh"; return `<div class="region-block"><div class="rb-name">${REGION_LABELS[r]}</div><div class="segmented">${
+      ["fresh","caution","stop"].map(v=>`<div class="seg ${v==="fresh"?"sel v-fresh":""}" onclick="selCheckin('${r}','${v}',this)"><span class="seg-mark m-${v}"></span><span class="seg-lbl">${FAT_LABELS[v]}</span></div>`).join("")
+    }</div></div>`; }).join(""):`<div class="subtle">Keine relevante Last in den letzten 72 h – alles frisch.</div>`}`;
+  const ov=document.getElementById("checkin-overlay"); ov.classList.add("show"); ov.setAttribute("aria-hidden","false");
+}
+function recentlyLoadedRegions(){
+  const set=new Set();
+  DB.logs.forEach(l=>{ if(hoursBetween(l.date,NOW)<=72){ Object.keys(regionLoad(l)).forEach(r=>{ if(r!=="systemic"&&r!=="knee") set.add(r); }); } });
+  return [...set].slice(0,6);
+}
+function selCheckin(r,v,el){ checkinState[r]=v; const seg=el.closest(".segmented"); seg.querySelectorAll(".seg").forEach(s=>s.className="seg"); el.className="seg sel v-"+v; }
+function closeCheckin(){ const ov=document.getElementById("checkin-overlay"); ov.classList.remove("show"); ov.setAttribute("aria-hidden","true"); }
+function saveCheckin(){
+  Object.entries(checkinState).forEach(([r,lvl])=>{ DB.fatigue.push({id:uid(),region:r,level:lvl,ts:new Date().toISOString(),context:"morning_checkin"}); });
+  save(); closeCheckin(); recompute(); go("inbox");
+  const n=DB.suggestions.length;
+  setTimeout(()=>toast("Check-in gespeichert · "+(n?n+" Vorschläge":"keine neuen Vorschläge")),350);
+}
+
+/* ============================================================
+   TOAST + INIT
+   ============================================================ */
+let toastTimer;
+function toast(text,kind){
+  const t=document.getElementById("toast");
+  document.getElementById("toast-text").innerHTML=text;
+  document.getElementById("toast-icon").textContent=kind==="stop"?"✕":"✓";
+  document.getElementById("toast-icon").style.background=kind==="stop"?"var(--stop-dim)":"var(--fresh-dim)";
+  t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2600);
+}
+(function initClock(){ const c=document.getElementById("clock"); function u(){ const d=new Date(); c.textContent=d.getHours()+":"+String(d.getMinutes()).padStart(2,"0"); } u(); setInterval(u,30000); })();
+render("home"); updateBadge(); initWeekDnD();
+</script>
+</body>
+</html>

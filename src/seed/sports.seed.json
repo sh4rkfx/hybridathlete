@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "description": "Seed sports catalog V1. Region IDs per spec §2.2. loadProfile values 0–3 = static per-sport region load, scaled at runtime by (sRPE/10) × (duration/60) per §3.1 (assumption-level regional decomposition). knee is a joint/pain/constraint region and never receives muscle load in the model. loadSource: 'profile' = region load from this sport's loadProfile; 'exercises' = region load aggregated from logged exercise loadProfiles (strength).",
+    "flags": {
+      "eccentric": "true = pronounced eccentric component (extends recovery window, R4).",
+      "tendonHeavy": "true = tendon/pulley-dominant loading (longer recovery constant, R3).",
+      "loadSource": "profile | exercises"
+    },
+    "evidenceNote": "Region load values are practitioner estimates (expert-consensus/assumption). They are inputs to the load model, not validated measurements. Tune via the rulebook screen; do not present as measured facts."
+  },
+  "sports": [
+    {
+      "sportId": "bouldering",
+      "name": "Bouldering",
+      "frequency": "weekly",
+      "typicallyFixed": true,
+      "loadSource": "profile",
+      "loadProfile": {
+        "fingers": 3,
+        "forearm": 3,
+        "elbow": 2,
+        "shoulder": 2,
+        "upper_back": 2,
+        "core": 2,
+        "systemic": 2
+      },
+      "flags": { "eccentric": false, "tendonHeavy": true },
+      "metrics": [
+        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
+        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true },
+        { "id": "hardFingerLoad", "label": "Harte Fingerbelastung (Leisten/Limit/Campus)", "type": "bool", "required": false }
+      ]
+    },
+    {
+      "sportId": "mountain_day",
+      "name": "Bergtag",
+      "frequency": "weekly",
+      "typicallyFixed": true,
+      "loadSource": "profile",
+      "loadProfile": {
+        "quads": 3,
+        "posterior_chain": 2,
+        "calves": 2,
+        "knee": 2,
+        "core": 1,
+        "systemic": 3
+      },
+      "flags": { "eccentric": true, "tendonHeavy": false },
+      "metrics": [
+        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
+        { "id": "elevationGain", "label": "Höhenmeter (Aufstieg)", "type": "int", "required": true },
+        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true }
+      ],
+      "notes": "Abstieg = exzentrische Quad-/Waden-Last. elevationGain skaliert das R4-Erholungsfenster (assumption-Skalierung, so gekennzeichnet)."
+    },
+    {
+      "sportId": "running",
+      "name": "Laufen",
+      "frequency": "irregular",
+      "typicallyFixed": false,
+      "loadSource": "profile",
+      "loadProfile": {
+        "quads": 2,
+        "posterior_chain": 2,
+        "calves": 2,
+        "knee": 1,
+        "core": 1,
+        "systemic": 2
+      },
+      "flags": { "eccentric": false, "tendonHeavy": false },
+      "metrics": [
+        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
+        { "id": "distance", "label": "Distanz (km)", "type": "float", "required": false },
+        { "id": "hrZone", "label": "HF-Zone (1–5)", "type": "int", "required": false },
+        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true }
+      ],
+      "notes": "Zone-2-Aufbau: meist niedrige Intensität, sRPE bildet das ab. Typische nicht-fixe Einheit, die ACWR-Reduktionsvorschläge (R7) zuerst betrifft."
+    },
+    {
+      "sportId": "strength",
+      "name": "Krafttraining",
+      "frequency": "weekly",
+      "typicallyFixed": false,
+      "loadSource": "exercises",
+      "loadProfile": {
+        "systemic": 1
+      },
+      "flags": { "eccentric": false, "tendonHeavy": false },
+      "metrics": [
+        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
+        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true }
+      ],
+      "notes": "Regionen-Last wird aus den geloggten Übungen (setLogs → exercise.loadProfile) aggregiert, NICHT aus diesem statischen Profil. loadProfile enthält nur eine systemische Basis; alles andere kommt aus dem Übungskatalog. Der Generator (§5) füllt intendedExercises abhängig von Split/Ziel/Constraints."
+    },
+    {
+      "sportId": "gravel_cycling",
+      "name": "Gravel-Rad",
+      "frequency": "irregular",
+      "typicallyFixed": false,
+      "loadSource": "profile",
+      "loadProfile": {
+        "quads": 2,
+        "posterior_chain": 1,
+        "calves": 1,
+        "knee": 1,
+        "core": 1,
+        "systemic": 2
+      },
+      "flags": { "eccentric": false, "tendonHeavy": false },
+      "metrics": [
+        { "id": "duration", "label": "Dauer (min)", "type": "int", "required": true },
+        { "id": "distance", "label": "Distanz (km)", "type": "float", "required": false },
+        { "id": "elevationGain", "label": "Höhenmeter", "type": "int", "required": false },
+        { "id": "hrZone", "label": "HF-Zone (1–5)", "type": "int", "required": false },
+        { "id": "sRPE", "label": "sRPE (0–10)", "type": "int", "required": true }
+      ],
+      "notes": "Konkurriert mit Bergtag/Lauf/Bein-Kraft um die Bein-Achse, aber gelenkschonend (keine exzentrische Spitze). Optionaler Multi-Sport-Eintrag über das Referenz-Setup hinaus."
+    }
+  ]
+}

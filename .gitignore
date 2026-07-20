@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+*.log
+.DS_Store
+
+# Generated test report (rebuilt by every test run; committed dashboards read it locally,
+# CI uploads it as an artifact instead)
+test-report.js

@@ -1,0 +1,176 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "description": "Declarative rule catalog for the planning engine. One entry per rule R1–R8. tier = priority (1 = highest; lower tiers never override higher). params are read by the engine; do not hardcode thresholds elsewhere. Every active rule MUST carry source + evidenceLevel (enforced by test T11). evidenceLevel scale: meta-analysis > rct > cohort > expert-consensus > assumption.",
+    "priorityOrder": ["R1_pain", "R2_constraints", "FIXED_UNITS(timing untouchable)", "R3_pulley", "R4_eccentric", "R5_muscular", "R6_interference", "R7_acwr"],
+    "operationTypes": ["swap", "reduce", "move", "remove"],
+    "minimalInterventionOrder": ["swap", "reduce", "move", "remove"],
+    "swapNote": "swap = exercise-level adjustment (spec v2.0 §3.4): affected exercises (load >= 2 on trigger region) are exchanged/removed, timing and remaining volume stay. Allowed on FIXED sessions — fixed protects timing, not content. Hollow-out guard: if drop > keep, fall back to move/reduce. Dedupe rank: swap 0 < reduce 1 < move 2 < remove 3.",
+    "note": "R8 is a generator rule (split coverage), not an in-week replanning trigger."
+  },
+  "rules": [
+    {
+      "ruleId": "R1_pain",
+      "name": "Pain-Monitoring Model",
+      "tier": 1,
+      "active": true,
+      "params": {
+        "nrsGreenMax": 2,
+        "nrsYellowMax": 5,
+        "redAbove": 5,
+        "yellowAction": "reduce",
+        "redAction": "block_region",
+        "followDayMustReturnToBaseline": true,
+        "fixedUnitOnAffectedRegion": "reduce_only",
+        "strengthTrySwapFirst": true
+      },
+      "logic": "NRS <= 2: no action. Strength sessions: exercise level first — swapProposal exchanges the exercises loading the painful region >= 2 (both NRS 3–5 and NRS > 5); if the hollow-out guard triggers (majority affected), fall back: NRS 3–5 -> reduce the session; NRS > 5 -> remove (non-fixed) or strongly reduce (fixed). Additional condition: pain the following day must not exceed baseline. Fixed units are never moved/removed.",
+      "source": {
+        "citation": "Silbernagel KG, Thomeé R, Eriksson BI, Karlsson J. Continued Sports Activity, Using a Pain-Monitoring Model, During Rehabilitation in Patients With Achilles Tendinopathy: A Randomized Controlled Study. Am J Sports Med. 2007;35(6):897–906.",
+        "doi": "10.1177/0363546506298279"
+      },
+      "evidenceLevel": "rct",
+      "evidenceNote": "Level 1 (randomized). Original model validated on the Achilles tendon (pain <=5/10 during activity, not markedly increasing afterward, returning to baseline next day). Application to other structures is common clinical practice but extrapolated — flagged, not presented as validated per-structure."
+    },
+    {
+      "ruleId": "R2_constraints",
+      "name": "Permanent Constraints",
+      "tier": 2,
+      "active": true,
+      "params": {
+        "yellowAction": "substitute_exercise",
+        "redAction": "exclude_region",
+        "matchBy": ["region", "tag"],
+        "exampleTag": "kneeFlexionTag"
+      },
+      "logic": "Per profile constraint: yellow -> replace matching exercises with an alternative (e.g. avoid kneeFlexionTag 'deep' under a knee_flexion constraint, use 'low'/'mid'). red -> do not load the region at all. Applied both in replanning and in the generator's exercise selection.",
+      "source": {
+        "citation": "User-defined constraint. Substitution/exclusion mechanic follows standard load-management practice; constraint content is a user preference, not a literature claim."
+      },
+      "evidenceLevel": "expert-consensus",
+      "evidenceNote": "Mechanism is expert-consensus; the specific constraint (e.g. knee flexion 80–90 deg under load) is a user-provided input, not derived from a study."
+    },
+    {
+      "ruleId": "R3_pulley",
+      "name": "Tendon/Pulley Recovery",
+      "tier": 4,
+      "active": true,
+      "params": {
+        "minHoursBetweenHighFingerLoad": 48,
+        "requiresHardFingerLoadFlag": true,
+        "tendonHeavyExtendsRecovery": true,
+        "fallbackWithoutFlag": "use_static_boulder_profile_low_confidence"
+      },
+      "logic": "After a session flagged tendonHeavy AND hardFingerLoad, the fingers region carries an extended recovery constant. Until recovered, do not propose a second high finger load (boulder limit session or high-grip strength pull) -> reduce/move. V1 rule of thumb: >= 48 h between two high finger loads. Without the hardFingerLoad flag, R3 falls back to the static boulder profile and is marked lower-confidence.",
+      "source": {
+        "citation": "Low S. Rehabbing injured pulleys — loading frequency ~3x/week or every other day to allow tissue recovery. Supplemental practitioner sources: The Climbing Doctor (pulley rehab); Hooper's Beta A2 Pulley Manual."
+      },
+      "evidenceLevel": "expert-consensus",
+      "evidenceNote": "No validated study exists on the recovery duration of a HEALTHY pulley between training stimuli. The 48 h value is a conservative practitioner heuristic and is explicitly low-evidence. Pulley overload is often not felt as fatigue before becoming symptomatic — hence the hardFingerLoad flag is the only reliable input."
+    },
+    {
+      "ruleId": "R4_eccentric",
+      "name": "Eccentric Fatigue / DOMS (post-mountain)",
+      "tier": 4,
+      "active": true,
+      "params": {
+        "recoveryWindowHours": [24, 72],
+        "peakHours": [24, 72],
+        "resolveDays": [5, 7],
+        "affectedRegions": ["quads", "posterior_chain", "calves"],
+        "scaleByElevationGain": true,
+        "typicalMoveSpacingHours": [48, 72],
+        "repeatedBoutModeled": false,
+        "strengthTrySwapFirst": true
+      },
+      "logic": "After a session flagged eccentric (mainly mountain-day descent), affected regions (quads, posterior_chain, calves) carry a 24–72 h recovery window with peak soreness 24–72 h. Strength session within the window: swapProposal first (only leg loaders >= 2 exchanged, rest stays — typical full-body case); if the hollow-out guard triggers (pure leg session): move (non-fixed, typically 48–72 h spacing) or reduce (fixed). Window scales with elevation gain.",
+      "source": {
+        "citation": "DOMS/EIMD time course (peak 24–72 h, resolves ~5–7 d): Physiopedia, Delayed Onset Muscle Soreness; ScienceDirect, 'Eccentric exercise: muscle damage to the new normal' (2026). Downhill running as the classic eccentric-EIMD model: Eston et al. (1995), as commonly cited."
+      },
+      "evidenceLevel": "cohort",
+      "evidenceNote": "DOMS time course is well established (cohort/review level). The elevation-gain scaling is an assumption. The repeated-bout effect (habituated athletes show attenuated DOMS) is NOT modeled in V1 — the full window is applied conservatively; flagged as assumption. Self-corrects via the feedback loop (V2)."
+    },
+    {
+      "ruleId": "R5_muscular",
+      "name": "General Muscular Recovery",
+      "tier": 4,
+      "active": true,
+      "params": {
+        "yellowReloadHours": [24, 48],
+        "redReloadHours": [48, 72],
+        "strengthTrySwapFirst": true,
+        "canonicalLabels": ["frisch", "müde", "platt"]
+      },
+      "logic": "Regions at müde (yellow) -> reduced reloading for 24–48 h; platt (red) -> >= 48–72 h, no heavy reloading. Strength sessions: swapProposal on the region first (also on fixed sessions — fixed protects timing, not content); fallback: platt -> move, müde -> reduce. Combines the fatigue traffic-light input with regional load from §3.1.",
+      "source": {
+        "citation": "General training physiology: muscle protein synthesis window and DOMS recovery course (see R4 references)."
+      },
+      "evidenceLevel": "expert-consensus",
+      "evidenceNote": "Consensus-level heuristic combining subjective regional fatigue with modeled regional load."
+    },
+    {
+      "ruleId": "R6_interference",
+      "name": "Strength/Endurance Interference",
+      "tier": 5,
+      "active": true,
+      "params": {
+        "minHoursBetweenStrengthEndurance": 6,
+        "preferStrengthBeforeEndurance": true,
+        "enduranceHighFreqThreshold": 3,
+        "enduranceHighFreqThresholdEvidence": "expert-consensus"
+      },
+      "logic": "(a) Strength + endurance same day: if times present, aim for >= 6 h apart; otherwise slot-separate. (b) Prefer strength before endurance when both unavoidable in one day (benefit mainly for lower-body dynamic strength). (c) High leg-endurance frequency together with heavy leg strength -> interference hint.",
+      "source": {
+        "citation": "Hickson RC (1980), Eur J Appl Physiol 45:255–263 — original interference finding. Schumann M, Feuerbacher JF, Sünkeler M, et al. Compatibility of Concurrent Aerobic and Strength Training for Skeletal Muscle Size and Function: An Updated Systematic Review and Meta-Analysis. Sports Med. 2022;52(3):601–612 (43 studies) — interference on maximal strength/hypertrophy is small; explosive strength slightly reduced, mainly in same-session concurrent work. 'The Role of Intra-Session Exercise Sequence in the Interference Effect: A Systematic Review with Meta-Analysis' (Sports Medicine) — resistance-before-endurance mildly favours lower-body dynamic strength over >= 5 weeks.",
+        "doi": "10.1007/s40279-021-01587-7"
+      },
+      "evidenceLevel": "meta-analysis",
+      "evidenceNote": "Meta-analytic evidence, but the interference effect is WEAKER than historically assumed — hence low priority (tier 5). For goal 'sport_support' it is largely non-critical; the rule mainly informs sensible slot ordering. The enduranceHighFreqThreshold is a tunable expert-consensus parameter, not a cited single value."
+    },
+    {
+      "ruleId": "R7_acwr",
+      "name": "ACWR Weekly Load Steering (systemic only in V1)",
+      "tier": 6,
+      "active": true,
+      "params": {
+        "acuteWindowDays": 7,
+        "chronicWindowDays": 28,
+        "zones": {
+          "detraining": { "max": 0.8 },
+          "sweetSpot": { "min": 0.8, "max": 1.3 },
+          "elevated": { "min": 1.3, "max": 1.5 },
+          "danger": { "min": 1.5 }
+        },
+        "axis": "systemic",
+        "reduceTargetMustBeNonFixed": true,
+        "method": "rolling_average"
+      },
+      "logic": "ACWR = acute load (7-day sum of sRPE-TL) / chronic load (28-day weekly average). Zones: <0.8 detraining; 0.8–1.3 sweet spot; 1.3–1.5 elevated; >1.5 warning. If projected weekend ACWR > 1.5: propose reducing/removing a NON-FIXED add-on load (typically running). V1: systemic axis only (validated Foster basis). No leg-axis ACWR (would multiply assumption-level decomposition by a contested metric); leg steering handled by R4/R5.",
+      "source": {
+        "citation": "Gabbett TJ. The training–injury prevention paradox: should athletes be training smarter and harder? Br J Sports Med. 2016;50(5):273–280. IOC consensus (2016) endorsed ACWR monitoring.",
+        "doi": "10.1136/bjsports-2015-095788"
+      },
+      "evidenceLevel": "cohort",
+      "evidenceNote": "Documented criticism: mathematical coupling (Lolli et al. 2019) and sensitivity issues (Impellizzeri et al. 2020). Hence lowest priority. V1 uses the simple rolling-average variant; EWMA/REDI are documented V2 alternatives. Show this criticism openly in the rulebook screen."
+    },
+    {
+      "ruleId": "R8_split_coverage",
+      "name": "Split Coverage Check (generator)",
+      "tier": "generator",
+      "active": true,
+      "params": {
+        "coveredByOtherSports": {
+          "bouldering": ["upper_back", "forearm", "fingers"]
+        },
+        "weaklyCovered": ["rear_shoulder", "horizontal_pull"],
+        "suggestedFixExerciseIds": ["rear_delt_fly_db", "band_pull_apart", "chest_supported_row_db"]
+      },
+      "logic": "When a split unit is disabled (e.g. Pull), check which regions become uncovered vs. covered by other sports. Bouldering covers upper_back/forearm/fingers well, but horizontal pulling and rear shoulder only weakly -> hint: 'gap: rear shoulder / horizontal pull — add 1–2 exercises into Push?' with concrete suggestions the V1 catalog can actually deliver.",
+      "source": {
+        "citation": "Climbing shoulder-prevention practice (antagonist training, rotator cuff / scapular balance)."
+      },
+      "evidenceLevel": "expert-consensus",
+      "evidenceNote": "Consensus-level; the suggested fixes are constrained to equipment available in V1 (dumbbell/band, no cable) so the hint is actionable."
+    }
+  ]
+}

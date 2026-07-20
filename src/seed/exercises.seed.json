@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "description": "Seed-Übungskatalog V1. Nur Lang-/Kurzhantel + minimal Band. Regionen-IDs gemäß Spezifikation §2.2. loadProfile-Werte 0–3. kneeFlexionTag nur für Bein-Übungen (Constraint-Logik R2/AC6): low = geringe Knieflexion unter Last, mid = ~90° kontrollierbar, deep = tiefe Flexion. eccentricEmphasis = exzentrisch betont (Hinweis für R4-nahe Logik).",
+    "coverageGuarantee": "Jede trainierbare Region hat >= 2 Übungen über verschiedene Tags. Rear-Delt/horizontales Ziehen für R8 ohne Kabelzug: rear_delt_fly_db, band_pull_apart, chest_supported_row_db."
+  },
+  "exercises": [
+    { "exerciseId": "barbell_bench_press", "name": "Barbell Bench Press", "equipment": ["barbell"], "category": "push", "loadProfile": { "chest": 3, "triceps": 2, "shoulder": 2 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "incline_barbell_press", "name": "Incline Barbell Bench Press", "equipment": ["barbell"], "category": "push", "loadProfile": { "chest": 3, "shoulder": 2, "triceps": 2 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "dumbbell_bench_press", "name": "Dumbbell Bench Press", "equipment": ["dumbbell"], "category": "push", "loadProfile": { "chest": 3, "triceps": 2, "shoulder": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "incline_dumbbell_press", "name": "Incline Dumbbell Press", "equipment": ["dumbbell"], "category": "push", "loadProfile": { "chest": 3, "shoulder": 2, "triceps": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "dumbbell_floor_press", "name": "Dumbbell Floor Press", "equipment": ["dumbbell"], "category": "push", "loadProfile": { "chest": 2, "triceps": 2 }, "kneeFlexionTag": null, "custom": false, "note": "Schulterschonende Chest-Variante (reduzierte Schulterabduktion)." },
+    { "exerciseId": "overhead_barbell_press", "name": "Overhead Barbell Press", "equipment": ["barbell"], "category": "push", "loadProfile": { "shoulder": 3, "triceps": 2, "core": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "seated_dumbbell_shoulder_press", "name": "Seated Dumbbell Shoulder Press", "equipment": ["dumbbell"], "category": "push", "loadProfile": { "shoulder": 3, "triceps": 2 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "arnold_press", "name": "Dumbbell Arnold Press", "equipment": ["dumbbell"], "category": "push", "loadProfile": { "shoulder": 3, "triceps": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "dumbbell_lateral_raise", "name": "Dumbbell Lateral Raise", "equipment": ["dumbbell"], "category": "push", "loadProfile": { "shoulder": 2 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "close_grip_bench_press", "name": "Close-Grip Bench Press", "equipment": ["barbell"], "category": "push", "loadProfile": { "triceps": 3, "chest": 2, "shoulder": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "db_overhead_triceps_extension", "name": "Dumbbell Overhead Triceps Extension", "equipment": ["dumbbell"], "category": "push", "loadProfile": { "triceps": 3, "elbow": 1 }, "kneeFlexionTag": null, "custom": false },
+
+    { "exerciseId": "barbell_bent_over_row", "name": "Barbell Bent-Over Row", "equipment": ["barbell"], "category": "pull", "loadProfile": { "upper_back": 3, "lower_back": 2, "forearm": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "pendlay_row", "name": "Pendlay Row", "equipment": ["barbell"], "category": "pull", "loadProfile": { "upper_back": 3, "lower_back": 2 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "single_arm_dumbbell_row", "name": "Single-Arm Dumbbell Row", "equipment": ["dumbbell"], "category": "pull", "loadProfile": { "upper_back": 3, "forearm": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "chest_supported_row_db", "name": "Chest-Supported Dumbbell Row", "equipment": ["dumbbell"], "category": "pull", "loadProfile": { "upper_back": 3, "shoulder": 1 }, "kneeFlexionTag": null, "custom": false, "note": "R8-Fix: horizontales Ziehen ohne untere-Rücken-Last." },
+    { "exerciseId": "rear_delt_fly_db", "name": "Dumbbell Rear Delt Fly", "equipment": ["dumbbell"], "category": "pull", "loadProfile": { "shoulder": 2, "upper_back": 1 }, "kneeFlexionTag": null, "custom": false, "note": "R8-Fix: hintere Schulter / Antagonist zum Klettern." },
+    { "exerciseId": "band_pull_apart", "name": "Band Pull-Apart", "equipment": ["band"], "category": "pull", "loadProfile": { "shoulder": 1, "upper_back": 1 }, "kneeFlexionTag": null, "custom": false, "note": "R8-Fix minimal-equipment: hintere Schulter, Schulterprävention." },
+    { "exerciseId": "barbell_curl", "name": "Barbell Curl", "equipment": ["barbell"], "category": "pull", "loadProfile": { "elbow": 2, "forearm": 2 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "hammer_curl", "name": "Dumbbell Hammer Curl", "equipment": ["dumbbell"], "category": "pull", "loadProfile": { "forearm": 2, "elbow": 2 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "incline_db_curl", "name": "Dumbbell Incline Curl", "equipment": ["dumbbell"], "category": "pull", "loadProfile": { "elbow": 2, "forearm": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "barbell_shrug", "name": "Barbell Shrug", "equipment": ["barbell"], "category": "pull", "loadProfile": { "upper_back": 2, "forearm": 1 }, "kneeFlexionTag": null, "custom": false },
+
+    { "exerciseId": "back_squat", "name": "Back Squat", "equipment": ["barbell"], "category": "legs", "loadProfile": { "quads": 3, "posterior_chain": 2, "lower_back": 2, "core": 1 }, "kneeFlexionTag": "deep", "custom": false },
+    { "exerciseId": "front_squat", "name": "Front Squat", "equipment": ["barbell"], "category": "legs", "loadProfile": { "quads": 3, "core": 2, "upper_back": 1 }, "kneeFlexionTag": "deep", "custom": false },
+    { "exerciseId": "box_squat", "name": "Box Squat", "equipment": ["barbell"], "category": "legs", "loadProfile": { "quads": 2, "posterior_chain": 2 }, "kneeFlexionTag": "mid", "custom": false, "note": "Constraint-Ausweich für Back Squat: Tiefe über Boxhöhe begrenzbar." },
+    { "exerciseId": "goblet_squat", "name": "Goblet Squat", "equipment": ["dumbbell"], "category": "legs", "loadProfile": { "quads": 2, "core": 1 }, "kneeFlexionTag": "mid", "custom": false },
+    { "exerciseId": "db_step_up", "name": "Dumbbell Step-Up", "equipment": ["dumbbell"], "category": "legs", "loadProfile": { "quads": 2, "posterior_chain": 1 }, "kneeFlexionTag": "mid", "custom": false, "note": "Flexion über Stufenhöhe steuerbar; niedrige Stufe = weniger Flexion." },
+    { "exerciseId": "walking_lunge_db", "name": "Dumbbell Walking Lunge", "equipment": ["dumbbell"], "category": "legs", "loadProfile": { "quads": 2, "posterior_chain": 2 }, "kneeFlexionTag": "deep", "custom": false },
+    { "exerciseId": "bulgarian_split_squat_db", "name": "Dumbbell Bulgarian Split Squat", "equipment": ["dumbbell"], "category": "legs", "loadProfile": { "quads": 3, "posterior_chain": 2 }, "kneeFlexionTag": "deep", "custom": false },
+    { "exerciseId": "romanian_deadlift", "name": "Romanian Deadlift", "equipment": ["barbell"], "category": "legs", "loadProfile": { "posterior_chain": 3, "lower_back": 2, "forearm": 1 }, "kneeFlexionTag": "low", "custom": false },
+    { "exerciseId": "conventional_deadlift", "name": "Conventional Deadlift", "equipment": ["barbell"], "category": "legs", "loadProfile": { "posterior_chain": 3, "lower_back": 3, "quads": 1, "forearm": 2 }, "kneeFlexionTag": "mid", "custom": false },
+    { "exerciseId": "barbell_hip_thrust", "name": "Barbell Hip Thrust", "equipment": ["barbell"], "category": "legs", "loadProfile": { "posterior_chain": 3, "quads": 1 }, "kneeFlexionTag": "low", "custom": false, "note": "Knieschonende Glute-Option: minimale Flexion unter Last." },
+    { "exerciseId": "barbell_good_morning", "name": "Barbell Good Morning", "equipment": ["barbell"], "category": "legs", "loadProfile": { "posterior_chain": 3, "lower_back": 3 }, "kneeFlexionTag": "low", "custom": false },
+    { "exerciseId": "nordic_hamstring_curl", "name": "Nordic Hamstring Curl", "equipment": ["bodyweight"], "category": "legs", "loadProfile": { "posterior_chain": 3 }, "kneeFlexionTag": "low", "custom": false, "eccentricEmphasis": true, "note": "Stark exzentrisch — nach Bergtag (R4) mit Vorsicht planen." },
+    { "exerciseId": "standing_calf_raise", "name": "Standing Calf Raise", "equipment": ["barbell", "dumbbell"], "category": "legs", "loadProfile": { "calves": 3 }, "kneeFlexionTag": "low", "custom": false },
+    { "exerciseId": "seated_calf_raise", "name": "Seated Calf Raise", "equipment": ["barbell", "dumbbell"], "category": "legs", "loadProfile": { "calves": 3 }, "kneeFlexionTag": "mid", "custom": false, "note": "Knie ~90°, meist unbelastete Flexion — bei Knie-Constraint prüfen." },
+
+    { "exerciseId": "plank", "name": "Plank", "equipment": ["bodyweight"], "category": "core", "loadProfile": { "core": 3 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "hanging_leg_raise", "name": "Hanging Leg Raise", "equipment": ["bodyweight"], "category": "core", "loadProfile": { "core": 3, "forearm": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "ab_wheel_rollout", "name": "Ab Wheel Rollout", "equipment": ["bodyweight"], "category": "core", "loadProfile": { "core": 3, "lower_back": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "db_side_bend", "name": "Dumbbell Side Bend", "equipment": ["dumbbell"], "category": "core", "loadProfile": { "core": 2, "lower_back": 1 }, "kneeFlexionTag": null, "custom": false },
+    { "exerciseId": "pallof_press_band", "name": "Pallof Press", "equipment": ["band"], "category": "core", "loadProfile": { "core": 2 }, "kneeFlexionTag": null, "custom": false }
+  ]
+}

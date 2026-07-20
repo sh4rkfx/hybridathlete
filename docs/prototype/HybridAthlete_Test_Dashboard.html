@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HybridAthlete · Test-Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1320;--surface-1:#151B2B;--surface-2:#1B2333;--surface-3:#222C40;
+  --border:rgba(255,255,255,.08);--border-strong:rgba(255,255,255,.14);
+  --text-hi:#EEF2FB;--text-mid:#9BA6BD;--text-low:#6B7591;
+  --brand:#C8F542;--brand-hi:#D9FF6B;--brand-dim:rgba(200,245,66,.13);
+  --fresh:#34D6A6;--fresh-dim:rgba(52,214,166,.15);
+  --caution:#F2B84B;--stop:#FF6188;--stop-dim:rgba(255,97,136,.15);
+  --font-display:'Archivo Black',system-ui,sans-serif;--font-body:'Barlow',system-ui,sans-serif;--font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --r-md:14px;--r-lg:20px;--r-pill:999px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:radial-gradient(1100px 500px at 50% -10%,#182236 0%,var(--bg) 55%);color:var(--text-hi);-webkit-font-smoothing:antialiased;padding:28px 18px 60px}
+.wrap{max-width:860px;margin:0 auto}
+.head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:8px}
+.brandmark{display:flex;align-items:center;gap:10px}
+.brandmark .name{font-family:var(--font-display);font-weight:700;font-size:20px}
+.brandmark .name b{color:var(--brand)}
+.brandmark .sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-low)}
+.summary{display:flex;gap:10px;align-items:center}
+.sum-chip{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--r-pill);border:1px solid var(--border-strong);font-family:var(--font-mono);font-size:13px}
+.sum-chip.pass{background:var(--fresh-dim);border-color:rgba(52,214,166,.4);color:var(--fresh)}
+.sum-chip.fail{background:var(--stop-dim);border-color:rgba(255,97,136,.4);color:var(--stop)}
+.sum-chip .mark{width:9px;height:9px}
+.meta-line{font-family:var(--font-mono);font-size:11px;color:var(--text-low);margin:6px 0 22px;line-height:1.6}
+.mark{display:inline-block}
+.mark.m-pass{background:var(--fresh);border-radius:50%}
+.mark.m-fail{background:var(--stop);border-radius:2px}
+.group-lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-low);margin:26px 2px 10px}
+.trow{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:9px;overflow:hidden}
+.trow.fail{border-color:rgba(255,97,136,.45)}
+.trow-head{display:flex;align-items:center;gap:13px;padding:13px 16px;cursor:pointer;user-select:none}
+.trow-head:hover{background:var(--surface-2)}
+.trow-head .mark{width:11px;height:11px;flex:none}
+.trow-head .tid{font-family:var(--font-mono);font-size:12px;color:var(--brand-hi);min-width:36px}
+.trow-head .ttl{font-size:14.5px;font-weight:600;flex:1}
+.trow-head .rule-chip{font-family:var(--font-mono);font-size:10.5px;color:var(--text-mid);border:1px solid var(--border-strong);border-radius:var(--r-pill);padding:3px 9px;flex:none}
+.trow-head .caret{color:var(--text-low);transition:transform .2s ease;flex:none}
+.trow.open .caret{transform:rotate(90deg)}
+.trow-body{display:none;padding:4px 16px 16px;border-top:1px solid var(--border)}
+.trow.open .trow-body{display:block}
+.d-sec{margin-top:13px}
+.d-lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-low);margin-bottom:6px}
+.d-txt{font-size:13.5px;color:var(--text-mid);line-height:1.55}
+pre.d-block{font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--text-hi);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;white-space:pre-wrap;word-break:break-word}
+pre.d-block.exp{border-left:3px solid var(--brand)}
+pre.d-block.act-pass{border-left:3px solid var(--fresh)}
+pre.d-block.act-fail{border-left:3px solid var(--stop);color:#FFD3DE}
+.foot{margin-top:34px;text-align:center;font-family:var(--font-mono);font-size:10.5px;color:var(--text-low);line-height:1.8}
+:focus-visible{outline:2px solid var(--brand-hi);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="brandmark">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="2" y="8" width="4" height="10" rx="1.2" fill="#C8F542"/><rect x="20" y="8" width="4" height="10" rx="1.2" fill="#C8F542"/><path d="M6 13 L10 13 L12 8 L14 18 L16 13 L20 13" stroke="#EEF2FB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="name" style="font-size:15px;font-weight:400">HYBRID<b>ATHLETE</b></div><div class="sub">Test-Dashboard</div></div>
+    </div>
+    <div class="summary" id="summary"></div>
+  </div>
+  <div class="meta-line" id="meta"></div>
+  <div id="tests"></div>
+  <div class="foot">Engine-Snapshot aus HybridAthlete_Funktionaler_Prototyp.html · Tests laufen live in diesem Browser<br>Klick auf eine Zeile → Beschreibung, Input, Expected, Actual</div>
+</div>
+
+<script>
+
+/* ============================================================
+   LOADR — Funktionaler Prototyp
+   Datenschicht + Load-Modell + Regel-Engine + Generator + UI
+   Persistenz: localStorage mit Fallback auf In-Memory.
+   ============================================================ */
+"use strict";
+
+/* ---------- Persistence ---------- */
+const STORE_KEY = "hybridathlete_v1";
+let memoryStore = null;
+function persist(db){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(db)); }
+  catch(e){ memoryStore = JSON.parse(JSON.stringify(db)); }
+}
+function loadStore(){
+  try{ const s = localStorage.getItem(STORE_KEY); if(s) return JSON.parse(s); }
+  catch(e){ if(memoryStore) return JSON.parse(JSON.stringify(memoryStore)); }
+  return null;
+}
+
+/* ---------- Time helpers (anchored to real now) ---------- */
+const NOW = new Date();
+function atHour(d,h){ const x=new Date(d); x.setHours(h,0,0,0); return x; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function dOnly(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function hoursBetween(a,b){ return Math.abs(new Date(a)-new Date(b))/36e5; }
+function mondayOf(d){ const x=dOnly(d); const wd=(x.getDay()+6)%7; return addDays(x,-wd); }
+const WD=["So","Mo","Di","Mi","Do","Fr","Sa"];
+function wdShort(d){ return WD[new Date(d).getDay()]; }
+function isSameDay(a,b){ return dOnly(a).getTime()===dOnly(b).getTime(); }
+function slotOfHour(h){ return h<12?"morning":h<18?"midday":"evening"; }
+
+/* ---------- Seed catalogs (subset of the repo seed files) ---------- */
+const SPORTS = {
+  bouldering:{id:"bouldering",name:"Bouldern",emoji:"🧗",loadSource:"profile",
+    loadProfile:{fingers:3,forearm:3,elbow:2,shoulder:2,upper_back:2,core:2,systemic:2},
+    painRegions:["fingers","forearm","elbow","shoulder"],maxDur:240,durStep:15,
+    flags:{eccentric:false,tendonHeavy:true}},
+  mountain_day:{id:"mountain_day",name:"Bergtag",emoji:"⛰️",loadSource:"profile",
+    loadProfile:{quads:3,posterior_chain:2,calves:2,knee:2,core:1,systemic:3},
+    painRegions:["knee","quads","calves","lower_back"],maxDur:720,durStep:30,
+    flags:{eccentric:true,tendonHeavy:false}},
+  running:{id:"running",name:"Laufen",emoji:"🏃",loadSource:"profile",
+    loadProfile:{quads:2,posterior_chain:2,calves:2,knee:1,core:1,systemic:2},
+    painRegions:["knee","calves","quads","lower_back"],maxDur:300,durStep:15,
+    flags:{eccentric:false,tendonHeavy:false}},
+  strength:{id:"strength",name:"Kraft",emoji:"🏋️",loadSource:"exercises",
+    loadProfile:{systemic:1},maxDur:180,durStep:15,
+    flags:{eccentric:false,tendonHeavy:false}},
+  gravel_cycling:{id:"gravel_cycling",name:"Gravel-Rad",emoji:"🚴",loadSource:"profile",
+    loadProfile:{quads:2,posterior_chain:1,calves:1,knee:1,core:1,systemic:2},
+    painRegions:["knee","lower_back","quads","forearm"],maxDur:480,durStep:30,
+    flags:{eccentric:false,tendonHeavy:false}}
+};
+
+const EXERCISES = [
+  {id:"barbell_bench_press",name:"Barbell Bench Press",cat:"push",load:{chest:3,triceps:2,shoulder:2},knee:null},
+  {id:"incline_db_press",name:"Incline Dumbbell Press",cat:"push",load:{chest:3,shoulder:2,triceps:1},knee:null},
+  {id:"overhead_press",name:"Overhead Barbell Press",cat:"push",load:{shoulder:3,triceps:2,core:1},knee:null},
+  {id:"db_floor_press",name:"Dumbbell Floor Press",cat:"push",load:{chest:2,triceps:2},knee:null},
+  {id:"lateral_raise",name:"Dumbbell Lateral Raise",cat:"push",load:{shoulder:2},knee:null},
+  {id:"close_grip_bench",name:"Close-Grip Bench Press",cat:"push",load:{triceps:3,chest:2},knee:null},
+  {id:"rear_delt_fly_db",name:"Dumbbell Rear Delt Fly",cat:"pull",load:{shoulder:2,upper_back:1},knee:null,r8fix:true},
+  {id:"chest_supported_row_db",name:"Chest-Supported Row",cat:"pull",load:{upper_back:3,shoulder:1},knee:null,r8fix:true},
+  {id:"barbell_row",name:"Barbell Bent-Over Row",cat:"pull",load:{upper_back:3,lower_back:2,forearm:1},knee:null},
+  {id:"single_arm_row",name:"Single-Arm Dumbbell Row",cat:"pull",load:{upper_back:3,forearm:1},knee:null},
+  {id:"barbell_curl",name:"Barbell Curl",cat:"pull",load:{elbow:2,forearm:2},knee:null},
+  {id:"back_squat",name:"Back Squat",cat:"legs",load:{quads:3,posterior_chain:2,lower_back:2,core:1},knee:"deep"},
+  {id:"front_squat",name:"Front Squat",cat:"legs",load:{quads:3,core:2},knee:"deep"},
+  {id:"box_squat",name:"Box Squat",cat:"legs",load:{quads:2,posterior_chain:2},knee:"mid"},
+  {id:"goblet_squat",name:"Goblet Squat",cat:"legs",load:{quads:2,core:1},knee:"mid"},
+  {id:"romanian_deadlift",name:"Romanian Deadlift",cat:"legs",load:{posterior_chain:3,lower_back:2,forearm:1},knee:"low"},
+  {id:"hip_thrust",name:"Barbell Hip Thrust",cat:"legs",load:{posterior_chain:3,quads:1},knee:"low"},
+  {id:"bulgarian_split",name:"Bulgarian Split Squat",cat:"legs",load:{quads:3,posterior_chain:2},knee:"deep"},
+  {id:"good_morning",name:"Barbell Good Morning",cat:"legs",load:{posterior_chain:3,lower_back:3},knee:"low"},
+  {id:"calf_raise",name:"Standing Calf Raise",cat:"legs",load:{calves:3},knee:"low"},
+  {id:"plank",name:"Plank",cat:"core",load:{core:3},knee:null},
+  {id:"hanging_leg_raise",name:"Hanging Leg Raise",cat:"core",load:{core:3,forearm:1},knee:null},
+  {id:"ab_wheel",name:"Ab Wheel Rollout",cat:"core",load:{core:3,lower_back:1},knee:null},
+  {id:"pallof_press",name:"Pallof Press",cat:"core",load:{core:2},knee:null}
+];
+const EX_BY_ID = Object.fromEntries(EXERCISES.map(e=>[e.id,e]));
+
+const FAT_LABELS = {fresh:"frisch",caution:"müde",stop:"platt"};
+const REGION_LABELS = {fingers:"Finger",forearm:"Unterarm",elbow:"Ellbogen",shoulder:"Schulter",
+  chest:"Brust",triceps:"Trizeps",upper_back:"Oberer Rücken",lower_back:"Unterer Rücken",core:"Core",
+  quads:"Quadrizeps",posterior_chain:"Hintere Kette",calves:"Waden",knee:"Knie",systemic:"Systemisch"};
+
+const RULES = [
+  {id:"R1",name:"Schmerz-Ampel",lvl:"rct",lvlLabel:"RCT",
+   src:"Silbernagel et al. (2007), Am J Sports Med — Pain-Monitoring-Model. Training bis NRS ≤5 zulässig, wenn danach nicht steigend und am Folgetag zurück auf Ausgangswert."},
+  {id:"R2",name:"Dauerhafte Constraints",lvl:"expert",lvlLabel:"Experten-Konsens",
+   src:"Nutzerdefinierte Einschränkung (z. B. Knieflexion 80–90° unter Last). Substitutions-Mechanik = Standard-Load-Management."},
+  {id:"R3",name:"Sehnen/Pulley-Erholung",lvl:"expert",lvlLabel:"Experten-Konsens",
+   src:"Low S., ‚Rehabbing injured pulleys‘; The Climbing Doctor; Hooper's Beta. ~48 h zwischen harten Finger-Reizen. Kein validierter Wert für gesunde Ringbänder — bewusst konservativ."},
+  {id:"R4",name:"Exzentrische Erholung",lvl:"cohort",lvlLabel:"Kohorte",
+   src:"DOMS-Reviews (Physiopedia; ScienceDirect 2026); Eston et al. (1995). Peak 24–72 h nach exzentrischer Last. hm-Skalierung als Annahme gekennzeichnet."},
+  {id:"R5",name:"Muskuläre Erholung",lvl:"expert",lvlLabel:"Experten-Konsens",
+   src:"Allgemeine Trainingsphysiologie (MPS-Fenster, DOMS-Verlauf). Kombiniert Ampel-Input mit regionaler Last."},
+  {id:"R6",name:"Kraft/Ausdauer-Interferenz",lvl:"meta",lvlLabel:"Meta-Analyse",
+   src:"Hickson (1980); Schumann et al. (2022), 43 Studien — Interferenz geringer als früher angenommen. Kraft vor Ausdauer, ≥6 h Abstand. Niedrige Priorität."},
+  {id:"R7",name:"ACWR-Wochenlast",lvl:"cohort",lvlLabel:"Kohorte · umstritten",
+   src:"Gabbett (2016), Br J Sports Med 50(5):273–280. Sweet Spot 0,8–1,3; >1,5 erhöhtes Risiko. Kritik offen: coupling (Lolli 2019), Sensitivität (Impellizzeri 2020)."}
+];
+const RULE_BY_ID = Object.fromEntries(RULES.map(r=>[r.id,r]));
+
+const GOAL_SCHEMES = {
+  kraftaufbau:{label:"Kraftaufbau",sets:5,reps:"3–5"},
+  hypertrophie:{label:"Hypertrophie",sets:4,reps:"8–12"},
+  erhalt:{label:"Erhalt",sets:2,reps:"6–10"},
+  sport_support:{label:"Sport-Support",sets:3,reps:"5–8"}
+};
+const SPLITS = {
+  full_body:{label:"Full Body",units:["full"]},
+  upper_lower:{label:"Upper / Lower",units:["upper","lower"]},
+  push_pull:{label:"Push / Pull",units:["push","pull"]},
+  PPL:{label:"Push / Pull / Legs",units:["push","pull","legs"]}
+};
+const UNIT_CATS = {full:["push","pull","legs","core"],upper:["push","pull"],lower:["legs"],
+  push:["push"],pull:["pull"],legs:["legs","core"]};
+
+/* ============================================================
+   SEED — realistic history so the engine fires on first open
+   ============================================================ */
+function seed(){
+  const profile = {goal:"sport_support",days:3,split:"PPL",disabledUnits:["pull"],
+    constraints:[{id:"knee_flexion",region:"knee",level:"yellow",note:"Linkes Knie, ~80–90° Flexion unter Last"}]};
+  const logs=[]; const fatigue=[];
+  // 28 Tage reduzierte Grundlast (Reha-Rückkehr-Szenario): kurze, moderate Einheiten,
+  // kein Bergtag im Chronik-Fenster -> niedrige chronische Basis. Die geplante große
+  // Woche erzeugt dann einen ECHTEN ACWR-Spike (Lehrbuchfall: Rampe nach Pause).
+  for(let i=28;i>=3;i--){
+    const day=addDays(NOW,-i);
+    const wd=day.getDay();
+    if(wd===2||wd===4){ logs.push(mkLog("bouldering",atHour(day,18),75,6,{})); }
+    if(wd===1){ logs.push(mkLog("running",atHour(day,7),40,4,{distance:7})); }
+    if(wd===6){ logs.push(mkLog("gravel_cycling",atHour(day,10),120,5,{distance:55})); }
+  }
+  // Recent, engine-relevant events — precise hour offsets so R3/R4 windows are active:
+  const hAgo=(h)=>new Date(NOW.getTime()-h*36e5);
+  logs.push(mkLog("mountain_day",hAgo(30),330,7,{elevationGain:1150})); // R4: eccentric, 30h ago
+  logs.push(mkLog("bouldering",hAgo(20),90,7,{hardFingerLoad:true}));    // R3: hard fingers, 20h ago
+  fatigue.push(mkFat("quads","caution",hAgo(28)));
+  fatigue.push(mkFat("calves","caution",hAgo(28)));
+  fatigue.push(mkFat("fingers","caution",hAgo(18)));
+
+  const db={profile,logs,fatigue,pain:[],planned:[],suggestions:[],
+    ruleStats:{R1:{up:12,down:1},R2:{up:6,down:0},R3:{up:9,down:2},R4:{up:8,down:3},R5:{up:7,down:1},R6:{up:4,down:2},R7:{up:5,down:4}},
+    rejected:{}};
+  db.planned = buildWeek(db);
+  return db;
+}
+function recentWeekday(targetWd){ // most recent past day with given weekday
+  let d=dOnly(NOW);
+  for(let i=0;i<7;i++){ if(d.getDay()===targetWd && d<dOnly(NOW)) return d; d=addDays(d,-1); }
+  return addDays(dOnly(NOW),-7);
+}
+let _idc=1; function uid(){ return "id"+(_idc++)+"_"+Math.random().toString(36).slice(2,6); }
+function mkLog(sportId,when,dur,sRPE,extra){
+  return Object.assign({id:uid(),sportId,date:new Date(when).toISOString(),slot:slotOfHour(new Date(when).getHours()),
+    duration:dur,sRPE,source:"manual",sets:[]},extra);
+}
+function mkFat(region,level,when){ return {id:uid(),region,level,ts:new Date(when).toISOString(),context:"post_session"}; }
+
+/* ============================================================
+   PLAN GENERATOR (§5) — builds this week's strength + fixed units
+   ============================================================ */
+function buildWeek(db){
+  // Rolling schedule anchored at NOW — guarantees future sessions the engine can evaluate.
+  const planned=[];
+  const hr=h=>{ const x=new Date(NOW); x.setMinutes(0,0,0); x.setHours(x.getHours()+h); return x; };
+  const at=(dOff,hour)=>atHour(addDays(dOnly(NOW),dOff),hour);
+
+  // 1) Bouldern HEUTE, fix, in ~3 h — Log-CTA + R3-Ziel (reduce), da Fingerlast
+  const boulderToday=hr(3);
+  planned.push(mkPlanned("bouldering",boulderToday,slotOfHour(boulderToday.getHours()),true));
+
+  // 2) Kraft aus Generator (PPL ohne Pull -> push + legs)
+  const strength=generateStrength(db.profile);
+  const legsUnit=strength.find(u=>u.unit==="legs");
+  const pushUnit=strength.find(u=>u.unit==="push");
+
+  // Legs in ~12 h, NICHT fix, midday — R4-Ziel (move): Bergtag war vor 30 h -> Abstand 42 h < 48 h
+  if(legsUnit){
+    const legsAt=hr(12);
+    planned.push(mkPlanned("strength",legsAt,"midday",false,{unit:"legs",exercises:legsUnit.exercises}));
+  }
+  // Push in 2 Tagen abends, nicht fix
+  if(pushUnit){
+    planned.push(mkPlanned("strength",at(2,17),"evening",false,{unit:"push",exercises:pushUnit.exercises}));
+  }
+
+  // 3) Zweites Bouldern in 2 Tagen, fix
+  planned.push(mkPlanned("bouldering",at(2,18),"evening",true));
+
+  // 4) Lauf in 3 Tagen, nicht fix — R7-Kandidat
+  planned.push(mkPlanned("running",at(3,7),"morning",false,{distance:10}));
+
+  // 5) Nächster Bergtag in 5 Tagen, fix — Demo: fixe Einheit bleibt unangetastet
+  planned.push(mkPlanned("mountain_day",at(5,9),"morning",true,{hm:1200}));
+
+  return planned;
+}
+function mkPlanned(sportId,when,slot,fixed,extra){
+  return Object.assign({id:uid(),sportId,date:new Date(when).toISOString(),slot,fixed:!!fixed,
+    status:"planned",reduced:false},extra||{});
+}
+function generateStrength(profile,db,when){
+  // db+when optional: dann wählt der Generator readiness-aware für den Zieltag
+  // (frisch zuerst, müde nachrangig, gesperrt fliegt raus) — Planungsphase kennt
+  // damit die aktuelle Ermüdungs- und Verletzungslage.
+  const split=SPLITS[profile.split]||SPLITS.PPL;
+  const units=split.units.filter(u=>!(profile.disabledUnits||[]).includes(u));
+  return units.map(unit=>{
+    const cats=UNIT_CATS[unit]||[unit];
+    let pool=EXERCISES.filter(e=>cats.includes(e.cat));
+    // R2 — Constraints: Knie nutzt Beugetiefe (Flexion-Tag), alle anderen Regionen die Load-Matrix.
+    // gelb = Alternative wählen (schwere Loader >=3 raus), rot = Region sperren (Loader >=2 raus).
+    (profile.constraints||[]).forEach(c=>{
+      if(c.region==="knee"){
+        if(c.level==="red") pool=pool.filter(e=>e.knee===null);
+        else pool=pool.filter(e=>e.knee!=="deep");
+      } else {
+        const thr=c.level==="red"?2:3;
+        pool=pool.filter(e=>(e.load[c.region]||0)<thr);
+      }
+    });
+    if(db&&when){
+      const ready=Object.fromEntries(pool.map(e=>[e.id,exerciseReadiness(e.id,when,db).level]));
+      pool=pool.filter(e=>ready[e.id]!=="stop");
+      pool=pool.slice().sort((a,b)=>READY_RANK[ready[a.id]]-READY_RANK[ready[b.id]]);
+    }
+    // pick up to 4, prefer variety of primary regions
+    const picks=[]; const usedPrimary=new Set();
+    for(const e of pool){
+      const primary=Object.keys(e.load).sort((a,b)=>e.load[b]-e.load[a])[0];
+      if(!usedPrimary.has(primary)||picks.length<2){ picks.push(e); usedPrimary.add(primary); }
+      if(picks.length>=4) break;
+    }
+    return {unit,exercises:picks.map(e=>e.id)};
+  });
+}
+function splitCoverageGaps(profile){
+  // R8: which regions become uncovered by disabling units
+  const disabled=profile.disabledUnits||[];
+  const gaps=[];
+  if(disabled.includes("pull")){
+    gaps.push({label:"Hintere Schulter & horizontales Ziehen",
+      note:"Bouldern deckt Lat/Unterarm ab, aber nicht die hintere Schulter.",
+      fixIds:["rear_delt_fly_db","chest_supported_row_db"]});
+  }
+  return gaps;
+}
+
+/* ============================================================
+   LOAD MODEL (§3.1)
+   ============================================================ */
+function srpeTL(log){ return (log.sRPE||0)*(log.duration||0); }
+function regionLoad(log){
+  const sport=SPORTS[log.sportId]; const out={};
+  if(!sport) return out;
+  const scale=(log.sRPE/10)*(log.duration/60);
+  if(sport.loadSource==="exercises"){
+    (log.sets||[]).forEach(s=>{ const ex=EX_BY_ID[s.exerciseId]; if(!ex)return;
+      for(const r in ex.load){ out[r]=(out[r]||0)+ex.load[r]*scale*0.4; } });
+    out.systemic=(out.systemic||0)+1*scale;
+  } else {
+    for(const r in sport.loadProfile){ out[r]=(out[r]||0)+sport.loadProfile[r]*scale; }
+  }
+  return out;
+}
+
+/* ============================================================
+   ACWR (§R7) — systemic, rolling average
+   ============================================================ */
+function acwr(logs, refDate){
+  const ref=refDate||NOW;
+  let acute=0, chronic=0;
+  logs.forEach(l=>{ const h=hoursBetween(l.date,ref); const tl=srpeTL(l);
+    if(new Date(l.date)<=ref){ if(h<=24*7) acute+=tl; if(h<=24*28) chronic+=tl; } });
+  const chronicWk=chronic/4;
+  const ratio=chronicWk>0?acute/chronicWk:0;
+  return {acute,chronicWk,ratio};
+}
+function acwrZone(r){ return r<0.8?"caution":r<=1.3?"fresh":r<=1.5?"caution":"stop"; }
+
+/* ============================================================
+   RULE ENGINE (§4) — pure evaluate(db) -> suggestions[]
+   ============================================================ */
+function latestFatigue(db,region){
+  const rel=db.fatigue.filter(f=>f.region===region && hoursBetween(f.ts,NOW)<=72)
+    .sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  return rel[0]||null;
+}
+function sessionLoadsRegion(p,region){
+  const sport=SPORTS[p.sportId];
+  if(sport.loadSource==="exercises"){
+    return (p.exercises||[]).some(id=>EX_BY_ID[id] && EX_BY_ID[id].load[region]>=2);
+  }
+  return (sport.loadProfile[region]||0)>=2;
+}
+function isHeavyLowerBody(p){
+  const sport=SPORTS[p.sportId];
+  if(p.sportId==="strength") return (p.exercises||[]).some(id=>{const e=EX_BY_ID[id];return e&&e.cat==="legs"&&(e.load.quads>=2||e.load.posterior_chain>=3);});
+  return (sport.loadProfile.quads||0)>=2;
+}
+function futurePlanned(db){
+  return db.planned.filter(p=>p.status!=="removed" && p.status!=="logged" && p.status!=="skipped"
+      && new Date(p.date)>=dOnly(NOW))
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+}
+function evaluate(db){
+  const sugs=[]; const now=NOW;
+  const rejected=db.rejected||{};
+  const push=(s)=>{ const key=s.ruleId+"|"+s.targetId; if(rejected[key])return;
+    const t=db.planned.find(p=>p.id===s.targetId);
+    if(t){ if(t.status==="removed") return;               // gestrichen -> nichts mehr vorschlagen
+           if(s.operation==="reduce" && t.reduced) return;   // schon reduziert -> Intervention erledigt
+           if(s.operation==="swap" && t.adjusted) return; }  // schon umgebaut -> Intervention erledigt
+    s.id=s.id||uid(); s.key=key; sugs.push(s); };
+
+  // R1 — pain
+  db.pain.filter(p=>hoursBetween(p.ts,now)<=36).forEach(p=>{
+    const region=p.region, nrs=p.nrs;
+    if(nrs<=2) return;
+    futurePlanned(db).forEach(pl=>{
+      if(!sessionLoadsRegion(pl,region)) return;
+      // Übungsebene zuerst: bei Kraft die schmerzenden Übungen rausplanen, Rest behalten
+      if(pl.sportId==="strength"){
+        const sw=swapProposal(pl,[region],db.profile);
+        if(sw){
+          push(sug("R1",1,"swap",pl,
+            nrs>5
+              ? `Dein `+REGION_LABELS[region]+` meldet klaren Schmerz (NRS `+nrs+`). `+exNames(sw.drop)+` fliegt aus dem Plan`+(sw.repl.length?` – dafür `+exNames(sw.repl):``)+`. `+exNames(sw.keep)+` kannst du schmerzfrei trainieren.`
+              : `Dein `+REGION_LABELS[region]+` zwickt (NRS `+nrs+`). Plan `+exNames(sw.drop)+` diesmal raus`+(sw.repl.length?`, dafür `+exNames(sw.repl):``)+` – der Rest der Einheit ist frei.`,
+            (nrs>5?`Über NRS 5 ist die Region für Belastung gesperrt (Pain-Monitoring-Model). `:`NRS 3–5 ist im Rahmen, solange der Schmerz nicht steigt. `)+`Nur Übungen, die `+REGION_LABELS[region]+` schwer belasten, werden getauscht.`,
+            {exercises:sw.proposed,adjusted:true},sw));
+          return;
+        }
+      }
+      if(nrs>5){
+        if(pl.fixed){ push(sug("R1",1,"reduce",pl,
+          `Dein `+REGION_LABELS[region]+` meldet klaren Schmerz (NRS `+nrs+`). `+SPORTS[pl.sportId].name+` ist fix – geh's heute deutlich zurück, große Griffe, kein Limit.`,
+          `NRS >5 bedeutet: die Region rausnehmen. Da die Einheit fix ist, statt streichen: stark abschwächen.`)); }
+        else { push(sug("R1",1,"remove",pl,
+          `Bei NRS `+nrs+` im `+REGION_LABELS[region]+` gehört diese Einheit gestrichen. Gib der Struktur Ruhe, bevor du sie wieder belastest.`,
+          `Über NRS 5 ist die Region für Belastung gesperrt (Pain-Monitoring-Model).`)); }
+      } else {
+        push(sug("R1",1,"reduce",pl,
+          `Dein `+REGION_LABELS[region]+` zwickt leicht (NRS `+nrs+`). Trainier ruhig, aber halt's unter der Schmerzgrenze – und schau, dass es morgen nicht schlimmer ist.`,
+          `NRS 3–5 ist im Rahmen, solange der Schmerz danach nicht steigt und am Folgetag zurück ist.`));
+      }
+    });
+  });
+
+  // R3 — pulley: last hard-finger boulder within 48h, planned high-finger session within window
+  const lastFinger=db.logs.filter(l=>SPORTS[l.sportId].flags.tendonHeavy && l.hardFingerLoad)
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if(lastFinger){
+    futurePlanned(db).forEach(pl=>{
+      const loadsFingers = sessionLoadsRegion(pl,"fingers");
+      if(!loadsFingers) return;
+      const gap=hoursBetween(pl.date,lastFinger.date);
+      if(gap<48){
+        if(pl.fixed){ push(sug("R3",4,"reduce",pl,
+          `Deine Finger hatten gestern harte Last und sind noch müde. `+SPORTS[pl.sportId].name+` bleibt (fix) – aber mach eine Volumen-Session statt am Limit zu crimpen. Offene Hand, große Griffe.`,
+          `Sehnen/Ringbänder erholen langsamer als Muskeln. Zwischen zwei harten Finger-Reizen sollten ~48 h liegen (`+Math.round(gap)+` h geplant).`)); }
+        else { push(sug("R3",4,"move",pl,
+          `Zwischen deiner harten Finger-Session gestern und dieser hier liegen nur `+Math.round(gap)+` h. Schieb sie etwas nach hinten, damit die Ringbänder nachkommen.`,
+          `~48 h Erholung zwischen harten Finger-Reizen (konservativer Praxis-Richtwert).`)); }
+      }
+    });
+  }
+
+  // R4 — eccentric: last eccentric log within scaled window; heavy lower-body planned in window
+  const lastEcc=db.logs.filter(l=>SPORTS[l.sportId].flags.eccentric)
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if(lastEcc){
+    const hm=lastEcc.elevationGain||600;
+    const windowH=48+Math.min(24, (hm-600)/1200*24); // 48–72h scaled by hm (assumption)
+    const sinceEcc=hoursBetween(now,lastEcc.date);
+    if(sinceEcc<=windowH){
+      futurePlanned(db).forEach(pl=>{
+        if(pl.sportId!=="strength"||!isHeavyLowerBody(pl)) return;
+        const afterEcc=hoursBetween(pl.date,lastEcc.date);
+        if(afterEcc<48){
+          const legRegs=["quads","posterior_chain","calves"];
+          const sw=swapProposal(pl,legRegs,db.profile);
+          if(sw){
+            push(sug("R4",4,"swap",pl,
+              `Dein Bergtag (`+hm+` hm) steckt noch in den Beinen. Lass `+exNames(sw.drop)+` diesmal weg`+(sw.repl.length?` – dafür `+exNames(sw.repl):``)+`. Der Rest der Einheit bleibt, wie er ist.`,
+              `Exzentrischer Abstieg trifft vor allem Quads, hintere Kette und Waden (Peak 24–72 h). Statt die ganze Einheit zu verschieben, tauscht HybridAthlete nur die betroffenen Übungen.`,
+              {exercises:sw.proposed,adjusted:true},sw));
+          }
+          else if(!pl.fixed){ push(sug("R4",4,"move",pl,
+            `Dein Bergtag (`+hm+` hm) steckt noch in den Beinen. Leg die schwere Beineinheit auf ≥48 h nach dem Abstieg – deine Quads brauchen das Fenster wirklich.`,
+            `Exzentrischer Abstieg verursacht Muskelschaden mit Peak 24–72 h. Training obendrauf bringt wenig und erhöht das Risiko.`)); }
+          else { push(sug("R4",4,"reduce",pl,
+            `Nach `+hm+` hm Abstieg sind die Beine noch nicht erholt. Diese Einheit ist fix – nimm Volumen und Last runter.`,
+            `DOMS peakt 24–72 h nach exzentrischer Last.`)); }
+        }
+      });
+    }
+  }
+
+  // R5 — muscular fatigue: region red/yellow + planned session loading it heavily
+  ["quads","posterior_chain","shoulder","upper_back","fingers","forearm"].forEach(region=>{
+    const f=latestFatigue(db,region);
+    if(!f||f.level==="fresh") return;
+    futurePlanned(db).forEach(pl=>{
+      if(hoursBetween(pl.date,f.ts) > (f.level==="stop"?72:48)) return;
+      if(!sessionLoadsRegion(pl,region)) return;
+      if(sugs.some(s=>s.targetId===pl.id)) return; // dedupe with higher tiers
+      // Übungsebene zuerst: betroffene Übungen tauschen statt die Einheit anfassen
+      if(pl.sportId==="strength"){
+        const sw=swapProposal(pl,[region],db.profile);
+        if(sw){
+          const lvlWord=f.level==="stop"?"platt":"müde";
+          push(sug("R5",4,"swap",pl,
+            `Dein `+REGION_LABELS[region]+` ist noch `+lvlWord+`. Bau die Einheit leicht um: `+exNames(sw.drop)+` raus`+(sw.repl.length?`, dafür `+exNames(sw.repl):``)+`. Timing und Rest bleiben.`,
+            (f.level==="stop"?`Platt = die Region braucht 48–72 h. `:`Müde = 24–48 h mit reduzierter Last. `)+`Nur die Übungen, die `+REGION_LABELS[region]+` schwer belasten, werden getauscht.`,
+            {exercises:sw.proposed,adjusted:true},sw));
+          return;
+        }
+      }
+      if(pl.fixed) return; // fixed handled by R3/R4 reduce paths
+      if(f.level==="stop"){ push(sug("R5",4,"move",pl,
+        `Dein `+REGION_LABELS[region]+` ist noch platt. Gib der Region 2–3 Tage, bevor du sie wieder schwer belastest – schieb die Einheit.`,
+        `Platt = die Region braucht 48–72 h, bevor sie wieder schwer belastet wird.`)); }
+      else { push(sug("R5",4,"reduce",pl,
+        `Dein `+REGION_LABELS[region]+` ist noch müde. Diese Einheit belastet ihn – nimm heute das Volumen etwas raus.`,
+        `Müde = 24–48 h mit reduzierter Last wiederbelasten.`)); }
+    });
+  });
+
+  // R6 — interference: same-day strength + endurance, <6h apart or same slot
+  const byDay={};
+  futurePlanned(db).forEach(pl=>{ const k=dOnly(pl.date).getTime(); (byDay[k]=byDay[k]||[]).push(pl); });
+  Object.values(byDay).forEach(list=>{
+    const str=list.find(p=>p.sportId==="strength"&&isHeavyLowerBody(p));
+    const end=list.find(p=>p.sportId==="running"||p.sportId==="gravel_cycling");
+    if(str&&end&&!str.fixed){
+      const gap=hoursBetween(str.date,end.date);
+      if(gap<6 && !sugs.some(s=>s.targetId===str.id)){
+        push(sug("R6",5,"move",str,
+          `Beinkraft und Ausdauer liegen heute nah beieinander (`+Math.round(gap)+` h). Zieh die Krafteinheit in einen früheren Slot oder mach sie zuerst – das schützt die Kraftanpassung.`,
+          `Interferenz tritt v. a. bei enger, gleichtägiger Kombination auf; ≥6 h Abstand und Kraft vor Ausdauer mildern das.`));
+      }
+    }
+  });
+
+  // R7 — ACWR: projizierte Ratio am Horizontende (heute+6d), korrektes 7-Tage-Fenster
+  // (Logs, die dann noch im Fenster liegen, + geplante Last bis Horizontende)
+  const base=acwr(db.logs, now);
+  const horizonEnd=atHour(addDays(dOnly(now),6),23);
+  let projAcute=0;
+  db.logs.forEach(l=>{ const h=hoursBetween(l.date,horizonEnd);
+    if(new Date(l.date)<=horizonEnd && h<=24*7) projAcute+=srpeTL(l); });
+  futurePlanned(db).forEach(pl=>{ if(new Date(pl.date)<=horizonEnd && pl.status!=="removed"){
+    projAcute += estPlannedTL(pl); } });
+  const projRatio=base.chronicWk>0?projAcute/base.chronicWk:0;
+  if(projRatio>1.5){
+    const run=futurePlanned(db).find(p=>(p.sportId==="running")&&!p.fixed);
+    if(run){ push(sug("R7",6,"remove",run,
+      `Deine Woche läuft nach der ruhigen Phase heiß: prognostizierte ACWR ≈ `+projRatio.toFixed(2)+` (Sweet Spot 0.8–1.3). Bergtag und Boulderabende sind fix – der Lauf am `+wdShort(run.date)+` ist der einzige frei bewegliche Baustein. Streich ihn diese Woche und halte den Rest moderat.`,
+      `Sweet Spot mit niedrigstem Risiko: 0,8–1,3. Über 1,5 steigt das Risiko deutlich (mit bekannter methodischer Kritik).`)); }
+  }
+
+  // Priority + minimal intervention: keep one suggestion per target (lowest tier wins),
+  // and among same tier prefer reduce > move > remove.
+  const opRank={swap:0,reduce:1,move:2,remove:3};
+  const byTarget={};
+  sugs.forEach(s=>{ const t=byTarget[s.targetId];
+    if(!t || s.tier<t.tier || (s.tier===t.tier && opRank[s.operation]<opRank[t.operation])) byTarget[s.targetId]=s; });
+  return Object.values(byTarget).sort((a,b)=>a.tier-b.tier);
+}
+function estPlannedTL(pl){
+  const sport=SPORTS[pl.sportId];
+  const durGuess = pl.sportId==="mountain_day"?360:pl.sportId==="running"?45:pl.sportId==="bouldering"?90:60;
+  const rpeGuess = pl.sportId==="mountain_day"?8:pl.sportId==="strength"?6:6;
+  return (pl.reduced?0.5:1)*durGuess*rpeGuess;
+}
+function sug(ruleId,tier,operation,target,coach,why,proposedOverride,swapDetail){
+  const r=RULE_BY_ID[ruleId];
+  return {ruleId,tier,operation,targetId:target.id,coach,why,
+    ruleName:r.name,src:r.src,lvl:r.lvl,lvlLabel:r.lvlLabel,
+    proposed:proposedOverride||proposeChange(operation,target),
+    swap:swapDetail||null};
+}
+function proposeChange(op,target){
+  if(op==="move"){
+    // move to +2 days, keep slot; if that lands on a fixed day, +1 more
+    let nd=addDays(new Date(target.date),2);
+    return {date:nd.toISOString()};
+  }
+  if(op==="reduce") return {reduced:true};
+  if(op==="remove") return {status:"removed"};
+  return {};
+}
+/* ---------- Übungsebene: Substitution statt ganze Einheit anfassen ---------- */
+function passesConstraints(e,profile){
+  return (profile.constraints||[]).every(c=>{
+    if(c.region==="knee") return c.level==="red" ? e.knee===null : e.knee!=="deep";
+    return (e.load[c.region]||0) < (c.level==="red"?2:3);
+  });
+}
+function swapProposal(pl,regions,profile){
+  const ids=pl.exercises||[]; if(ids.length<2) return null;
+  const hits=id=>{ const e=EX_BY_ID[id]; return !!e&&regions.some(r=>(e.load[r]||0)>=2); };
+  const drop=ids.filter(hits), keep=ids.filter(id=>!hits(id));
+  if(!drop.length) return null;
+  if(drop.length>keep.length) return null; // Session wäre ausgehöhlt -> move/reduce ist die ehrlichere Intervention
+  const unitCats=UNIT_CATS[pl.unit]||[pl.unit];
+  const taken=new Set(keep); const repl=[];
+  drop.forEach(id=>{
+    const orig=EX_BY_ID[id];
+    const ok=x=>!regions.some(r=>(x.load[r]||0)>=2)&&!taken.has(x.id)&&x.id!==id&&passesConstraints(x,profile);
+    const cand=EXERCISES.find(x=>x.cat===orig.cat&&ok(x)) || EXERCISES.find(x=>unitCats.includes(x.cat)&&ok(x));
+    if(cand){ repl.push(cand.id); taken.add(cand.id); }
+  });
+  return {drop,keep,repl,proposed:[...keep,...repl]};
+}
+function exNames(ids){ return ids.map(id=>EX_BY_ID[id]?EX_BY_ID[id].name:id).join(", "); }
+/* ---------- Machbarkeit pro Übung: was geht HEUTE (bzw. am gewählten Tag)? ----------
+   Speist sich aus denselben Signalen wie die Regeln: R2 Constraints, R1 Schmerz,
+   R5 Ermüdung, R4 Exzentrik-Fenster. level: fresh|caution|stop + Gründe. */
+const READY_RANK={fresh:0,caution:1,stop:2};
+function lastEccLog(db){ return db.logs.filter(l=>SPORTS[l.sportId].flags.eccentric)
+  .sort((a,b)=>new Date(b.date)-new Date(a.date))[0]||null; }
+function exerciseReadiness(exId,when,db){
+  const e=EX_BY_ID[exId]; if(!e) return {level:"fresh",reasons:[]};
+  let level="fresh"; const reasons=[];
+  const bump=(lv,why)=>{ if(READY_RANK[lv]>READY_RANK[level]) level=lv; reasons.push(why); };
+  // R2 — Constraints (strukturell, zeitunabhängig)
+  (db.profile.constraints||[]).forEach(c=>{
+    if(c.region==="knee"){
+      if(e.knee==null) return;
+      if(c.level==="red") bump("stop","Knie gesperrt (Constraint)");
+      else if(e.knee==="deep") bump("stop","Beugetiefe zu tief fürs Knie");
+      else bump("caution","Knie-Constraint: moderate Beugetiefe");
+    } else {
+      const L=e.load[c.region]||0;
+      if(L>=2&&c.level==="red") bump("stop",REGION_LABELS[c.region]+" gesperrt (Constraint)");
+      else if(L>=3&&c.level==="yellow") bump("caution",REGION_LABELS[c.region]+"-Constraint (gelb)");
+    }
+  });
+  // R1 — Schmerz (36-h-Fenster)
+  db.pain.filter(p=>hoursBetween(p.ts,NOW)<=36).forEach(p=>{
+    const L=e.load[p.region]||0; if(L<2) return;
+    if(p.nrs>5) bump("stop","Schmerz "+REGION_LABELS[p.region]+" (NRS "+p.nrs+")");
+    else if(p.nrs>=3) bump("caution","Schmerz "+REGION_LABELS[p.region]+" (NRS "+p.nrs+")");
+  });
+  // R5 — Ermüdung (müde 48 h / platt 72 h relativ zum Zieltermin)
+  Object.keys(e.load).forEach(region=>{
+    if((e.load[region]||0)<2||region==="systemic") return;
+    const f=latestFatigue(db,region); if(!f||f.level==="fresh") return;
+    const h=hoursBetween(when,f.ts);
+    if(f.level==="stop"&&h<=72) bump("stop",REGION_LABELS[region]+" platt");
+    else if(f.level==="caution"&&h<=48) bump("caution",REGION_LABELS[region]+" müde");
+  });
+  // R4 — Exzentrik-Fenster (Bergtag): Beinregionen bis 48 h nach Abstieg
+  const ecc=lastEccLog(db);
+  if(ecc){
+    const after=(new Date(when)-new Date(ecc.date))/36e5;
+    if(after>=0&&after<48){
+      const legL=Math.max(e.load.quads||0,e.load.posterior_chain||0,e.load.calves||0);
+      if(legL>=3) bump("stop","Bergtag vor "+Math.round(after)+" h – Beine im DOMS-Fenster");
+      else if(legL>=2) bump("caution","Bergtag vor "+Math.round(after)+" h");
+    }
+  }
+  return {level,reasons};
+}
+
+
+</script>
+<script>
+/* ============================================================
+   TESTS — datengetrieben: jede liefert {input, expected, actual, pass}
+   ============================================================ */
+function freshDb(){ _idc=1; return seed(); }
+function fmtSug(s){ return s.ruleId+" "+s.operation+" → "+(s._t||""); }
+function sugList(db,sugs){ return sugs.map(s=>{ const t=db.planned.find(p=>p.id===s.targetId)||{};
+  return s.ruleId+" · "+s.operation+" → "+(SPORTS[t.sportId]?SPORTS[t.sportId].name:"?")+(t.unit?" ("+t.unit+")":"")+(t.fixed?" [FIX]":""); }).join("\n"); }
+
+const TESTS=[
+{id:"T01",rule:"Lastmodell",title:"ACWR-Mathematik: bekannte Fixture ⇒ Ratio exakt 1.00",
+ desc:"Vier identische Einheiten (100 min · sRPE 6 = TL 600) im Abstand von je 7 Tagen. Akut-Fenster (7 d) enthält genau eine, das chronische Fenster (28 d) alle vier ⇒ chronischer Wochenschnitt 600, Ratio 600/600 = 1.00.",
+ run(){
+   const mk=(dAgo)=>({id:"x"+dAgo,sportId:"running",date:new Date(Date.now()-dAgo*864e5).toISOString(),duration:100,sRPE:6});
+   const logs=[mk(3),mk(10),mk(17),mk(24)];
+   const a=acwr(logs,new Date());
+   const input="logs = 4 × (100 min · sRPE 6) @ vor 3 / 10 / 17 / 24 Tagen\nsrpeTL je Einheit = 6 × 100 = 600";
+   const expected="acute = 600\nchronicWk = 2400 / 4 = 600\nratio = 1.00";
+   const actual="acute = "+Math.round(a.acute)+"\nchronicWk = "+Math.round(a.chronicWk)+"\nratio = "+a.ratio.toFixed(2);
+   return {input,expected,actual,pass:Math.round(a.acute)===600&&Math.round(a.chronicWk)===600&&a.ratio.toFixed(2)==="1.00"};
+ }},
+{id:"T02",rule:"Engine",title:"Demo-Seed erzeugt genau 3 Vorschläge (R3, R4, R7)",
+ desc:"Reha-Rückkehr-Szenario: 4 Wochen reduzierte Basis, Bergtag (1150 hm) vor 30 h, harte Fingersession vor 20 h, volle geplante Woche. Erwartung: genau drei Interventionen, keine mehr, keine weniger.",
+ run(){
+   const db=freshDb(); const sugs=evaluate(db);
+   const rules=sugs.map(s=>s.ruleId).sort().join(",");
+   const input="seed(): 17 Logs (28 d) · 6 geplante Einheiten · Bergtag −30 h · harte Finger −20 h";
+   const expected="3 Vorschläge: R3, R4, R7";
+   const actual=sugs.length+" Vorschläge: "+rules+"\n"+sugList(db,sugs);
+   return {input,expected,actual,pass:sugs.length===3&&rules==="R3,R4,R7"};
+ }},
+{id:"T03",rule:"R3",title:"Fingerlast <48 h ⇒ fixes Bouldern wird abgeschwächt, nie verschoben",
+ desc:"Harte Fingersession vor 20 h, heutiges Bouldern (fix) in ~3 h ⇒ Abstand ~23 h < 48 h. Fix schützt den Termin, also muss die Intervention 'reduce' sein.",
+ run(){
+   const db=freshDb(); const sugs=evaluate(db);
+   const s=sugs.find(x=>x.ruleId==="R3"); const t=s&&db.planned.find(p=>p.id===s.targetId);
+   const input="lastFinger = Bouldern (hardFingerLoad) vor 20 h\ngeplant: Bouldern HEUTE, fixed=true, in ~3 h ⇒ Abstand ~23 h";
+   const expected="R3 · operation=reduce · Ziel=Bouldern (fix)";
+   const actual=s?("R3 · operation="+s.operation+" · Ziel="+(t?SPORTS[t.sportId].name+(t.fixed?" (fix)":""):"?")):"kein R3-Vorschlag";
+   return {input,expected,actual,pass:!!s&&s.operation==="reduce"&&!!t&&t.fixed&&t.sportId==="bouldering"};
+ }},
+{id:"T04",rule:"R4",title:"Bergtag vor 30 h + reine Beineinheit in 12 h ⇒ Verschieben",
+ desc:"Reine Beineinheit (alle Übungen belasten Beinregionen) 42 h nach 1150 hm Abstieg – innerhalb des DOMS-Fensters. Swap würde die Einheit aushöhlen (drop > keep), also greift der Fallback: move.",
+ run(){
+   const db=freshDb(); const sugs=evaluate(db);
+   const s=sugs.find(x=>x.ruleId==="R4"); const t=s&&db.planned.find(p=>p.id===s.targetId);
+   const input="lastEcc = Bergtag 1150 hm vor 30 h ⇒ Fenster 48–72 h aktiv\ngeplant: Kraft legs in ~12 h ⇒ 42 h nach Abstieg (< 48 h)\nÜbungen: alle mit Bein-Load ≥2 ⇒ Swap-Guard greift";
+   const expected="R4 · operation=move · Ziel=Kraft (legs)";
+   const actual=s?("R4 · operation="+s.operation+" · Ziel="+(t?SPORTS[t.sportId].name+" ("+t.unit+")":"?")):"kein R4-Vorschlag";
+   return {input,expected,actual,pass:!!s&&s.operation==="move"&&!!t&&t.unit==="legs"};
+ }},
+{id:"T05",rule:"R7",title:"Projizierte ACWR > 1.5 ⇒ beweglichster Baustein (Lauf) wird gestrichen",
+ desc:"Niedrige chronische Basis (Reha) + volle geplante Woche ⇒ die Projektion ans Horizontende springt über 1.5. Bergtag und Boulderabende sind fix – nur der Lauf ist frei beweglich.",
+ run(){
+   const db=freshDb(); const sugs=evaluate(db);
+   const s=sugs.find(x=>x.ruleId==="R7"); const t=s&&db.planned.find(p=>p.id===s.targetId);
+   const m=s&&s.coach.match(/≈ ([\d.]+)/);
+   const input="chronicWk ≈ 2245 (reduzierte Basis)\nprojizierte Akut-Last = Logs im 7-d-Fenster am Horizontende + geplante Einheiten";
+   const expected="R7 · operation=remove · Ziel=Laufen (nicht fix) · proj. Ratio > 1.5";
+   const actual=s?("R7 · operation="+s.operation+" · Ziel="+(t?SPORTS[t.sportId].name:"?")+" · proj. Ratio ≈ "+(m?m[1]:"?")):"kein R7-Vorschlag";
+   return {input,expected,actual,pass:!!s&&s.operation==="remove"&&!!t&&t.sportId==="running"&&!!m&&parseFloat(m[1])>1.5};
+ }},
+{id:"T06",rule:"Fix-Schutz",title:"Keine Regel darf eine fixe Einheit verschieben oder streichen",
+ desc:"Invariante über alle Vorschläge des Seeds: Auf fixe Einheiten sind nur inhaltliche Eingriffe (reduce, swap) erlaubt – nie move oder remove.",
+ run(){
+   const db=freshDb(); const sugs=evaluate(db);
+   const bad=sugs.filter(s=>{ const t=db.planned.find(p=>p.id===s.targetId); return t&&t.fixed&&(s.operation==="move"||s.operation==="remove"); });
+   const input="alle Seed-Vorschläge geprüft:\n"+sugList(db,sugs);
+   const expected="0 Verstöße (move/remove auf fix)";
+   const actual=bad.length+" Verstöße"+(bad.length?": "+bad.map(s=>s.ruleId+" "+s.operation).join(", "):"");
+   return {input,expected,actual,pass:bad.length===0};
+ }},
+{id:"T07",rule:"Mutation",title:"Verschieben annehmen ⇒ R4 feuert nicht erneut",
+ desc:"Der move-Vorschlag legt die Beineinheit +2 Tage ⇒ 90 h nach dem Abstieg, außerhalb des Fensters. Nach der Mutation darf R4 auf diese Einheit nicht erneut anschlagen.",
+ run(){
+   const db=freshDb(); let sugs=evaluate(db);
+   const r4=sugs.find(s=>s.ruleId==="R4"); const t=db.planned.find(p=>p.id===r4.targetId);
+   const before=new Date(t.date); Object.assign(t,r4.proposed); sugs=evaluate(db);
+   const input="accept: Object.assign(legs, proposed)\nvorher: "+before.toISOString().slice(0,16)+"\nnachher: "+t.date.slice(0,16);
+   const expected="kein R4-Vorschlag mehr auf diese Einheit";
+   const actual=sugs.some(s=>s.ruleId==="R4")?"R4 feuert erneut":"kein R4 mehr · verbleibend: "+(sugs.map(s=>s.ruleId).join(", ")||"–");
+   return {input,expected,actual,pass:!sugs.some(s=>s.ruleId==="R4")};
+ }},
+{id:"T08",rule:"Ablehnung",title:"Abgelehnter Vorschlag kommt nie wieder",
+ desc:"Ablehnen speichert den Key (Regel|Ziel) in db.rejected. Bei jeder Neubewertung wird dieser Key übersprungen – der Coach nervt nicht doppelt.",
+ run(){
+   const db=freshDb(); let sugs=evaluate(db);
+   const first=sugs[0]; db.rejected[first.key]="fit"; sugs=evaluate(db);
+   const input="rejected['"+first.key+"'] = 'fit'";
+   const expected="Key erscheint in keiner Neubewertung mehr";
+   const actual=sugs.some(s=>s.key===first.key)?"Vorschlag erneut da":"Vorschlag dauerhaft unterdrückt · verbleibend: "+sugs.length;
+   return {input,expected,actual,pass:!sugs.some(s=>s.key===first.key)};
+ }},
+{id:"T09",rule:"R1 · Priorität",title:"Schmerz NRS 7 schlägt R3 auf demselben Ziel (Dedupe)",
+ desc:"Fingerschmerz NRS 7 und Finger-Erholung (R3) zielen beide auf das heutige Bouldern. Die Prioritätshierarchie (R1 = Tier 1) muss gewinnen; da die Einheit fix ist: reduce statt remove.",
+ run(){
+   const db=freshDb(); db.pain.push({id:"p1",region:"fingers",nrs:7,ts:new Date().toISOString()});
+   const sugs=evaluate(db);
+   const boulder=db.planned.find(p=>p.sportId==="bouldering"&&p.fixed);
+   const winner=sugs.find(s=>s.targetId===boulder.id);
+   const input="pain = {region: fingers, NRS 7, jetzt}\nKonkurrent: R3 (Fingerlast vor 20 h) auf dasselbe Ziel";
+   const expected="Gewinner am Ziel: R1 · reduce · R1 ist erster Vorschlag der Liste";
+   const actual="Gewinner: "+(winner?winner.ruleId+" · "+winner.operation:"?")+" · erster: "+(sugs[0]?sugs[0].ruleId:"?");
+   return {input,expected,actual,pass:!!winner&&winner.ruleId==="R1"&&winner.operation==="reduce"&&sugs[0].ruleId==="R1"};
+ }},
+{id:"T10",rule:"R5",title:"Schulter platt ⇒ Push-Einheit wird verschoben (Swap unmöglich)",
+ desc:"3 von 4 Push-Übungen laden die Schulter ≥2 ⇒ Swap würde die Einheit aushöhlen (Guard). Fallback bei 'platt': move.",
+ run(){
+   const db=freshDb(); db.fatigue.push(mkFat("shoulder","stop",new Date()));
+   const sugs=evaluate(db);
+   const s=sugs.find(x=>{ const t=db.planned.find(p=>p.id===x.targetId); return x.ruleId==="R5"&&t&&t.unit==="push"; });
+   const t=s&&db.planned.find(p=>p.id===s.targetId);
+   const input="fatigue = {shoulder, platt, jetzt}\nPush-Übungen: "+exNames(db.planned.find(p=>p.unit==="push").exercises);
+   const expected="R5 · operation=move · Ziel=Kraft (push)";
+   const actual=s?("R5 · operation="+s.operation+" · Ziel=Kraft ("+t.unit+")"):"kein R5 auf push";
+   return {input,expected,actual,pass:!!s&&s.operation==="move"};
+ }},
+{id:"T11",rule:"R2 · Generator",title:"Knie rot ⇒ Beineinheit ohne einzige Knie-belastende Übung",
+ desc:"Rotes Knie-Constraint sperrt alle Übungen mit Knie-Flexions-Tag. Die Legs-Einheit darf nur noch Core-Inhalte bauen.",
+ run(){
+   const db=freshDb(); db.profile.constraints=[{id:"k",region:"knee",level:"red"}];
+   const units=generateStrength(db.profile); const legs=units.find(u=>u.unit==="legs");
+   const bad=(legs?legs.exercises:[]).filter(id=>EX_BY_ID[id].knee!==null);
+   const input="constraints = [{knee, rot}] · Split PPL ohne Pull";
+   const expected="legs-Einheit: 0 Übungen mit knee-Tag";
+   const actual="legs = "+exNames(legs?legs.exercises:[])+"\nmit knee-Tag: "+bad.length;
+   return {input,expected,actual,pass:bad.length===0};
+ }},
+{id:"T12",rule:"R2 · Generator",title:"Constraint Schulter rot ⇒ Push ohne Schulter-Loader ≥2",
+ desc:"Generische Constraints (nicht nur Knie): rot sperrt die Region ⇒ jede Übung mit load[shoulder] ≥ 2 fliegt aus dem Pool.",
+ run(){
+   const db=freshDb(); db.profile.constraints.push({id:"s",region:"shoulder",level:"red"});
+   const units=generateStrength(db.profile); const push=units.find(u=>u.unit==="push");
+   const bad=push.exercises.filter(id=>(EX_BY_ID[id].load.shoulder||0)>=2);
+   const input="constraints += [{shoulder, rot}]";
+   const expected="push-Einheit: alle Übungen mit load[shoulder] < 2";
+   const actual="push = "+exNames(push.exercises)+"\nVerstöße: "+bad.length;
+   return {input,expected,actual,pass:bad.length===0};
+ }},
+{id:"T13",rule:"Lastmodell",title:"Geloggte / ausgefallene Einheiten zählen nicht doppelt",
+ desc:"Nach dem Loggen steckt die reale Last im Log. Der Plan-Eintrag (status=logged) muss aus Projektion und Regelprüfung verschwinden – sonst zählt die Session doppelt in die ACWR-Prognose.",
+ run(){
+   const db=freshDb();
+   const b=db.planned.find(p=>p.sportId==="bouldering"&&p.fixed); b.status="logged";
+   const r=db.planned.find(p=>p.sportId==="running"); r.status="skipped";
+   const fp=futurePlanned(db);
+   const leak=fp.filter(p=>p.status==="logged"||p.status==="skipped");
+   const input="bouldering.status='logged' · running.status='skipped'";
+   const expected="futurePlanned enthält keine davon · R3 zielt nicht mehr aufs geloggte Bouldern";
+   const sugs=evaluate(db);
+   const r3leak=sugs.some(s=>s.targetId===b.id);
+   const actual="Leaks in futurePlanned: "+leak.length+" · R3 auf geloggtes Bouldern: "+(r3leak?"ja":"nein");
+   return {input,expected,actual,pass:leak.length===0&&!r3leak};
+ }},
+{id:"T14",rule:"R4 · Übungsebene",title:"Full Body nach Bergtag ⇒ nur Beinübungen raus, Rest bleibt",
+ desc:"Das Feedback-Beispiel: gemischte Full-Body-Einheit im DOMS-Fenster. Statt die ganze Einheit zu verschieben, tauscht die Engine nur die Übungen, die Quads / hintere Kette / Waden ≥2 laden.",
+ run(){
+   const db=freshDb(); const l=db.planned.find(p=>p.unit==="legs");
+   l.unit="full"; l.exercises=["barbell_bench_press","single_arm_row","back_squat","plank"];
+   const sugs=evaluate(db); const s=sugs.find(x=>x.ruleId==="R4");
+   const input="Einheit (full, in 12 h · 42 h nach 1150 hm):\n· Bench Press (chest)\n· Single-Arm Row (upper_back)\n· Back Squat (quads 3) ← betroffen\n· Plank (core)";
+   const expected="operation=swap · Raus: Back Squat · Bench/Row/Plank bleiben · Ersatz lädt keine Beinregion ≥2";
+   const legRegs=["quads","posterior_chain","calves"];
+   const ok=!!s&&s.operation==="swap"&&s.swap.drop.includes("back_squat")
+     &&s.swap.keep.length===3
+     &&s.proposed.exercises.every(id=>!legRegs.some(rg=>(EX_BY_ID[id].load[rg]||0)>=2));
+   const actual=s?("operation="+s.operation+"\nRaus: "+exNames(s.swap.drop)+"\nRein: "+(s.swap.repl.length?exNames(s.swap.repl):"–")+"\nBleibt: "+exNames(s.swap.keep)):"kein R4";
+   return {input,expected,actual,pass:ok};
+ }},
+{id:"T15",rule:"R4 · Übungsebene",title:"Swap-Grenze: reine Beineinheit wird NICHT ausgehöhlt",
+ desc:"Wenn mehr als die Hälfte der Übungen betroffen wäre, ist Tauschen unehrlich – die Einheit wäre nicht mehr sie selbst. Dann bleibt die Engine bei move/reduce.",
+ run(){
+   const db=freshDb(); const sugs=evaluate(db);
+   const s=sugs.find(x=>x.ruleId==="R4"); const t=s&&db.planned.find(p=>p.id===s.targetId);
+   const ex=db.planned.find(p=>p.unit==="legs").exercises;
+   const input="legs-Einheit: "+exNames(ex)+"\nalle 4 laden Beinregionen ≥2 ⇒ drop(4) > keep(0)";
+   const expected="operation=move (kein swap)";
+   const actual=s?"operation="+s.operation:"kein R4";
+   return {input,expected,actual,pass:!!s&&s.operation==="move"};
+ }},
+{id:"T16",rule:"R5 · Übungsebene",title:"Oberkörper nach Bouldern ⇒ weniger / kein Pull",
+ desc:"Das zweite Feedback-Beispiel: oberer Rücken müde vom Bouldern, geplante Upper-Session. Nur der schwere Pull-Anteil (Barbell Row) wird getauscht – Curl (Ellbogen/Unterarm) bleibt.",
+ run(){
+   const db=freshDb(); db.fatigue.push(mkFat("upper_back","caution",new Date()));
+   const u=db.planned.find(p=>p.unit==="push");
+   u.unit="upper"; u.exercises=["barbell_bench_press","overhead_press","barbell_row","barbell_curl"];
+   const sugs=evaluate(db); const s=sugs.find(x=>x.ruleId==="R5"&&x.targetId===u.id);
+   const input="fatigue = {upper_back, müde}\nUpper-Session: Bench · OHP · Barbell Row (upper_back 3) · Curl";
+   const expected="operation=swap · Raus: Barbell Row · Curl bleibt · Ergebnis lädt upper_back < 2";
+   const ok=!!s&&s.operation==="swap"&&s.swap.drop.includes("barbell_row")&&!s.swap.drop.includes("barbell_curl")
+     &&s.proposed.exercises.every(id=>(EX_BY_ID[id].load.upper_back||0)<2);
+   const actual=s?("operation="+s.operation+"\nRaus: "+exNames(s.swap.drop)+"\nRein: "+(s.swap.repl.length?exNames(s.swap.repl):"–")):"kein R5-Swap";
+   return {input,expected,actual,pass:ok};
+ }},
+{id:"T17",rule:"Machbarkeit",title:"Übungs-Machbarkeit ist datumsabhängig: Bergtag-Fenster läuft ab",
+ desc:"Die Machbarkeits-Ampel pro Übung (Session-Editor) berechnet für den GEWÄHLTEN Tag: Back Squat ist 42 h nach dem Bergtag gesperrt (DOMS-Fenster + Beugetiefe), Bench ist frei. 4 Tage später ist das Bergtag-Fenster abgelaufen – nur der strukturelle Knie-Constraint bleibt.",
+ run(){
+   const db=freshDb();
+   const H=h=>new Date(Date.now()+h*36e5);
+   const early=exerciseReadiness("back_squat",H(12),db);
+   const late=exerciseReadiness("back_squat",H(96),db);
+   const bench=exerciseReadiness("barbell_bench_press",H(12),db);
+   const input="Kontext: Bergtag 1150 hm vor 30 h · Knie-Constraint gelb · Quads müde\nÜbung: Back Squat (quads 3, knee deep) vs. Bench Press";
+   const expected="Back Squat @+12 h: stop (Bergtag im Fenster)\nBack Squat @+4 d: Bergtag-Grund weg, Knie-Grund bleibt\nBench @+12 h: fresh";
+   const actual="Back Squat @+12 h: "+early.level+" ["+early.reasons.join(" · ")+"]\nBack Squat @+4 d: "+late.level+" ["+late.reasons.join(" · ")+"]\nBench @+12 h: "+bench.level;
+   const ok=early.level==="stop"&&early.reasons.some(r=>/Bergtag/.test(r))
+     &&!late.reasons.some(r=>/Bergtag/.test(r))&&late.reasons.some(r=>/Knie|Beugetiefe/.test(r))
+     &&bench.level==="fresh";
+   return {input,expected,actual,pass:ok};
+ }},
+];
+
+/* ---------- Runner + Render ---------- */
+const results=TESTS.map(t=>{ let r;
+  try{ r=t.run(); }catch(e){ r={input:"(Fehler beim Ausführen)",expected:"—",actual:"EXCEPTION: "+e.message,pass:false}; }
+  return Object.assign({},t,r); });
+const nPass=results.filter(r=>r.pass).length, nFail=results.length-nPass;
+
+document.getElementById("summary").innerHTML=
+  `<span class="sum-chip pass"><span class="mark m-pass"></span>${nPass} PASS</span>`+
+  (nFail?`<span class="sum-chip fail"><span class="mark m-fail"></span>${nFail} FAIL</span>`:"");
+document.getElementById("meta").textContent=
+  "Lauf: "+new Date().toLocaleString("de-DE")+" · "+results.length+" Szenario-Tests · Regel-Engine, Lastmodell, Generator, Prioritäten, Übungsebene";
+
+const groups=[["Lastmodell & Engine",["T01","T02","T13"]],["Regeln R1–R7",["T03","T04","T05","T09","T10"]],
+  ["Schutzmechanismen & Lernen",["T06","T07","T08"]],["Generator & Constraints",["T11","T12"]],
+  ["Übungsebene (neu)",["T14","T15","T16","T17"]]];
+const byId=Object.fromEntries(results.map(r=>[r.id,r]));
+document.getElementById("tests").innerHTML=groups.map(([lbl,ids])=>
+  `<div class="group-lbl">${lbl}</div>`+ids.map(id=>{ const r=byId[id];
+    return `<div class="trow ${r.pass?"":"fail"}" id="row-${r.id}">
+      <div class="trow-head" onclick="document.getElementById('row-${r.id}').classList.toggle('open')" tabindex="0" role="button" aria-expanded="false">
+        <span class="mark ${r.pass?"m-pass":"m-fail"}"></span>
+        <span class="tid">${r.id}</span>
+        <span class="ttl">${r.title}</span>
+        <span class="rule-chip">${r.rule}</span>
+        <span class="caret">›</span>
+      </div>
+      <div class="trow-body">
+        <div class="d-sec"><div class="d-lbl">Was wird getestet</div><div class="d-txt">${r.desc}</div></div>
+        <div class="d-sec"><div class="d-lbl">Input</div><pre class="d-block">${r.input}</pre></div>
+        <div class="d-sec"><div class="d-lbl">Expected</div><pre class="d-block exp">${r.expected}</pre></div>
+        <div class="d-sec"><div class="d-lbl">Actual</div><pre class="d-block ${r.pass?"act-pass":"act-fail"}">${r.actual}</pre></div>
+      </div>
+    </div>`; }).join("")).join("");
+</script>
+</body>
+</html>
