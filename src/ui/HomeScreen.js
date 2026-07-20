@@ -1,10 +1,10 @@
 import { html } from './html.js';
-import { acwr, acwrZone } from '../engine/acwr.js';
+import { acwr } from '../engine/acwr.js';
 import { wdShort, isSameDay } from '../engine/time.js';
 import { REGION_LABELS, FAT_LABELS } from '../engine/texts.js';
 import { catalogOf } from '../engine/catalog.js';
 import { sportUi } from './sportsUi.js';
-import { nextLoggable, currentRegionStatus, upcomingSessions, ridgeData, MONTHS } from './helpers.js';
+import { nextLoggable, currentRegionStatus, upcomingSessions, ridgeData, MONTHS, zoneWording, needsOnboarding } from './helpers.js';
 
 function Ridge({ state, now }) {
   const r = ridgeData(state, now);
@@ -27,14 +27,14 @@ function Ridge({ state, now }) {
     </div>`;
 }
 
-export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek }) {
+export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onAdd, onRegenerate }) {
   const cat = catalogOf(state);
   const a = acwr(state.logs, now);
-  const zone = acwrZone(a.ratio);
-  const zoneWord = { fresh: 'Im grünen Bereich', caution: a.ratio < 0.8 ? 'Untertrainiert' : 'Erhöht – aufpassen', stop: 'Überlast' }[zone];
+  const { zone, word: zoneWord, ratioLabel } = zoneWording(a);
   const next = nextLoggable(state, now);
   const regs = currentRegionStatus(state, now);
   const up = upcomingSessions(state, now);
+  const onboarding = needsOnboarding(state);
 
   return html`
     <div class="home-top">
@@ -47,11 +47,18 @@ export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek }) {
     <div class="ridge-card">
       <div class="rc-head">
         <div><div class="rc-label">Wochenlast</div><h2>${zoneWord}</h2></div>
-        <button class="acwr-chip z-${zone}" onClick=${onAcwr} aria-label="Was ist ACWR?"><span class="v">${a.ratio.toFixed(2)}</span><span class="l">ACWR ⓘ</span></button>
+        <button class="acwr-chip z-${zone}" onClick=${onAcwr} aria-label="Was ist ACWR?"><span class="v">${ratioLabel}</span><span class="l">ACWR ⓘ</span></button>
       </div>
       <${Ridge} state=${state} now=${now} />
     </div>
-    ${next ? html`
+    ${onboarding ? html`
+      <div class="settings-card" style="margin-top:16px">
+        <div class="f-lbl">Erste Woche planen</div>
+        <p class="subtle" style="margin-bottom:12px">Noch nichts geplant. Lass den Generator einen Kraftplan bauen – oder leg direkt eine Einheit an. Fixe Termine (Boulderabend, Bergtag) markierst du mit 📌.</p>
+        <button class="act-btn primary" onClick=${onRegenerate}>Kraftplan generieren</button>
+        <button class="act-btn" onClick=${() => onAdd(0, 'evening')}>＋ Einheit planen</button>
+      </div>` : ''}
+    ${!onboarding && next ? html`
       <button class="log-cta" onClick=${() => onLog(next.id)}>
         <div class="lc-left">
           <span class="lc-k">${isSameDay(next.date, now) ? 'Heute geplant' : wdShort(next.date) + ' geplant'}</span>
@@ -60,7 +67,8 @@ export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek }) {
         </div>
         <span class="lc-icon" aria-hidden="true">+</span>
       </button>`
-    : html`<div class="mini-card" style="margin-top:16px"><span class="mc-emoji">✓</span><div class="mc-body"><div class="mc-t">Alles geloggt</div><div class="mc-s">Keine offene Einheit</div></div></div>`}
+    : ''}
+    ${!onboarding && !next ? html`<div class="mini-card" style="margin-top:16px"><span class="mc-emoji">✓</span><div class="mc-body"><div class="mc-t">Alles geloggt</div><div class="mc-s">Keine offene Einheit</div></div></div>` : ''}
     <button class="ghost-cta" onClick=${onCheckin}>
       <div style="text-align:left"><div class="g-k">Guten Morgen</div><div>Check-in · 30 Sekunden</div></div>
       <span>→</span>
@@ -69,7 +77,7 @@ export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek }) {
     <div class="region-strip">
       ${regs.map((x) => html`<span class="rpill"><span class="mark m-${x.level}"></span>${REGION_LABELS[x.r]} · ${FAT_LABELS[x.level]}</span>`)}
     </div>
-    <div class="sec-title"><h3>Diese Woche</h3><button class="link" onClick=${onGoWeek}>Alle ansehen</button></div>
+    ${up.length ? html`<div class="sec-title"><h3>Diese Woche</h3><button class="link" onClick=${onGoWeek}>Alle ansehen</button></div>` : ''}
     ${up.map((p) => {
       const ui = sportUi(p.sportId);
       const cls = (p.fixed ? 'fixed ' : '') + (p.status === 'removed' ? 'removed ' : '') + (p.loggedId ? 'done ' : '');

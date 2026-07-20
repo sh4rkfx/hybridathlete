@@ -230,7 +230,9 @@ export function App() {
       onLog=${(id) => setOverlay({ kind: 'log', plannedId: id })}
       onCheckin=${() => setOverlay({ kind: 'checkin' })}
       onAcwr=${() => setOverlay({ kind: 'acwr' })}
-      onGoWeek=${() => setScreen('week')} />`,
+      onGoWeek=${() => setScreen('week')}
+      onAdd=${openAdd}
+      onRegenerate=${settingsActions.regenerate} />`,
     week: () => html`<${WeekView} state=${state} now=${now} onEdit=${openEdit} onAdd=${openAdd} onMove=${moveSession} suppressTapRef=${suppressTapRef} />`,
     inbox: () => html`<${SuggestionInbox} state=${state} onAccept=${acceptSug} onReject=${rejectSug} />`,
     rules: () => html`<${RulebookScreen} state=${state} />`,

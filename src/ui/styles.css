@@ -45,6 +45,8 @@ h1.title{font-family:var(--font-display);font-weight:400;font-size:22px;letter-s
 .acwr-chip.z-fresh{background:var(--fresh-dim);border-color:rgba(52,214,166,.35)} .acwr-chip.z-fresh .v{color:var(--fresh)}
 .acwr-chip.z-caution{background:var(--caution-dim);border-color:rgba(242,184,75,.35)} .acwr-chip.z-caution .v{color:var(--caution)}
 .acwr-chip.z-stop{background:var(--stop-dim);border-color:rgba(255,97,136,.35)} .acwr-chip.z-stop .v{color:var(--stop)}
+/* neutral: first run without chronic base — no traffic-light judgement yet */
+.acwr-chip.z-neutral{background:var(--surface-2);border-color:var(--border-strong)} .acwr-chip.z-neutral .v{color:var(--text-mid)}
 .ridge-wrap{margin:14px -18px -12px;position:relative}
 .ridge-wrap svg{display:block;width:100%;height:118px}
 .ridge-days{display:flex;justify-content:space-between;padding:6px 18px 4px;font-family:var(--font-mono);font-size:10px;color:var(--text-low)}
