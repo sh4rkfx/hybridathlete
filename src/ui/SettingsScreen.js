@@ -10,7 +10,7 @@ import { generateStrength, splitCoverageGaps, splitHint } from '../engine/genera
 import { exerciseReadiness } from '../engine/readiness.js';
 import { GarminImport } from './GarminImport.js';
 import { PlanAdvisor } from './PlanAdvisor.js';
-import { sportUi } from './sportsUi.js';
+import { SportGlyph } from './sportsUi.js';
 import { initialSetupSection } from './helpers.js';
 
 function Why({ children }) {
@@ -46,7 +46,7 @@ export function SettingsScreen({ state, now, actions, toast }) {
     return lv === 'fresh' ? '●' : lv === 'caution' ? '◆' : '■';
   };
   const hint = splitHint(p);
-  const activeSports = (p.activeSports ?? []).map((id) => sportUi(id).emoji).join(' ');
+  const activeSports = p.activeSports ?? [];
 
   return html`
     <div class="eyebrow">Setup</div><h1 class="title">Dein Plan</h1>
@@ -55,7 +55,7 @@ export function SettingsScreen({ state, now, actions, toast }) {
       <button class="stat-chip" onClick=${() => setOpen('manual')}><span class="k">Ziel</span> ${sc.label}</button>
       <button class="stat-chip" onClick=${() => setOpen('manual')}><span class="k">Split</span> ${SPLITS[p.split].label}${(p.disabledUnits || []).length ? ` − ${(p.disabledUnits || []).join('/')}` : ''}</button>
       <button class="stat-chip" onClick=${() => setOpen('advisor')}>${p.trainingDays ?? 3} Tage</button>
-      ${activeSports ? html`<button class="stat-chip" onClick=${() => setOpen('advisor')}>${activeSports}</button>` : ''}
+      ${activeSports.length ? html`<button class="stat-chip" onClick=${() => setOpen('advisor')}>${activeSports.map((id) => html`<${SportGlyph} id=${id} size=${16} />`)}</button>` : ''}
       ${(p.constraints || []).map((c) => html`<button class="stat-chip warn" onClick=${() => setOpen('manual')}>${REGION_LABELS[c.region]} · ${c.level === 'red' ? 'rot' : 'gelb'}</button>`)}
     </div>
 

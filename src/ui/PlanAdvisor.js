@@ -5,7 +5,7 @@ import { html } from './html.js';
 import { useState } from 'preact/hooks';
 import { recommendPlan } from '../engine/advisor.js';
 import { catalogOf, SPLITS } from '../engine/catalog.js';
-import { sportUi } from './sportsUi.js';
+import { sportUi, SportGlyph } from './sportsUi.js';
 import { WD } from '../engine/time.js';
 import { addDays, dOnly } from '../engine/time.js';
 
@@ -23,7 +23,7 @@ export function PlanAdvisor({ state, now, actions, toast }) {
 
   return html`<div>
     <div class="field"><div class="f-lbl">Ich mache außerdem</div><div class="opt-row">
-      ${otherSports.map((s) => html`<button class="opt ${active.includes(s.id) ? 'sel' : ''}" onClick=${() => { actions.toggleActiveSport(s.id); setRec(null); }}>${sportUi(s.id).emoji} ${s.name}</button>`)}
+      ${otherSports.map((s) => html`<button class="opt ${active.includes(s.id) ? 'sel' : ''}" onClick=${() => { actions.toggleActiveSport(s.id); setRec(null); }}><${SportGlyph} id=${s.id} /> ${s.name}</button>`)}
     </div></div>
     <div class="field"><div class="f-lbl">Krafttage pro Woche</div><div class="opt-row">
       ${[1, 2, 3, 4, 5].map((n) => html`<button class="opt ${days === n ? 'sel' : ''}" onClick=${() => { actions.setTrainingDays(n); setRec(null); }}>${n}</button>`)}
