@@ -16,6 +16,17 @@ const mkPlanned = (sportId, when, slot, fixed, extra = {}) => ({
   id: uid(), sportId, date: new Date(when).toISOString(), slot, fixed: !!fixed, status: 'planned', reduced: false, ...extra,
 });
 
+// Plausible demo working weights so set prefill + R9 progression are
+// experiencable immediately (story #50). Fallback 40 kg for anything else.
+const DEMO_WEIGHTS = {
+  barbell_bench_press: 62.5, incline_barbell_press: 55, dumbbell_bench_press: 26,
+  overhead_barbell_press: 42.5, seated_dumbbell_shoulder_press: 20, close_grip_bench_press: 50,
+  dumbbell_arnold_press: 18, dumbbell_lateral_raise: 10, db_overhead_triceps_extension: 22,
+  box_squat: 85, goblet_squat: 24, romanian_deadlift: 90, standing_calf_raise: 60,
+  conventional_deadlift: 100, barbell_hip_thrust: 80, seated_calf_raise: 50,
+  plank: 0, hanging_leg_raise: 0, ab_wheel_rollout: 0, db_side_bend: 20, pallof_press_band: 0,
+};
+
 export function loadDemoWeek(state, now) {
   state.logs = [];
   state.fatigue = [];
@@ -51,4 +62,23 @@ export function loadDemoWeek(state, now) {
   planned.push(mkPlanned('mountain_day', at(5, 9), 'morning', true, { hm: 1200 }));
   state.planned = planned;
   state.rejected = {};
+
+  // One past strength session per generated unit (a week ago) with real
+  // per-set rows — feeds prefill and the R9 progression demo (story #50).
+  state.setLogs = [];
+  [{ unit: legsUnit, daysAgo: 6 }, { unit: pushUnit, daysAgo: 8 }].forEach(({ unit, daysAgo }) => {
+    if (!unit) return;
+    const when = atHour(addDays(now, -daysAgo), 17);
+    const log = mkLog('strength', when, 60, 6, { sets: unit.exercises.map((exerciseId) => ({ exerciseId })) });
+    state.logs.push(log);
+    unit.exercises.forEach((exerciseId) => {
+      const w = DEMO_WEIGHTS[exerciseId] ?? 40;
+      [8, 7, 6].forEach((reps, i) => {
+        state.setLogs.push({
+          setId: uid(), logId: log.id, exerciseId, setIndex: i,
+          weight: w, reps, date: log.date, ...(i === 2 ? { rir: 2 } : {}),
+        });
+      });
+    });
+  });
 }

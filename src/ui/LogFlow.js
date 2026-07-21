@@ -10,6 +10,7 @@ import { catalogOf, GOAL_SCHEMES } from '../engine/catalog.js';
 import { exerciseReadiness } from '../engine/readiness.js';
 import { sportUi, SportGlyph } from './sportsUi.js';
 import { rpeMeta, fmtDur } from './helpers.js';
+import { prefillSets, incrementFor } from '../engine/progression.js';
 
 const defaultDur = (sportId) => sportId === 'mountain_day' ? 360 : sportId === 'running' ? 45 : sportId === 'strength' ? 60 : 90;
 
@@ -21,9 +22,14 @@ function buildSteps(sportId, loadSource) {
   return steps;
 }
 
+// Story #50: ctx.sets values are {included, sets:[{w,reps}], rir, ...} — only
+// included exercises count towards regions.
+const includedIds = (ctx) => Object.entries(ctx.sets).filter(([, c]) => c.included).map(([id]) => id);
+
 function painRegionsFor(ctx, cat) {
   if (ctx.loadSource === 'exercises') {
-    const ids = Object.keys(ctx.sets).length ? Object.keys(ctx.sets) : ((ctx.planned && ctx.planned.exercises) || []);
+    const inc = includedIds(ctx);
+    const ids = inc.length ? inc : ((ctx.planned && ctx.planned.exercises) || []);
     const set = new Set();
     ids.forEach((id) => {
       const e = cat.exById[id];
@@ -39,7 +45,7 @@ function painRegionsFor(ctx, cat) {
 function loadedRegions(ctx, cat) {
   if (ctx.loadSource === 'exercises') {
     const set = new Set();
-    Object.keys(ctx.sets).forEach((id) => {
+    includedIds(ctx).forEach((id) => {
       const e = cat.exById[id];
       if (e) Object.keys(e.load).forEach((r) => { if (e.load[r] >= 2) set.add(r); });
     });
@@ -94,7 +100,14 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
       fatigue: {}, pain: null,
       // Story #39: default is "done as planned" — every planned exercise starts
       // checked, the user unchecks what was skipped.
-      sets: sport.loadSource === 'exercises' ? Object.fromEntries((p?.exercises ?? []).map((id) => [id, true])) : {},
+      // Story #50: one entry per exercise with REAL sets (weight × reps),
+      // prefilled from history/R9 advice; included=true is the happy path.
+      sets: sport.loadSource === 'exercises'
+        ? Object.fromEntries((p?.exercises ?? []).map((id) => {
+          const pre = prefillSets(id, state, state.profile.goal);
+          return [id, { included: true, open: false, rir: pre.rir, source: pre.source, deltaKg: pre.deltaKg, sets: pre.sets, touched: pre.sets.map(() => false) }];
+        }))
+        : {},
       pickSport: false, editConfirm: false,
       steps: buildSteps(sportId, sport.loadSource),
     };
@@ -192,22 +205,61 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
       <div class="switch ${ctx.hardFingerLoad ? 'on' : ''}" onClick=${() => patch({ hardFingerLoad: !ctx.hardFingerLoad })} role="switch" aria-checked=${ctx.hardFingerLoad} tabindex="0"><span class="knob"></span></div></div>`;
   } else if (stepName === 'sets') {
     const exs = ((ctx.planned && ctx.planned.exercises) || []).map((id) => cat.exById[id]).filter(Boolean);
-    const done = Object.keys(ctx.sets).length;
-    // Story #39: checkboxes, everything pre-selected — the question is not
-    // "what did you tap?" but "what did you leave out?".
-    body = html`${kicker}<h2>Übungen</h2><p class="s-hint">Wie geplant vorausgewählt (${done}/${exs.length}) – <b>tippe ab, was du weggelassen hast</b>. Die Ampel zeigt den heutigen Zustand der Region.</p>
+    const included = exs.filter((e) => ctx.sets[e.id]?.included).length;
+    const fmtW = (w) => (Math.round(w * 100) / 100).toString().replace('.', ',');
+    // Story #50: real sets per exercise — collapsed summary, cascade prefill,
+    // one-tap RIR; unchecking an exercise strikes it from the log.
+    const patchEx = (id, fn) => {
+      const sets = { ...ctx.sets };
+      const c = { ...sets[id], sets: sets[id].sets.map((s) => ({ ...s })), touched: [...sets[id].touched] };
+      fn(c);
+      sets[id] = c;
+      patch({ sets });
+    };
+    const cascade = (c, i, apply) => {
+      apply(c.sets[i]);
+      c.touched[i] = true;
+      for (let j = i + 1; j < c.sets.length; j++) if (!c.touched[j]) apply(c.sets[j]);
+    };
+    body = html`${kicker}<h2>Übungen</h2><p class="s-hint">Sätze vorbefüllt (${included}/${exs.length} dabei) – <b>nur Abweichungen anfassen</b>. RIR = Wiederholungen in Reserve im letzten Satz.</p>
       ${exs.map((e) => {
         const r = exerciseReadiness(e.id, now, state, now);
-        const on = !!ctx.sets[e.id];
-        return html`<div class="set-row" role="checkbox" aria-checked=${on} tabindex="0" style="cursor:pointer;${on ? '' : 'opacity:.55'}" onClick=${() => {
-          const sets = { ...ctx.sets };
-          if (sets[e.id]) delete sets[e.id]; else sets[e.id] = true;
-          patch({ sets });
-        }}>
-          <span class="mark m-${r.level}" style="flex:none" title=${r.reasons[0] || 'frei'}></span>
-          <span class="ex-name" style=${on ? '' : 'text-decoration:line-through'}>${e.name}${r.level !== 'fresh' ? html`<span class="exr-r" style="display:block;text-decoration:none">${r.reasons.join(' · ')}</span>` : ''}</span>
-          <span class="ex-scheme">${sc.sets}×${sc.reps}</span>
-          <span style="flex:none;font-weight:700;color:${on ? 'var(--fresh)' : 'var(--text-low)'};min-width:22px;text-align:center">${on ? '✓' : '○'}</span>
+        const c = ctx.sets[e.id];
+        if (!c) return '';
+        const step = incrementFor(e).step || 2.5;
+        const on = c.included;
+        const sum = `${c.sets.length} Sätze · ${fmtW(c.sets[0].w)} kg · ${c.sets.map((s) => s.reps).join('/')}`;
+        return html`<div class="exr" style=${on ? '' : 'opacity:.55'}>
+          <div class="exr-head" style="display:flex;align-items:baseline;gap:8px">
+            <span class="mark m-${r.level}" style="flex:none" title=${r.reasons[0] || 'frei'}></span>
+            <span class="exr-n" style="font-weight:700;${on ? '' : 'text-decoration:line-through'}">${e.name}</span>
+            ${c.source === 'advice' ? html`<span class="hint-chip ok" style="margin:0">↑ +${fmtW(c.deltaKg)} kg (Coach)</span>` : ''}
+            ${c.source === 'fresh' ? html`<span class="hint-chip warn" style="margin:0">erstes Mal – Last einstellen</span>` : ''}
+            <button class="exr-btn" style="margin-left:auto" aria-label=${on ? 'Übung weglassen' : 'Übung wieder aufnehmen'}
+              onClick=${() => patchEx(e.id, (cc) => { cc.included = !cc.included; })}>${on ? '✓' : '○'}</button>
+          </div>
+          ${r.level !== 'fresh' ? html`<div class="exr-r">${r.reasons.join(' · ')}</div>` : ''}
+          ${on ? html`
+          <div class="setline" style="display:flex;align-items:center;gap:8px;margin-top:8px">
+            <button class="sum-btn ${c.open ? 'open' : ''}" onClick=${() => patchEx(e.id, (cc) => { cc.open = !cc.open; })} aria-expanded=${c.open}>
+              <span>${sum}</span><span class="acc-caret" aria-hidden="true">›</span></button>
+            <div class="rir"><span>RIR</span>${[0, 1, 2, 3].map((n) => html`
+              <button class=${c.rir === n ? 'sel' : ''} onClick=${() => patchEx(e.id, (cc) => { cc.rir = n; })}>${n === 3 ? '3+' : n}</button>`)}</div>
+          </div>
+          ${c.open ? html`
+            ${c.sets.map((s, i) => html`
+              <div class="setrow">
+                <span class="s-lbl">S${i + 1}</span>
+                <div class="stp sm"><button onClick=${() => patchEx(e.id, (cc) => cascade(cc, i, (x) => { x.w = Math.max(0, x.w - step); }))}>−</button>
+                  <span class="v">${fmtW(s.w)}<small> kg</small></span>
+                  <button onClick=${() => patchEx(e.id, (cc) => cascade(cc, i, (x) => { x.w = x.w + step; }))}>+</button></div>
+                <div class="stp sm"><button onClick=${() => patchEx(e.id, (cc) => cascade(cc, i, (x) => { x.reps = Math.max(1, x.reps - 1); }))}>−</button>
+                  <span class="v">${s.reps}<small> Wdh</small></span>
+                  <button onClick=${() => patchEx(e.id, (cc) => cascade(cc, i, (x) => { x.reps = Math.min(20, x.reps + 1); }))}>+</button></div>
+                ${c.sets.length > 1 ? html`<button class="s-del" aria-label="Satz entfernen" onClick=${() => patchEx(e.id, (cc) => { cc.sets.splice(i, 1); cc.touched.splice(i, 1); })}>✕</button>` : ''}
+              </div>`)}
+            <button class="addset" onClick=${() => patchEx(e.id, (cc) => { cc.sets.push({ ...cc.sets[cc.sets.length - 1] }); cc.touched.push(true); })}>＋ Satz</button>
+          ` : ''}` : ''}
         </div>`;
       })}`;
   } else if (stepName === 'fatigue') {

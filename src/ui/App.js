@@ -17,6 +17,8 @@ import { MorningCheckin } from './MorningCheckin.js';
 import { SessionEditor } from './SessionEditor.js';
 import { AcwrExplainer } from './AcwrExplainer.js';
 import { FatigueReport } from './FatigueReport.js';
+import { ProgressionSummary } from './ProgressionSummary.js';
+import { progressionAdvice } from '../engine/progression.js';
 
 const NAV = [
   ['home', 'Home', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 12l8-8 8 8M5 10v8h4v-5h4v5h4v-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`],
@@ -67,7 +69,22 @@ export function App() {
       };
       if (ctx.sportId === 'bouldering') log.hardFingerLoad = ctx.hardFingerLoad;
       if (ctx.sportId === 'mountain_day') log.elevationGain = ctx.hm;
-      if (ctx.loadSource === 'exercises') log.sets = Object.keys(ctx.sets).map((id) => ({ exerciseId: id }));
+      if (ctx.loadSource === 'exercises') {
+        // Story #50: log.sets keeps ONE entry per done exercise (regional-load
+        // semantics unchanged); the real per-set rows go into setLogs.
+        const included = Object.entries(ctx.sets).filter(([, c]) => c.included);
+        log.sets = included.map(([id]) => ({ exerciseId: id }));
+        st.setLogs ??= [];
+        for (const [exerciseId, c] of included) {
+          c.sets.forEach((s, i) => {
+            st.setLogs.push({
+              setId: store.uid(), logId: log.id, exerciseId, setIndex: i,
+              weight: s.w, reps: s.reps, date: log.date,
+              ...(i === c.sets.length - 1 ? { rir: c.rir } : {}),
+            });
+          });
+        }
+      }
       st.logs.push(log);
       if (ctx.planned) {
         const p = st.planned.find((x) => x.id === ctx.planned.id);
@@ -80,10 +97,24 @@ export function App() {
         st.pain.push({ id: store.uid(), region: ctx.pain.region, nrs: ctx.pain.nrs, ts: new Date().toISOString() });
       }
     });
-    setOverlay(null);
-    setScreen('inbox');
+    // Story #50: after a strength log, show the R9 verdicts before the inbox.
+    const adviceItems = ctx.loadSource === 'exercises'
+      ? Object.entries(ctx.sets)
+        .filter(([, c]) => c.included)
+        .map(([exerciseId, c]) => progressionAdvice({ exerciseId, sets: c.sets, rir: c.rir, goal: store.getState().profile.goal }, store.getState()))
+        .filter(Boolean)
+      : [];
     const n = store.getState().suggestions.length;
-    setTimeout(() => toast(`Log in ${secs} s gespeichert · ` + (n ? `${n} neue Vorschläge` : 'keine neuen Vorschläge')), 350);
+    const done = () => {
+      setScreen('inbox');
+      setTimeout(() => toast(`Log in ${secs} s gespeichert · ` + (n ? `${n} neue Vorschläge` : 'keine neuen Vorschläge')), 250);
+    };
+    if (adviceItems.length) {
+      setOverlay({ kind: 'progression', items: adviceItems, after: done });
+    } else {
+      setOverlay(null);
+      done();
+    }
   };
 
   const skipSession = (planned) => {
@@ -277,6 +308,7 @@ export function App() {
     ${overlay?.kind === 'checkin' ? html`<${MorningCheckin} state=${state} now=${now} onClose=${() => setOverlay(null)} onSave=${saveCheckin} />` : ''}
     ${(overlay?.kind === 'edit' || overlay?.kind === 'add') ? html`<${SessionEditor} state=${state} now=${now} mode=${overlay.kind} sessionId=${overlay.sessionId} initDay=${overlay.dayOff} initSlot=${overlay.slot} onClose=${() => setOverlay(null)} onSave=${saveEditor} toast=${toast} />` : ''}
     ${overlay?.kind === 'acwr' ? html`<${AcwrExplainer} state=${state} now=${now} onClose=${() => setOverlay(null)} />` : ''}
+    ${overlay?.kind === 'progression' ? html`<${ProgressionSummary} state=${state} items=${overlay.items} onClose=${() => { const after = overlay.after; setOverlay(null); after?.(); }} />` : ''}
     ${overlay?.kind === 'fatigue' ? html`<${FatigueReport} onClose=${() => setOverlay(null)} onSave=${(region, level) => {
       store.update((st) => {
         st.fatigue.push({ id: store.uid(), region, level, ts: new Date().toISOString(), context: 'manual' });

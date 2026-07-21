@@ -1,6 +1,6 @@
 // Service worker: cache-first offline shell (spec: offline-first, no backend).
 // Bump CACHE_VERSION on every deploy that changes precached files.
-const CACHE_VERSION = 'v15';
+const CACHE_VERSION = 'v16';
 const CACHE_NAME = `hybridathlete-${CACHE_VERSION}`;
 
 const PRECACHE = [
@@ -47,6 +47,7 @@ const PRECACHE = [
   'src/ui/MorningCheckin.js',
   'src/ui/overlayA11y.js',
   'src/ui/PlanAdvisor.js',
+  'src/ui/ProgressionSummary.js',
   'src/ui/RulebookScreen.js',
   'src/ui/SessionEditor.js',
   'src/ui/SettingsScreen.js',

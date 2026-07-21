@@ -44,7 +44,7 @@ export function update(mutator, { reevaluate = true } = {}) {
 async function sync() {
   if (!db) return;
   try {
-    const tx = db.transaction(['profile', 'plannedSessions', 'sessionLogs', 'fatigueEntries', 'painEntries'], 'readwrite');
+    const tx = db.transaction(['profile', 'plannedSessions', 'sessionLogs', 'setLogs', 'fatigueEntries', 'painEntries'], 'readwrite');
     await tx.objectStore('profile').put(structuredClone(state.profile), PROFILE_KEY);
     const writeAll = async (storeName, rows, key) => {
       const s = tx.objectStore(storeName);
@@ -53,6 +53,7 @@ async function sync() {
     };
     await writeAll('plannedSessions', state.planned, 'sessionId');
     await writeAll('sessionLogs', [...state.logs, ...(state.draftLogs ?? [])], 'logId');
+    await writeAll('setLogs', state.setLogs ?? [], 'setId');
     await writeAll('fatigueEntries', state.fatigue, 'entryId');
     await writeAll('painEntries', state.pain, 'painId');
     await tx.done;
