@@ -16,6 +16,12 @@ export const PROFILE_SEED = {
   split: 'PPL',
   disabledUnits: ['pull'],
   activeSports: ['bouldering', 'mountain_day', 'running', 'gravel_cycling'],
+  // Story #55: declarative weekly wishes for the week planner (weekday 0=So).
+  weekWishes: {
+    bouldering: { count: 2, fixedDays: [3], preferredDays: [5] },
+    mountain_day: { count: 1, fixedDays: [6], preferredDays: [] },
+    running: { count: 1, optional: true, fixedDays: [], preferredDays: [] },
+  },
   constraints: [
     {
       id: 'knee_flexion',

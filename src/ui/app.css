@@ -13,6 +13,20 @@ body { display: block; padding: 0; background: var(--bg); }
 /* No fake status bar in the real app */
 .statusbar { display: none; }
 
+/* Week wizard (story #55) */
+.wish-row { border-bottom: 1px solid var(--border); padding: 10px 0; }
+.wish-row:last-of-type { border-bottom: none; margin-bottom: 10px; }
+.wish-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.wish-name { font-weight: 600; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; }
+.wish-days { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.opt.sm { min-height: 34px; padding: 4px 10px; font-size: 12px; }
+.week-preview { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
+.wp-day { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 6px 2px; text-align: center; min-height: 58px; }
+.wp-day.empty { opacity: .45; }
+.wp-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-low); margin-bottom: 3px; }
+.wp-meta { font-size: 9.5px; color: var(--text-mid); margin-top: 2px; }
+
 /* Boulder session tracker (story #54) */
 .grade-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
 .grade-strip .opt { flex: none; min-width: 46px; }
