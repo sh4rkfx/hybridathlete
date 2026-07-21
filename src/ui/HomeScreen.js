@@ -3,8 +3,11 @@ import { acwr } from '../engine/acwr.js';
 import { wdShort, isSameDay } from '../engine/time.js';
 import { REGION_LABELS, FAT_LABELS, ACWR_CHIP_LABEL } from '../engine/texts.js';
 import { catalogOf } from '../engine/catalog.js';
-import { sportUi, SportGlyph } from './sportsUi.js';
-import { nextLoggable, currentRegionStatus, upcomingSessions, ridgeData, MONTHS, zoneWording, needsOnboarding, checkinDoneToday } from './helpers.js';
+import { SportGlyph } from './sportsUi.js';
+import { nextLoggable, currentRegionStatus, ridgeData, MONTHS, zoneWording, needsOnboarding, checkinDoneToday } from './helpers.js';
+import { prefillSets } from '../engine/progression.js';
+import { exerciseReadiness } from '../engine/readiness.js';
+import { GOAL_SCHEMES } from '../engine/catalog.js';
 
 function Ridge({ state, now }) {
   const r = ridgeData(state, now);
@@ -27,14 +30,18 @@ function Ridge({ state, now }) {
     </div>`;
 }
 
-export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onAdd, onRegenerate, onReportFatigue }) {
+export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onAdd, onRegenerate, onReportFatigue }) {
   const cat = catalogOf(state);
   const a = acwr(state.logs, now);
   const { zone, word: zoneWord, ratioLabel } = zoneWording(a);
   const next = nextLoggable(state, now);
   const regs = currentRegionStatus(state, now);
-  const up = upcomingSessions(state, now);
   const onboarding = needsOnboarding(state);
+  // Story #52: on a strength day the session ITSELF gets the attention —
+  // exercises, readiness and prefilled loads (MyFitCoach-style), not just a
+  // slim "log" button.
+  const todayStrength = next && next.sportId === 'strength' && isSameDay(next.date, now) ? next : null;
+  const fmtW = (w) => (Math.round(w * 100) / 100).toString().replace('.', ',');
 
   return html`
     <div class="home-top">
@@ -58,7 +65,29 @@ export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onA
         <button class="act-btn primary" onClick=${onRegenerate}>Kraftplan generieren</button>
         <button class="act-btn" onClick=${() => onAdd(0, 'evening')}>＋ Einheit planen</button>
       </div>` : ''}
-    ${!onboarding && next ? html`
+    ${!onboarding && todayStrength ? html`
+      <div class="workout-card">
+        <div class="wo-head">
+          <span class="wo-glyph"><${SportGlyph} id="strength" size=${22} /></span>
+          <div><div class="wo-k">Heute geplant${todayStrength.fixed ? ' · 📌 fix' : ''}</div>
+          <div class="wo-t">Kraft · ${todayStrength.unit ?? ''} <span class="wo-time">${new Date(todayStrength.date).getHours()}:00</span></div></div>
+        </div>
+        ${(todayStrength.exercises ?? []).map((id) => {
+          const e = cat.exById[id];
+          if (!e) return '';
+          const r = exerciseReadiness(id, now, state, now);
+          const pre = prefillSets(id, state, state.profile.goal);
+          return html`<div class="wo-row">
+            <span class="mark m-${r.level}" title=${r.reasons[0] || 'frei'}></span>
+            <span class="wo-name">${e.name}</span>
+            ${pre.source === 'advice' ? html`<span class="hint-chip ok">↑ +${fmtW(pre.deltaKg)}</span>` : ''}
+            ${pre.source === 'fresh' ? html`<span class="hint-chip warn">erstes Mal</span>` : ''}
+            <span class="wo-scheme">${pre.sets.length}× ${GOAL_SCHEMES[state.profile.goal].reps}${pre.sets[0].w > 0 ? ` · ${fmtW(pre.sets[0].w)} kg` : ''}</span>
+          </div>`;
+        })}
+        <button class="cta-start" onClick=${() => onLog(todayStrength.id)}>Training starten</button>
+      </div>` : ''}
+    ${!onboarding && next && !todayStrength ? html`
       <button class="log-cta" onClick=${() => onLog(next.id)}>
         <div class="lc-left">
           <span class="lc-k">${isSameDay(next.date, now) ? 'Heute geplant' : wdShort(next.date) + ' geplant'}</span>
@@ -86,16 +115,5 @@ export function HomeScreen({ state, now, onLog, onCheckin, onAcwr, onGoWeek, onA
         : html`<span class="rpill"><span class="mark m-fresh"></span>Alles frisch – keine Einschränkungen</span>`}
       <button class="rpill" style="cursor:pointer" onClick=${onReportFatigue}>＋ melden</button>
     </div>
-    ${up.length ? html`<div class="sec-title"><h3>Diese Woche</h3><button class="link" onClick=${onGoWeek}>Alle ansehen</button></div>` : ''}
-    ${up.map((p) => {
-      const ui = sportUi(p.sportId);
-      const cls = (p.fixed ? 'fixed ' : '') + (p.status === 'removed' ? 'removed ' : '') + (p.loggedId ? 'done ' : '');
-      return html`<div class="mini-card ${cls}">
-        <span class="mc-emoji"><${SportGlyph} id=${p.sportId} size=${22} /></span>
-        <div class="mc-body"><div class="mc-t">${cat.sports[p.sportId].name}${p.unit ? ' · ' + p.unit : ''} ${p.reduced ? html`<span class="tag-reduced">reduziert</span>` : ''}</div>
-        <div class="mc-s">${wdShort(p.date)} · ${new Date(p.date).getHours()}:00${p.status === 'removed' ? ' · gestrichen' : ''}</div></div>
-        ${p.fixed ? html`<span class="pin">📌 fix</span>` : ''}
-      </div>`;
-    })}
     <div class="proto-note">HYBRIDATHLETE · lokale Daten · Engine: T01–T17 grün</div>`;
 }
