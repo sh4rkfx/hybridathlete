@@ -11,22 +11,22 @@ import exercisesSeed from '../seed/exercises.seed.json' with { type: 'json' };
 // studies (4–12 weeks); transfer to a multi-sport context is an assumption.
 export const GOAL_SCHEMES = {
   kraftaufbau: {
-    label: 'Kraftaufbau', sets: 5, reps: '3–5',
+    label: 'Kraftaufbau', sets: 5, reps: '3–5', corridor: [3, 5],
     source: 'Schoenfeld/Grgic (2021), Repetition Continuum: Maximalkraft braucht schwere Lasten. Pelland et al. (2025), Dose-Response-Meta-Regression (67 Studien): Kraft profitiert von Frequenz, mit abnehmendem Grenznutzen.',
     evidenceLevel: 'meta-analysis',
   },
   hypertrophie: {
-    label: 'Hypertrophie', sets: 4, reps: '8–12',
+    label: 'Hypertrophie', sets: 4, reps: '8–12', corridor: [8, 12],
     source: 'Pelland et al. (2025): Wochenvolumen ist der Haupttreiber. Schoenfeld et al. (2017), Low- vs. High-Load-Meta: Lastspektrum gleichwertig nahe Muskelversagen — 8–12 Wdh. sind eine valide Zone, nicht die einzige.',
     evidenceLevel: 'meta-analysis',
   },
   erhalt: {
-    label: 'Erhalt', sets: 2, reps: '6–10',
+    label: 'Erhalt', sets: 2, reps: '6–10', corridor: [6, 10],
     source: 'Minimal-Dose-Reviews (Androulakis-Korakakis 2020; Übersicht 2024): schon ~1 harter Satz × 2–3/Woche erhält Kraft. Das Schema ist bewusst konservativ darüber.',
     evidenceLevel: 'meta-analysis',
   },
   sport_support: {
-    label: 'Sport-Support', sets: 3, reps: '5–8',
+    label: 'Sport-Support', sets: 3, reps: '5–8', corridor: [5, 8],
     source: 'Iversen et al. (2021), „No Time to Lift?": zeiteffiziente Programme — wenige harte Mehrgelenksätze, moderate Frequenz. Übertragung auf Multi-Sport-Wochen ist Extrapolation.',
     evidenceLevel: 'expert-consensus',
   },
@@ -77,6 +77,8 @@ export function normalizeExercise(e) {
     load: e.load ?? e.loadProfile ?? {},
     knee: e.knee !== undefined ? e.knee : (e.kneeFlexionTag ?? null),
     eccentricEmphasis: e.eccentricEmphasis ?? false,
+    // R9 progression needs the equipment class (increment steps differ).
+    equipment: e.equipment ?? ['barbell'],
   };
 }
 

@@ -181,6 +181,30 @@
       },
       "evidenceLevel": "expert-consensus",
       "evidenceNote": "Consensus-level; the suggested fixes are constrained to equipment available in V1 (dumbbell/band, no cable) so the hint is actionable."
+    },
+    {
+      "ruleId": "R9_progression",
+      "name": "Load Progression (double progression, RIR-scaled)",
+      "tier": "coach",
+      "active": true,
+      "params": {
+        "rirStepFactors": { "0": 0, "1": 0, "2": 1, "3": 2 },
+        "earlyIncreaseMinRir": 3,
+        "increments": {
+          "barbell": { "large": 2.5, "small": 1.25 },
+          "dumbbell": { "large": 2.0, "small": 1.0 },
+          "machine": { "large": 5.0, "small": 2.5 },
+          "band": { "large": 0, "small": 0 },
+          "bodyweight": { "large": 0, "small": 0 }
+        },
+        "largeMuscleRegions": ["quads", "posterior_chain", "chest", "upper_back", "lower_back"]
+      },
+      "logic": "Double progression over ALL sets: load increases only when every set reaches the goal's corridor top. RIR scales the step: RIR <= 1 -> hold (grind, stabilize reps first); RIR 2 -> +1 increment; RIR >= 3 -> +2 increments; RIR >= 3 with every set at least at the corridor bottom -> early +1 increment (clearly too light). Increment size depends on equipment x primary-muscle size (barbell 2.5/1.25 kg, dumbbell rack step 2.0/1.0, machine stack 5.0/2.5 prepared for the V2 catalog, band/bodyweight 0 -> progress via reps/variant). Values are practical equipment steps, tunable via this catalog.",
+      "source": {
+        "citation": "Autoregulated load prescription beats fixed %1RM plans: network meta-analysis (J Exerc Sci Fit 2025, 40791980); load/volume autoregulation review (PMC8762534). RIR-based RPE scale validated vs. bar velocity: Zourdos et al. 2016 — less accurate for untrained lifters and high-rep sets. Double-progression mechanic and per-equipment increments are established practice, not a trialed protocol."
+      },
+      "evidenceLevel": "expert-consensus",
+      "evidenceNote": "The autoregulation PRINCIPLE carries meta-analytic support; the specific step sizes are practical equipment constraints (assumption-level, tunable). Epley e1RM shown alongside is an estimate, never a tested max."
     }
   ]
 }
