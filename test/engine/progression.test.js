@@ -1,7 +1,7 @@
 // Story #47: R9 progression — RIR-scaled double progression with
 // equipment × muscle-size increments.
 import { describe, it, expect } from 'vitest';
-import { progressionAdvice, incrementFor, muscleSizeOf, e1rmEpley } from '../../src/engine/progression.js';
+import { progressionAdvice, incrementFor, muscleSizeOf, e1rmEpley, lastSetsFor, prefillSets } from '../../src/engine/progression.js';
 import { DEFAULT_CATALOG, normalizeExercise } from '../../src/engine/catalog.js';
 import { ruleParams } from '../../src/rules/params.js';
 
@@ -96,5 +96,44 @@ describe('edges', () => {
 
   it('R9 carries source + evidenceLevel (source mandate)', () => {
     expect(ruleParams('R9').increments.barbell.large).toBe(2.5);
+  });
+});
+
+describe('prefill loop (story #50): log -> advice -> next prefill', () => {
+  const rows = (logId, exerciseId, date, sets, rir) => sets.map(([weight, reps], setIndex) => ({
+    setId: `${logId}-${exerciseId}-${setIndex}`, logId, exerciseId, setIndex, weight, reps, date,
+    ...(setIndex === sets.length - 1 ? { rir } : {}),
+  }));
+
+  it('lastSetsFor picks the newest log and keeps set order + last-set RIR', () => {
+    const state = { setLogs: [
+      ...rows('l1', 'barbell_bench_press', '2026-07-10T17:00:00Z', [[60, 8], [60, 7]], 1),
+      ...rows('l2', 'barbell_bench_press', '2026-07-17T17:00:00Z', [[62.5, 8], [62.5, 7], [62.5, 6]], 2),
+    ] };
+    const last = lastSetsFor('barbell_bench_press', state);
+    expect(last.sets).toEqual([{ w: 62.5, reps: 8 }, { w: 62.5, reps: 7 }, { w: 62.5, reps: 6 }]);
+    expect(last.rir).toBe(2);
+    expect(lastSetsFor('plank', state)).toBeNull();
+  });
+
+  it('fresh: no history -> goal set count × corridor bottom at 0 kg', () => {
+    const p = prefillSets('barbell_bench_press', { setLogs: [] }, 'sport_support');
+    expect(p.source).toBe('fresh');
+    expect(p.sets).toEqual([{ w: 0, reps: 5 }, { w: 0, reps: 5 }, { w: 0, reps: 5 }]);
+  });
+
+  it('last: history without progression is prefilled verbatim', () => {
+    const state = { setLogs: rows('l1', 'barbell_bench_press', '2026-07-17T17:00:00Z', [[62.5, 8], [62.5, 7], [62.5, 6]], 2) };
+    const p = prefillSets('barbell_bench_press', state, 'sport_support');
+    expect(p.source).toBe('last');
+    expect(p.sets[2]).toEqual({ w: 62.5, reps: 6 });
+  });
+
+  it('advice: full corridor @ RIR 2 -> next prefill at nextWeight, reps reset to corridor bottom', () => {
+    const state = { setLogs: rows('l1', 'barbell_bench_press', '2026-07-17T17:00:00Z', [[62.5, 8], [62.5, 8], [62.5, 8]], 2) };
+    const p = prefillSets('barbell_bench_press', state, 'sport_support');
+    expect(p.source).toBe('advice');
+    expect(p.deltaKg).toBe(2.5);
+    expect(p.sets).toEqual([{ w: 65, reps: 5 }, { w: 65, reps: 5 }, { w: 65, reps: 5 }]);
   });
 });

@@ -97,7 +97,7 @@ export async function putSessionLogIdempotent(db, log) {
 // `rejected` and `ruleStats` are derived from the persisted suggestion history —
 // they are projections, not stores of their own.
 export async function loadEngineState(db) {
-  const [profile, planned, allLogs, fatigue, pain, suggestions, rules, sports, exercises] =
+  const [profile, planned, allLogs, fatigue, pain, suggestions, rules, sports, exercises, setLogs] =
     await Promise.all([
       db.get('profile', PROFILE_KEY),
       db.getAll('plannedSessions'),
@@ -108,6 +108,7 @@ export async function loadEngineState(db) {
       db.getAll('rules'),
       db.getAll('sports'),
       db.getAll('exercises'),
+      db.getAll('setLogs'),
     ]);
 
   const rejected = {};
@@ -126,7 +127,7 @@ export async function loadEngineState(db) {
   const logs = allLogs.filter((l) => !l.draft);
   const draftLogs = allLogs.filter((l) => l.draft);
 
-  return { profile, planned, logs, draftLogs, fatigue, pain, suggestions, rules, sports, exercises, rejected, ruleStats };
+  return { profile, planned, logs, draftLogs, setLogs, fatigue, pain, suggestions, rules, sports, exercises, rejected, ruleStats };
 }
 
 // Persist a fresh evaluation result: open (un-answered) suggestions are replaced

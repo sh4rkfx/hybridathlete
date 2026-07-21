@@ -75,3 +75,36 @@ export function progressionAdvice({ exerciseId, sets, rir, goal }, state) {
   return { ...base, action: 'build_reps', nextWeight: topWeight,
     why: `Schwächster Satz bei ${minReps} Wdh – noch ${hi - minReps} bis zur Laststeigerung (double progression).` };
 }
+
+// Latest real sets for an exercise from the setLogs rows (story #50).
+// Rows carry their own date so no join with sessionLogs is needed.
+export function lastSetsFor(exerciseId, state) {
+  const rows = (state.setLogs ?? []).filter((r) => r.exerciseId === exerciseId);
+  if (!rows.length) return null;
+  const latestLogId = rows.reduce((a, b) => (new Date(a.date) > new Date(b.date) ? a : b)).logId;
+  const sets = rows.filter((r) => r.logId === latestLogId).sort((a, b) => a.setIndex - b.setIndex);
+  return {
+    sets: sets.map((r) => ({ w: r.weight, reps: r.reps })),
+    rir: sets[sets.length - 1].rir ?? 2,
+  };
+}
+
+// Prefill for the log flow (story #50) — the closed loop: last real sets, or
+// the R9 advice applied (nextWeight, reps back to the corridor bottom), or a
+// fresh start (goal set count × corridor bottom at weight 0).
+export function prefillSets(exerciseId, state, goal) {
+  const scheme = GOAL_SCHEMES[goal] ?? GOAL_SCHEMES.sport_support;
+  const [lo] = scheme.corridor;
+  const last = lastSetsFor(exerciseId, state);
+  if (!last) {
+    return { sets: Array.from({ length: scheme.sets }, () => ({ w: 0, reps: lo })), rir: 2, source: 'fresh' };
+  }
+  const advice = progressionAdvice({ exerciseId, sets: last.sets, rir: last.rir, goal }, state);
+  if (advice?.action === 'increase') {
+    return {
+      sets: last.sets.map(() => ({ w: advice.nextWeight, reps: lo })),
+      rir: 2, source: 'advice', deltaKg: advice.deltaKg,
+    };
+  }
+  return { sets: last.sets.map((s) => ({ ...s })), rir: 2, source: 'last' };
+}
