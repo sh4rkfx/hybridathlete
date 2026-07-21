@@ -28,7 +28,7 @@ describe('seedIfEmpty', () => {
 
     expect(await db.count('sports')).toBe(5);
     expect(await db.count('exercises')).toBe(40);
-    expect(await db.count('rules')).toBe(8);
+    expect(await db.count('rules')).toBe(9);
   });
 
   it('is idempotent and never overwrites user edits', async () => {
