@@ -11,11 +11,15 @@ import { exerciseReadiness } from '../engine/readiness.js';
 import { sportUi, SportGlyph } from './sportsUi.js';
 import { rpeMeta, fmtDur } from './helpers.js';
 import { prefillSets, incrementFor } from '../engine/progression.js';
+import { FONT_GRADES, GRIPS, sessionSummary, suggestHardFingerLoad, bestPastGrade } from '../engine/boulder.js';
 
 const defaultDur = (sportId) => sportId === 'mountain_day' ? 360 : sportId === 'running' ? 45 : sportId === 'strength' ? 60 : 90;
 
 function buildSteps(sportId, loadSource) {
-  const steps = ['confirm', 'effort'];
+  const steps = ['confirm'];
+  // Story #54: boulder sessions are tracked per boulder before the effort step.
+  if (sportId === 'bouldering') steps.push('boulders');
+  steps.push('effort');
   if (sportId === 'bouldering') steps.push('finger');
   if (loadSource === 'exercises') steps.push('sets');
   steps.push('fatigue', 'pain');
@@ -109,6 +113,8 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
         }))
         : {},
       pickSport: false, editConfirm: false,
+      // Story #54: per-boulder tracking state
+      boulders: [], activeBoulder: null, lastGrade: '6A', lastGrip: null, fingerTouched: false,
       steps: buildSteps(sportId, sport.loadSource),
     };
   }, [plannedId]);
@@ -133,13 +139,27 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
     setCtx((c) => ({
       ...c, pickSport: false, planned: null, sportId, loadSource: sport.loadSource,
       duration: defaultDur(sportId), hm: sportId === 'mountain_day' ? 800 : 0,
-      hardFingerLoad: false, sets: {}, fatigue: {}, steps: buildSteps(sportId, sport.loadSource),
+      hardFingerLoad: false, sets: {}, fatigue: {},
+      boulders: [], activeBoulder: null, fingerTouched: false,
+      steps: buildSteps(sportId, sport.loadSource),
     }));
     setStep(2);
   };
 
   const next = () => {
     if (ctx.pickSport) return;
+    // Story #54: leaving the boulder step ends the session — the global timer
+    // prefills the duration (rounded to the sport's step, min 15 min).
+    if (stepName === 'boulders' && ctx.boulders.length) {
+      const stepMin = ui.durStep || 15;
+      const mins = Math.max(15, Math.round(secs / 60 / stepMin) * stepMin || stepMin);
+      patch({ duration: Math.min(ui.maxDur || 240, mins), activeBoulder: null });
+    }
+    // Story #54: entering the finger step prefills the R3 suggestion from the
+    // session (assumption-level heuristic, overridable by the toggle).
+    if (ctx.steps[step] === 'finger' && ctx.boulders.length && !ctx.fingerTouched) {
+      patch({ hardFingerLoad: suggestHardFingerLoad(ctx.boulders, bestPastGrade(state)) });
+    }
     if (step < total) setStep(step + 1);
     else onFinish(ctx, Math.floor((Date.now() - start) / 1000));
   };
@@ -184,10 +204,57 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
           <button class="alt-choice" onClick=${() => onSkip(ctx.planned)}>Nicht gemacht – ausgefallen</button>
         </div>` : ''}`;
     }
+  } else if (stepName === 'boulders') {
+    // Story #54: per-boulder tracking — grade + optional grip, per-boulder
+    // timer, finished with Flash / Top / Fail. The session timer keeps
+    // running in the header and later prefills the duration.
+    const sum = sessionSummary(ctx.boulders);
+    const active = ctx.activeBoulder;
+    const elapsed = active ? Math.max(0, Math.floor((Date.now() - active.startedAt) / 1000)) : 0;
+    const fmtT = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    const finishBoulder = (result) => {
+      const b = { grade: active.grade, grip: active.grip, seconds: Math.max(1, elapsed), result };
+      patch({ boulders: [...ctx.boulders, b], activeBoulder: null, lastGrade: active.grade, lastGrip: active.grip });
+    };
+    body = html`${kicker}<h2>Boulder-Session</h2>
+      <p class="s-hint">${sum.total
+        ? html`<b>Ø ${sum.avgGrade ?? '–'}</b> · ${sum.total} Boulder · ${sum.counts.flash} Flash / ${sum.counts.top} Top / ${sum.counts.fail} Fail`
+        : 'Grad wählen, optional die Griffform, Boulder starten – beenden mit Flash, Top oder Fail.'}</p>
+      ${active ? html`
+        <div class="boulder-live">
+          <div class="bl-head"><span class="bl-grade">${active.grade}</span>
+            <span class="bl-grip">${active.grip ?? 'Griffform: –'}</span>
+            <span class="bl-timer">${fmtT(elapsed)}</span></div>
+          <div class="bl-actions">
+            <button class="bl-btn flash" onClick=${() => finishBoulder('flash')}>⚡ Flash</button>
+            <button class="bl-btn top" onClick=${() => finishBoulder('top')}>✓ Top</button>
+            <button class="bl-btn fail" onClick=${() => finishBoulder('fail')}>✕ Fail</button>
+          </div>
+        </div>`
+      : html`
+        <div class="field"><div class="f-lbl">Grad (Font)</div>
+          <div class="grade-strip">${FONT_GRADES.map((g) => html`
+            <button class="opt ${ctx.lastGrade === g ? 'sel' : ''}" onClick=${() => patch({ lastGrade: g })}>${g}</button>`)}</div>
+        </div>
+        <div class="field"><div class="f-lbl">Griffform <span style="text-transform:none;letter-spacing:0;color:var(--text-low)">(optional)</span></div>
+          <div class="opt-row">${GRIPS.map((g) => html`
+            <button class="opt ${ctx.lastGrip === g ? 'sel' : ''}" onClick=${() => patch({ lastGrip: ctx.lastGrip === g ? null : g })}>${g}</button>`)}</div>
+        </div>
+        <button class="cta-start" onClick=${() => patch({ activeBoulder: { grade: ctx.lastGrade, grip: ctx.lastGrip, startedAt: Date.now() } })}>▶ Boulder starten</button>`}
+      ${ctx.boulders.length ? html`<div class="field" style="margin-top:16px"><div class="f-lbl">Diese Session</div>
+        ${ctx.boulders.map((b, i) => html`<div class="boulder-row ${b.result}">
+          <span class="br-grade">${b.grade}</span>
+          <span class="br-meta">${b.grip ?? '–'} · ${fmtT(b.seconds)}</span>
+          <span class="br-result">${b.result === 'flash' ? '⚡ Flash' : b.result === 'top' ? '✓ Top' : '✕ Fail'}</span>
+          <button class="s-del" aria-label="Boulder entfernen" onClick=${() => patch({ boulders: ctx.boulders.filter((_, j) => j !== i) })}>✕</button>
+        </div>`)}
+      </div>` : ''}
+      <p class="s-hint" style="margin-top:12px;font-size:12px">„Weiter" beendet die Session – die Dauer wird aus dem Timer übernommen. Ø über die Font-Skala ist eine Vereinfachung (Annahme); nur Flash/Top zählen in den Schnitt.</p>`;
   } else if (stepName === 'effort') {
     const md = ui.maxDur || 180;
     const m = rpeMeta(ctx.sRPE);
-    body = html`${kicker}<h2>Wie war's?</h2><p class="s-hint">Dauer${ctx.sportId === 'mountain_day' ? ' (reine Gehzeit)' : ''} und gefühlte Anstrengung.</p>
+    const bsum = ctx.boulders?.length ? sessionSummary(ctx.boulders) : null;
+    body = html`${kicker}<h2>Wie war's?</h2><p class="s-hint">${bsum ? html`<b>Ø ${bsum.avgGrade ?? '–'}</b> · ${bsum.total} Boulder · ${bsum.counts.flash} Flash / ${bsum.counts.top} Top / ${bsum.counts.fail} Fail — Dauer aus dem Session-Timer übernommen. ` : ''}Dauer${ctx.sportId === 'mountain_day' ? ' (reine Gehzeit)' : ''} und gefühlte Anstrengung.</p>
       <${Stepper} label="Dauer" display=${fmtDur(ctx.duration)} fillPct=${ctx.duration / md * 100}
         onStep=${(dir) => patch({ duration: Math.max(15, Math.min(md, ctx.duration + dir * (ui.durStep || 15))) })}
         onScrub=${(f) => { const st = ui.durStep || 15; patch({ duration: Math.max(15, Math.min(md, Math.round((f * md) / st) * st)) }); }} />
@@ -202,7 +269,7 @@ export function LogFlow({ state, now, plannedId, onClose, onFinish, onSkip, toas
   } else if (stepName === 'finger') {
     body = html`${kicker}<h2>Finger heute</h2><p class="s-hint">Nur ein Tap – wichtig für die Sehnen-Erholung (R3).</p>
       <div class="toggle-row"><div class="tr-body"><div class="tr-t">Harte Fingerbelastung</div><div class="tr-s">Leisten, Campus, Projekte am Limit</div></div>
-      <div class="switch ${ctx.hardFingerLoad ? 'on' : ''}" onClick=${() => patch({ hardFingerLoad: !ctx.hardFingerLoad })} role="switch" aria-checked=${ctx.hardFingerLoad} tabindex="0"><span class="knob"></span></div></div>`;
+      <div class="switch ${ctx.hardFingerLoad ? 'on' : ''}" onClick=${() => patch({ hardFingerLoad: !ctx.hardFingerLoad, fingerTouched: true })} role="switch" aria-checked=${ctx.hardFingerLoad} tabindex="0"><span class="knob"></span></div></div>`;
   } else if (stepName === 'sets') {
     const exs = ((ctx.planned && ctx.planned.exercises) || []).map((id) => cat.exById[id]).filter(Boolean);
     const included = exs.filter((e) => ctx.sets[e.id]?.included).length;
