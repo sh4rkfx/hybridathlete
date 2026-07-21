@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HybridAthlete · Kraft-POC</title>
+<style>
+:root{
+  --bg:#0E1320; --surface-1:#151B2B; --surface-2:#1B2333; --surface-3:#222C40;
+  --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.14);
+  --text-hi:#EEF2FB; --text-mid:#9BA6BD; --text-low:#8E99B2;
+  --brand:#C8F542; --brand-hi:#D9FF6B; --brand-dim:rgba(200,245,66,.13);
+  --fresh:#34D6A6; --fresh-dim:rgba(52,214,166,.15);
+  --caution:#F2B84B; --caution-dim:rgba(242,184,75,.15);
+  --stop:#FF6188; --stop-dim:rgba(255,97,136,.15);
+  --font-display:'Archivo Black',system-ui,sans-serif;
+  --font-body:'Barlow',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --r-sm:7px; --r-md:11px; --r-lg:14px; --r-pill:999px; --tap:46px;
+}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,#182236 0%,var(--bg) 55%);
+  color:var(--text-hi);font:15px/1.5 var(--font-body),system-ui,sans-serif;min-height:100vh;
+  display:flex;justify-content:center;padding:0}
+.phone{width:100%;max-width:430px;min-height:100vh;padding:22px 16px 60px;
+  border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-low)}
+h1{font-family:var(--font-display);font-size:24px;text-transform:uppercase;letter-spacing:.5px;margin:2px 0 4px}
+h1 b{color:var(--brand)}
+.poc-note{font-size:11.5px;color:var(--text-low);border:1px dashed var(--border-strong);
+  border-radius:var(--r-md);padding:8px 12px;margin:12px 0 20px}
+h2{font-family:var(--font-display);font-size:15px;text-transform:uppercase;letter-spacing:.8px;margin:26px 0 4px}
+.sub{color:var(--text-mid);font-size:13px;margin-bottom:12px}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:12px}
+.mono{font-family:var(--font-mono)}
+/* --- exercise set rows --- */
+.exr{border-bottom:1px solid var(--border);padding:12px 0}
+.exr:last-child{border-bottom:none}
+.exr-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.exr-name{font-weight:700;font-size:15px}
+.exr-last{font-size:11.5px;color:var(--text-low)}
+.setline{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.stp{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:4px}
+.stp button{width:38px;height:38px;border:none;border-radius:var(--r-sm);background:var(--surface-3);
+  color:var(--text-hi);font-size:18px;cursor:pointer}
+.stp .v{font-family:var(--font-mono);font-size:14px;min-width:74px;text-align:center}
+.stp .v small{color:var(--text-low);font-size:10px}
+.rir{display:flex;gap:5px;align-items:center;margin-left:auto}
+.rir span{font-size:10.5px;color:var(--text-low);margin-right:2px}
+.rir button{min-width:34px;height:34px;border-radius:var(--r-sm);border:1px solid var(--border-strong);
+  background:none;color:var(--text-mid);font-family:var(--font-mono);font-size:12.5px;cursor:pointer}
+.rir button.sel{background:var(--brand-dim);border-color:var(--brand);color:var(--brand)}
+.hint-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;border-radius:var(--r-pill);
+  padding:3px 10px;margin-top:8px}
+.hint-chip.warn{background:var(--caution-dim);color:var(--caution)}
+.hint-chip.ok{background:var(--fresh-dim);color:var(--fresh)}
+.cta{width:100%;min-height:52px;border:none;border-radius:var(--r-md);background:var(--brand);
+  color:#0E1320;font-family:var(--font-display);font-size:15px;text-transform:uppercase;
+  letter-spacing:.5px;cursor:pointer;margin-top:6px}
+.cta:disabled{opacity:.4}
+/* --- progression cards --- */
+.prog{border-left:3px solid var(--fresh);padding-left:11px;margin-bottom:12px}
+.prog.hold{border-color:var(--caution)}
+.prog .p-t{font-weight:700;font-size:14px}
+.prog .p-s{font-size:12.5px;color:var(--text-mid);margin-top:2px}
+.evi{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.lvl{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+  border:1px solid var(--caution);color:var(--caution);border-radius:var(--r-pill);padding:1px 8px}
+.lvl.meta{border-color:var(--fresh);color:var(--fresh)}
+.src{font-size:10.5px;color:var(--text-low)}
+.spark{margin-top:8px}
+.spark text{font-family:var(--font-mono);font-size:8.5px;fill:var(--text-low)}
+/* --- volume cockpit --- */
+.vol-row{display:grid;grid-template-columns:92px 1fr 58px;gap:10px;align-items:center;margin-bottom:10px}
+.vol-name{font-size:12.5px;color:var(--text-mid)}
+.vol-track{position:relative;height:16px;background:var(--surface-2);border-radius:var(--r-pill);overflow:hidden}
+.vol-corridor{position:absolute;top:0;bottom:0;background:rgba(52,214,166,.12);border-left:1px solid rgba(52,214,166,.4);border-right:1px solid rgba(52,214,166,.4)}
+.vol-fill{position:absolute;top:2px;bottom:2px;left:2px;background:var(--brand);border-radius:var(--r-pill)}
+.vol-fill.boulder{background:var(--fresh);opacity:.75}
+.vol-v{font-family:var(--font-mono);font-size:11.5px;color:var(--text-mid);text-align:right}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--text-low);margin:4px 0 14px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+/* --- sim toggles --- */
+.tgl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.tgl:last-child{border-bottom:none}
+.tgl .t-t{font-size:14px;font-weight:600}
+.tgl .t-s{font-size:11.5px;color:var(--text-low)}
+.switch{width:46px;height:27px;border-radius:var(--r-pill);background:var(--surface-3);border:1px solid var(--border-strong);
+  position:relative;cursor:pointer;flex:none}
+.switch .knob{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:var(--text-mid);transition:all .15s}
+.switch.on{background:var(--brand-dim);border-color:var(--brand)}
+.switch.on .knob{left:21px;background:var(--brand)}
+/* --- coach cards --- */
+.sug{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:14px;margin-bottom:12px;border-left:3px solid var(--op,var(--brand))}
+.sug .op{font-family:var(--font-mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--op,var(--brand))}
+.sug .coach{font-size:14.5px;margin-top:6px}
+.why{background:var(--surface-2);border-radius:var(--r-md);padding:10px 12px;margin-top:10px}
+.why .wl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-low)}
+.why .wt{font-size:12.5px;color:var(--text-mid);margin-top:3px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);
+  background:var(--surface-3);border:1px solid var(--border-strong);border-radius:var(--r-pill);
+  padding:10px 18px;font-size:13.5px;transition:transform .25s;box-shadow:0 8px 30px rgba(0,0,0,.45);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.footer-note{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-low);
+  text-align:center;margin-top:30px}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="eyebrow">POC · Konzept P1–P3</div>
+  <h1>Kraft<b>planung</b></h1>
+  <div class="poc-note">⚗️ Prototyp mit Demo-Daten (6 Wochen Historie), nicht mit der App verdrahtet.
+    Zeigt: Satz-Logging mit Vorbefüllung + RIR · Progression + e1RM · Volumen-Cockpit · Readiness/Deload.</div>
+
+  <!-- ===================== 1 · LOGGING ===================== -->
+  <h2>1 · Krafttag loggen</h2>
+  <p class="sub">Vorbefüllt mit deinem letzten Training. Lief's nach Plan: <b>ein Tap</b>. Nur Abweichungen anfassen. RIR = „wie viele Wiederholungen waren noch drin?"</p>
+  <div class="card" id="log-card"></div>
+  <button class="cta" id="log-btn" onclick="logAll()">Alles wie geplant · loggen</button>
+
+  <!-- ===================== 2 · PROGRESSION ===================== -->
+  <h2>2 · Progression &amp; e1RM</h2>
+  <p class="sub">Nach dem Log rechnet der Coach je Übung: Korridor voll bei RIR ≥ 2 → Last hoch. Darunter die geschätzte 1RM-Kurve (Epley) über die Demo-Historie.</p>
+  <div class="card" id="prog-card"><span class="sub" style="margin:0">Noch nichts geloggt – oben „loggen" tippen.</span></div>
+
+  <!-- ===================== 3 · VOLUMEN ===================== -->
+  <h2>3 · Volumen-Cockpit</h2>
+  <p class="sub">Harte Sätze je Region diese Woche vs. Ziel-Korridor (Sport-Support: 6–10). Bouldern zahlt sichtbar aufs Zug-Volumen ein.</p>
+  <div class="card">
+    <div class="legend"><span><i style="background:var(--brand)"></i>Kraft</span>
+      <span><i style="background:var(--fresh);opacity:.75"></i>aus Bouldern</span>
+      <span><i style="background:rgba(52,214,166,.25)"></i>Ziel-Korridor</span></div>
+    <div id="vol-rows"></div>
+    <div class="src" style="margin-top:6px">Korridore: Dose-Response-Meta-Regressionen (Pelland 2025; Schoenfeld). Zählweise „Satz zählt für Region mit Load ≥ 2" = Annahme, wie §3.1.</div>
+  </div>
+
+  <!-- ===================== 4 · READINESS / DELOAD ===================== -->
+  <h2>4 · Autoregulation simulieren</h2>
+  <p class="sub">Der USP: Lastvorschläge kennen deine anderen Sportarten und deine Ampeln.</p>
+  <div class="card">
+    <div class="tgl"><div><div class="t-t">⛰️ Bergtag gestern (1150 hm)</div><div class="t-s">R4-Fenster aktiv → Beinlasten −10 %</div></div>
+      <div class="switch" id="tgl-berg" onclick="toggle('berg')"><span class="knob"></span></div></div>
+    <div class="tgl"><div><div class="t-t">📉 Zwei zähe Wochen</div><div class="t-s">Ampeln häufen müde/platt, e1RM stagniert</div></div>
+      <div class="switch" id="tgl-fatigue" onclick="toggle('fatigue')"><span class="knob"></span></div></div>
+  </div>
+  <div id="deload-slot"></div>
+
+  <div class="footer-note">HybridAthlete · Kraft-POC · Demo-Daten · Tokens = App-CI</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------- Demo-Daten: 6 Wochen Historie (Gewicht kg, beste Satz-Wdh, RIR) ---------- */
+const GOAL = { corridor:[5,8], sets:3, label:"Sport-Support 3×5–8" };
+const EXS = [
+  { id:"bench", name:"Barbell Bench Press", leg:false,
+    hist:[[57.5,8],[60,6],[60,7],[60,8],[62.5,6],[62.5,7]] },
+  { id:"ohp", name:"Overhead Press", leg:false,
+    hist:[[37.5,8],[40,5],[40,6],[40,7],[40,8],[42.5,5]] },
+  { id:"boxsquat", name:"Box Squat", leg:true,
+    hist:[[75,8],[80,5],[80,6],[80,7],[80,8],[85,5]] },
+  { id:"rdl", name:"Romanian Deadlift", leg:true,
+    hist:[[85,7],[87.5,6],[87.5,8],[90,6],[90,7],[90,8]] },
+];
+const e1rm = (w, r) => w * (1 + r / 29);
+const state = { berg:false, fatigue:false, logged:false,
+  cur: Object.fromEntries(EXS.map(e => { const [w, r] = e.hist[e.hist.length-1]; return [e.id, { w, reps:r, rir:2 }]; })) };
+
+/* ---------- 1 · Logging ---------- */
+function renderLog(){
+  const el = document.getElementById("log-card");
+  el.innerHTML = EXS.map(e => {
+    const c = state.cur[e.id];
+    const [lw, lr] = e.hist[e.hist.length-1];
+    const bergHit = state.berg && e.leg;
+    const effW = bergHit ? round2p5(c.w * 0.9) : c.w;
+    return `<div class="exr">
+      <div class="exr-head"><span class="exr-name">${e.name}</span>
+        <span class="exr-last">letztes Mal: ${GOAL.sets}×${lr} @ ${fmt(lw)} kg</span></div>
+      <div class="setline">
+        <div class="stp"><button onclick="step('${e.id}','w',-2.5)">−</button>
+          <span class="v">${fmt(effW)}<small> kg${bergHit ? " ·⛰" : ""}</small></span>
+          <button onclick="step('${e.id}','w',2.5)">+</button></div>
+        <div class="stp"><button onclick="step('${e.id}','reps',-1)">−</button>
+          <span class="v">${GOAL.sets}×${c.reps}<small> Wdh</small></span>
+          <button onclick="step('${e.id}','reps',1)">+</button></div>
+        <div class="rir"><span>RIR</span>${[0,1,2,3].map(n =>
+          `<button class="${c.rir===n?"sel":""}" onclick="setRir('${e.id}',${n})">${n===3?"3+":n}</button>`).join("")}</div>
+      </div>
+      ${bergHit ? `<span class="hint-chip warn">◆ Bergtag-Fenster: −10 % vorgeschlagen (${fmt(c.w)} → ${fmt(effW)} kg)</span>` : ""}
+    </div>`;
+  }).join("");
+  document.getElementById("log-btn").disabled = state.logged;
+  document.getElementById("log-btn").textContent = state.logged ? "✓ Geloggt in 4 s" : "Alles wie geplant · loggen";
+}
+function step(id, k, d){ const c = state.cur[id]; if(k==="w") c.w = Math.max(2.5, c.w + d); else c.reps = Math.max(1, Math.min(15, c.reps + d)); state.logged = false; renderLog(); }
+function setRir(id, n){ state.cur[id].rir = n; state.logged = false; renderLog(); }
+function fmt(w){ return (Math.round(w*10)/10).toString().replace(".", ","); }
+function round2p5(w){ return Math.round(w/2.5)*2.5; }
+
+/* ---------- 2 · Progression ---------- */
+function logAll(){
+  state.logged = true; renderLog();
+  const [lo, hi] = GOAL.corridor;
+  const cards = EXS.map(e => {
+    const c = state.cur[e.id];
+    const bergHit = state.berg && e.leg;
+    const up = !bergHit && c.reps >= hi && c.rir >= 2;
+    const grind = c.rir <= 1;
+    const nextW = up ? c.w + 2.5 : c.w;
+    const points = e.hist.concat([[c.w, c.reps]]).map(([w, r]) => e1rm(w, r));
+    const title = up
+      ? `${e.name}: ${fmt(c.w)} → <b>${fmt(nextW)} kg</b> nächstes Mal`
+      : bergHit
+        ? `${e.name}: Last halten – Bergtag-Fenster`
+        : grind
+          ? `${e.name}: ${fmt(c.w)} kg halten (RIR ${c.rir} – zu schwer für Progression)`
+          : `${e.name}: ${fmt(c.w)} kg halten, Wdh ausbauen (${c.reps}/${hi})`;
+    const sub = up
+      ? `Korridor ${lo}–${hi} voll bei RIR ${c.rir} ⇒ double progression: +2,5 kg, zurück ans Korridor-Ende.`
+      : bergHit ? `Erst raus aus dem DOMS-Fenster, dann zählt der Korridor wieder.`
+      : grind ? `RIR ≤ 1 heißt: nahe am Limit gearbeitet – erst Wiederholungen stabilisieren.`
+      : `Noch ${hi - c.reps} Wdh bis zur Laststeigerung.`;
+    return `<div class="prog ${up ? "" : "hold"}">
+      <div class="p-t">${title}</div><div class="p-s">${sub}</div>
+      ${spark(points)}
+      <div class="p-s mono">e1RM ≈ ${fmt(Math.round(points[points.length-1]*10)/10)} kg (Epley)</div>
+    </div>`;
+  }).join("");
+  document.getElementById("prog-card").innerHTML = cards + `
+    <div class="evi"><span class="lvl meta">Meta-Analyse</span>
+      <span class="src">Autoregulierte Laststeuerung (RIR/RPE, APRE) > starre %1RM-Pläne — Netzwerk-Meta 2025. RIR-Skala validiert (Zourdos 2016), bei hohen Wdh ungenauer.</span></div>
+    <div class="evi"><span class="lvl">Experten-Konsens</span>
+      <span class="src">Double-Progression-Mechanik; e1RM per Epley = Schätzung, kein Test-Max.</span></div>`;
+  toast("Geloggt · Coach hat Progression & Volumen aktualisiert");
+  renderVol(true);
+  renderDeload();
+}
+function spark(pts){
+  const W = 340, Hh = 56, min = Math.min(...pts) - 2, max = Math.max(...pts) + 2;
+  const xy = pts.map((v, i) => [ (i/(pts.length-1)) * (W-38) + 4, Hh-10 - ((v-min)/(max-min)) * (Hh-22) ]);
+  const line = xy.map((p, i) => (i ? "L" : "M") + p[0].toFixed(0) + "," + p[1].toFixed(0)).join(" ");
+  const last = xy[xy.length-1];
+  return `<svg class="spark" viewBox="0 0 ${W} ${Hh}" width="100%" height="${Hh}">
+    <path d="${line}" fill="none" stroke="var(--fresh)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${last[0].toFixed(0)}" cy="${last[1].toFixed(0)}" r="3.4" fill="var(--bg)" stroke="var(--brand)" stroke-width="2"/>
+    <text x="${W-2}" y="${last[1].toFixed(0)}" text-anchor="end" dominant-baseline="middle">heute</text>
+    <text x="4" y="${Hh-1}">vor 6 Wo</text></svg>`;
+}
+
+/* ---------- 3 · Volumen-Cockpit ---------- */
+const VOL = [
+  { r:"Brust", strength:6, boulder:0 },
+  { r:"Schulter", strength:5, boulder:1 },
+  { r:"Oberer Rücken", strength:0, boulder:7 },
+  { r:"Unterarm/Griff", strength:0, boulder:8 },
+  { r:"Quadrizeps", strength:6, boulder:0 },
+  { r:"Hintere Kette", strength:6, boulder:0 },
+];
+function renderVol(afterLog){
+  const [lo, hi] = [6, 10], SCALE = 14;
+  document.getElementById("vol-rows").innerHTML = VOL.map(v => {
+    const s = v.strength + (afterLog ? 0 : 0), total = s + v.boulder;
+    const pct = x => Math.min(100, x / SCALE * 100);
+    const low = total < lo, inBand = total >= lo && total <= hi;
+    return `<div class="vol-row"><span class="vol-name">${v.r}</span>
+      <div class="vol-track">
+        <div class="vol-corridor" style="left:${pct(lo)}%;width:${pct(hi)-pct(lo)}%"></div>
+        <div class="vol-fill" style="width:${pct(s)}%"></div>
+        <div class="vol-fill boulder" style="left:${pct(s)}%;width:${pct(v.boulder)}%"></div>
+      </div>
+      <span class="vol-v" style="color:${inBand ? "var(--fresh)" : low ? "var(--caution)" : "var(--text-mid)"}">${total}<small>/${lo}–${hi}</small></span>
+    </div>`;
+  }).join("");
+}
+
+/* ---------- 4 · Readiness / Deload ---------- */
+function toggle(k){
+  state[k] = !state[k];
+  document.getElementById("tgl-" + k).classList.toggle("on", state[k]);
+  state.logged = false;
+  renderLog(); renderDeload();
+}
+function renderDeload(){
+  const el = document.getElementById("deload-slot");
+  el.innerHTML = state.fatigue ? `
+    <div class="sug" style="--op-color:var(--caution);--op:var(--caution)">
+      <span class="op">● Deload vorschlagen</span>
+      <p class="coach">Deine Ampeln melden seit 14 Tagen gehäuft müde/platt und dein e1RM stagniert auf 3 von 4 Übungen. Nimm nächste Woche das Volumen um 40–50 % raus – Lasten bleiben, Sätze halbieren. Danach greift die Progression wieder.</p>
+      <div class="why"><div class="wl">Warum</div>
+        <div class="wt">Deload-Timing ist kaum direkt beforscht (Experten-Konsens) – aber die Trigger sind deine evidenz-gegradeten Signale: R5-Ampelhäufung, ACWR-Verlauf, e1RM-Plateau. Kein Kalender-Deload, sondern signalgesteuert.</div>
+        <div class="evi"><span class="lvl">Experten-Konsens</span>
+          <span class="src">Periodisierung: kleiner, realer Vorteil für Maximalkraft (Williams 2017, d ≈ 0,23–0,43).</span></div>
+      </div>
+    </div>` : "";
+}
+
+function toast(t){ const el = document.getElementById("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove("show"), 2600); }
+
+renderLog(); renderVol(false); renderDeload();
+</script>
+</body>
+</html>
