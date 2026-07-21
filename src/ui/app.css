@@ -13,6 +13,13 @@ body { display: block; padding: 0; background: var(--bg); }
 /* No fake status bar in the real app */
 .statusbar { display: none; }
 
+/* Rulebook source links (story #57) */
+.ri-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.src-link { display: inline-block; font-size: 11.5px; color: var(--brand);
+  border: 1px solid var(--brand-dim); background: var(--brand-dim);
+  border-radius: var(--r-pill); padding: 3px 11px; text-decoration: none; min-height: 24px; }
+.src-link:hover { border-color: var(--brand); }
+
 /* Home workout focus (story #52): today's strength session, MyFitCoach-style */
 .workout-card { background: var(--surface-1); border: 1px solid var(--brand-line, rgba(200,245,66,.5));
   border-radius: var(--r-lg); padding: 14px; margin-top: 16px; box-shadow: 0 0 0 1px var(--brand-dim); }
