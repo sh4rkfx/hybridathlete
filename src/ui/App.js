@@ -256,6 +256,28 @@ export function App() {
       setScreen('home');
     },
     resetData: async () => { await store.resetAll(); toast('Zurückgesetzt'); setScreen('home'); },
+    // Story #55: accept a full week proposal — logged/skipped entries stay,
+    // everything else is replaced; strength exercises generated readiness-
+    // aware for their actual date.
+    applyWeekPlan: (weekRec, wishes) => {
+      store.update((st) => {
+        st.profile.weekWishes = wishes;
+        st.planned = st.planned.filter((p) => p.status === 'logged' || p.status === 'skipped');
+        weekRec.sessions.forEach((s) => {
+          const when = atHour(addDays(dOnly(now), s.dayOffset), ENGINE_SLOT_HOUR[s.slot]);
+          const extra = {};
+          if (s.sportId === 'strength') {
+            const gen = generateStrength(st.profile, st, when, now).find((u) => u.unit === s.unit);
+            extra.unit = s.unit;
+            extra.exercises = gen ? gen.exercises : [];
+          }
+          st.planned.push({ id: store.uid(), sportId: s.sportId, date: when.toISOString(), slot: s.slot, fixed: s.fixed, status: 'planned', reduced: false, ...extra });
+        });
+      });
+      const n = store.getState().suggestions.length;
+      toast(`Woche übernommen · ${weekRec.sessions.length} Einheiten` + (n ? ` · ${n === 1 ? '1 Vorschlag' : n + ' Vorschläge'}` : ''));
+      setScreen('week');
+    },
     toggleActiveSport: (id) => store.update((st) => {
       const a = st.profile.activeSports ?? [];
       st.profile.activeSports = a.includes(id) ? a.filter((x) => x !== id) : [...a, id];
