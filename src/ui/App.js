@@ -67,7 +67,11 @@ export function App() {
         slot: slotOfHour(new Date().getHours()), duration: ctx.duration, sRPE: ctx.sRPE,
         source: 'manual', sets: [],
       };
-      if (ctx.sportId === 'bouldering') log.hardFingerLoad = ctx.hardFingerLoad;
+      if (ctx.sportId === 'bouldering') {
+        log.hardFingerLoad = ctx.hardFingerLoad;
+        // Story #54: per-boulder session data lives on the session log.
+        if (ctx.boulders?.length) log.boulders = ctx.boulders.map((b) => ({ ...b }));
+      }
       if (ctx.sportId === 'mountain_day') log.elevationGain = ctx.hm;
       if (ctx.loadSource === 'exercises') {
         // Story #50: log.sets keeps ONE entry per done exercise (regional-load
