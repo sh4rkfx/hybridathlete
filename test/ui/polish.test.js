@@ -24,3 +24,20 @@ describe('citation typography', () => {
     }
   });
 });
+
+describe('rule source links (story #57)', () => {
+  it('linked rules carry https URLs; R1/R6/R7 resolve via doi.org; R2/R5 stay unlinked', async () => {
+    const { RULE_META } = await import('../../src/engine/texts.js');
+    for (const [id, meta] of Object.entries(RULE_META)) {
+      for (const l of meta.links ?? []) {
+        expect(l.url, id).toMatch(/^https:\/\//);
+        expect(l.label, id).toBeTruthy();
+      }
+    }
+    for (const id of ['R1', 'R6', 'R7']) {
+      expect(RULE_META[id].links.some((l) => l.url.startsWith('https://doi.org/')), id).toBe(true);
+    }
+    expect(RULE_META.R2.links).toBeUndefined();
+    expect(RULE_META.R5.links).toBeUndefined();
+  });
+});
