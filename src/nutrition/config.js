@@ -138,6 +138,7 @@ export const DEFAULT_CONFIG = {
     trackingCoverageMin: 5,
     proteinMinGPerKgFfm: 2.0,
     eaLowThreshold: 30,
+    eaCriticalMargin: 5,               // EA_CRITICAL fires below threshold - margin
     eaBodyFatAware: true,
     // Body-fat-aware EA threshold (kickoff "Energieverfügbarkeit"). The two
     // body-fat anchors reuse MAX_RATE_BANDS edges so the taper introduces one
@@ -334,6 +335,7 @@ const FIELD_SPECS = [
   { path: 'flags.trackingCoverageMin', type: 'integer', min: 0, max: 7 },
   { path: 'flags.proteinMinGPerKgFfm', type: 'number', min: 0, max: 5 },
   { path: 'flags.eaLowThreshold', type: 'number', min: 5, max: 80 },
+  { path: 'flags.eaCriticalMargin', type: 'number', min: 0, max: 30 },
   { path: 'flags.eaBodyFatAware', type: 'boolean' },
   { path: 'flags.eaThresholdTaper.minThresholdKcalPerKgFfm', type: 'number', min: 5, max: 80 },
   { path: 'flags.eaThresholdTaper.fullThresholdBelowBodyFatPct.male', type: 'number', min: 0, max: 75 },

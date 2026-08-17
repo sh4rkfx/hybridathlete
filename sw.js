@@ -26,6 +26,7 @@ const PRECACHE = [
   'src/engine/time.js',
   'src/engine/week.js',
   'src/i18n/de.json',
+  'src/nutrition/availability.js',
   'src/nutrition/calibration.js',
   'src/nutrition/config.js',
   'src/nutrition/energy.js',
