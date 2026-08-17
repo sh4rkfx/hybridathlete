@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Energy module, steps 4–5: `targets.js` (rest-day TDEE, continuous auto phases, safety floors, macro split), `availability.js` (energy availability with a body-fat-aware threshold) and `ledger.js` (two-stage weekly plan/actual reconciliation). The module can now say what to eat, not only measure what is spent.
+- Continuous auto-phase rate: interpolates the body-fat rate bands and takes a fixed share of them, so phase rate and safety ceiling read one table. The share is 0.45 — at 0.70 the fat-mass cap and the intake floor bind for the whole cut and the curve never steers; 0.70 is pinned as a failing case so the default cannot drift upward unnoticed.
+- Body-fat-aware EA threshold, tapering 30 → 22 kcal/kg FFM. A documented departure from the literature and a load-bearing one: against a flat 30 the module's own recommended rest-day intake would raise `EA_LOW` every rest day indefinitely.
+- Energy availability is computed from calibrated training energy. With the raw source figure the kickoff's own ±1 kcal/kg constancy requirement is unreachable (1.55 at factor 0.95 on a 1500 kcal session); with calibration the residual is rounding only, bounded and always downward.
+- Service-worker precache list is now enforced by test — a `src/` file missing from `PRECACHE` fails the build instead of silently not existing offline.
 - Energy module, domain layer (steps 1–3 of the kickoff): `src/nutrition/` as a fourth test-enforced pure layer (ADR 0005) with `config.js`, `energy.js`, `trend.js` and `calibration.js`. Measures real daily energy turnover from tracked intake against the regressed weight trend, instead of estimating it.
 - Versioned config schema with declarative field specs and declarative safety hardcaps: an empty config runs, unknown fields survive a roundtrip, and `safety.*` violations are both reported and clamped so an aggressive config is unreachable even if a caller ignores `valid`.
 - Five BMR formulas plus a `median` default that degrades to the available subset; Atwater intake derivation with EU/US fibre handling; TEF computed per macro and suppressed when the data source already includes it.
