@@ -78,6 +78,42 @@
       "CONFIG_FIBER_ATWATER_UNUSUAL": "Ballaststoff-Faktor {value} kcal/g ist unüblich – 2 entspricht der EU-Kennzeichnung, 4 der US-amerikanischen.",
       "CONFIG_PROTEIN_BASIS_NEEDS_BODY_COMP": "Proteinziel auf FFM-Basis, aber ohne Körperfett- oder FFM-Angabe. Es greift ersatzweise die Untergrenze pro kg Körpergewicht ({fallback}).",
       "CONFIG_EA_FLOOR_ABOVE_THRESHOLD": "Der EA-Boden ({floor} kcal/kg FFM) liegt über der Schwelle ({threshold}). Die Absenkung entfällt damit – es gilt durchgehend der Literaturwert."
+    },
+    "flags": {
+      "RHR_ELEVATED": "Ruhepuls seit {days} Tagen bei oder über {limit} bpm (Baseline {baseline}). Ein typisches Zeichen für zu wenig Erholung.",
+      "RHR_SUPPRESSED": "Ruhepuls seit {days} Tagen bei oder unter {limit} bpm (Baseline {baseline}). Ein dauerhaft abgesenkter Ruhepuls im Defizit spricht für eine heruntergefahrene Stoffwechsellage.",
+      "PLATEAU": "Der Gewichtstrend liegt seit {days} Tagen praktisch bei null ({slopeKgPerDay} kg/Tag).",
+      "RATE_TOO_FAST": "Der Gewichtsverlust liegt bei {ratePctBwPerWeek} %/Woche und damit über der Sicherheitsgrenze von {cap} %/Woche.",
+      "PROTEIN_LOW": "Ø Protein {gPerKgFfm} g/kg fettfreie Masse liegt unter der Untergrenze von {minimum}.",
+      "PROTEIN_NOT_TRACKED": "An {missing} von {of} Tagen mit Kalorienangabe fehlt das Protein.",
+      "MACRO_KCAL_MISMATCH": "An {days} Tagen weichen eingegebene und aus Makros abgeleitete Kalorien um mehr als {tolerancePct} % voneinander ab.",
+      "TRACKING_GAP": "Nur {tracked} von 7 Tagen erfasst, nötig sind {minimum}.",
+      "FACTOR_CLAMPED": "Der Kalibrierungsfaktor {rawFactor} liegt außerhalb des zulässigen Bereichs und wurde auf {factor} begrenzt. Häufigste Ursache ist systematisches Untertracking, nicht ein ungewöhnlicher Stoffwechsel.",
+      "EA_LOW": "Die Energieverfügbarkeit lag an {days} von 7 Tagen unter der Schwelle.",
+      "EA_CRITICAL": "Die Energieverfügbarkeit liegt seit {days} Tagen in Folge deutlich unter der Schwelle.",
+      "LEDGER_SATURATED": "Das Wochenkonto ist am Deckel ({balanceKcal} kcal). Weitere Abweichungen werden nicht mehr verrechnet.",
+      "DIET_BREAK_DUE": "Seit {weeks} Wochen ohne Diätpause – vorgesehen sind {everyWeeks}.",
+      "RECALIBRATION_DUE": "Die letzte Kalibrierung ist {days} Tage her.",
+      "SOURCE_DEGRADED": "Die Datenquelle liefert nur {coverage} der Tage, nötig sind {minimum}.",
+      "DEVICE_CHANGE_DETECTED": "Der Median des Tagesumsatzes springt bei gleicher Aktivität und gleichem Ruhepuls um {jumpPct} % ({before} → {after} kcal). Das sieht nach einem Gerätewechsel aus.",
+      "DISTRIBUTION_SHIFT": "Der Median weicht um {shiftPct} % vom Vorjahresfenster ab ({prior} → {current} kcal).",
+      "NON_REPRESENTATIVE_DATA": "{pct} % des Fensters sind als nicht repräsentativ markiert (Grenze {maximum} %)."
+    },
+    "actions": {
+      "REDUCE_LOAD_OR_EAT_MORE": "Trainingslast senken oder mehr essen.",
+      "END_DEFICIT": "Defizit beenden und auf Erhaltung gehen.",
+      "RECALIBRATE": "Neu kalibrieren.",
+      "RAISE_INTAKE": "Zufuhr erhöhen.",
+      "RAISE_PROTEIN": "Proteinzufuhr erhöhen.",
+      "TRACK_PROTEIN": "Protein mit erfassen.",
+      "REVIEW_ENTRY": "Eingabe prüfen.",
+      "TRACK_DAILY": "Täglich erfassen.",
+      "REVIEW_TRACKING": "Tracking auf Vollständigkeit prüfen.",
+      "REVIEW_TARGET": "Zielzufuhr prüfen.",
+      "TAKE_DIET_BREAK": "Diätpause einlegen.",
+      "CHECK_DATA_SOURCE": "Datenquelle prüfen.",
+      "ADD_DEVICE_ERA": "Geräte-Ära eintragen.",
+      "REVIEW_CONTEXT": "Kontext-Zeiträume prüfen."
     }
   }
 }

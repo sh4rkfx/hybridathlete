@@ -132,11 +132,29 @@ export const DEFAULT_CONFIG = {
 
   flags: {
     rhrBaseline: 'auto',
+    rhrBaselineDays: 28,               // 'auto' = median of the first 28 days of the era
     rhrHighDelta: 4,
+    rhrHighDays: 7,
     rhrLowDelta: -4,
+    rhrLowDays: 21,
     plateauDays: 21,
-    trackingCoverageMin: 5,
+    // "Gewichtstrend ~ 0" needs a width. 0.01 kg/day is 0.07 kg/week, roughly
+    // 77 kcal/day — below the noise any weekly weigh-in can resolve.
+    // ASSUMPTION: the kickoff says "approximately zero" and no more.
+    plateauMaxTrendKgPerDay: 0.01,
+    trackingCoverageMin: 5,            // of 7 days
     proteinMinGPerKgFfm: 2.0,
+    proteinMissingDaysOf7: 3,          // PROTEIN_NOT_TRACKED above this many
+    eaLowDaysOf7: 5,
+    eaCriticalConsecutiveDays: 3,
+    sourceCoverageMin: 0.8,            // SOURCE_DEGRADED below this share of days
+    deviceChangeJumpPct: 15,
+    // "Same activity and pulse" for the device-change detector: rest days whose
+    // resting heart rate sits within this band of the baseline.
+    // ASSUMPTION: the kickoff names neither the comparison set nor the band.
+    rhrSameDeltaBpm: 2,
+    distributionShiftPct: 20,
+    nonRepresentativeMaxPct: 30,
     eaLowThreshold: 30,
     eaCriticalMargin: 5,               // EA_CRITICAL fires below threshold - margin
     eaBodyFatAware: true,
@@ -329,6 +347,18 @@ const FIELD_SPECS = [
   { path: 'history.trainingContext.defaultLabel', type: 'string' },
 
   { path: 'flags.rhrBaseline', type: 'rhrBaseline' },
+  { path: 'flags.rhrBaselineDays', type: 'integer', min: 3, max: 365 },
+  { path: 'flags.rhrHighDays', type: 'integer', min: 1, max: 180 },
+  { path: 'flags.rhrLowDays', type: 'integer', min: 1, max: 365 },
+  { path: 'flags.rhrSameDeltaBpm', type: 'number', min: 0, max: 20 },
+  { path: 'flags.plateauMaxTrendKgPerDay', type: 'number', min: 0, max: 1 },
+  { path: 'flags.proteinMissingDaysOf7', type: 'integer', min: 0, max: 7 },
+  { path: 'flags.eaLowDaysOf7', type: 'integer', min: 1, max: 7 },
+  { path: 'flags.eaCriticalConsecutiveDays', type: 'integer', min: 1, max: 30 },
+  { path: 'flags.sourceCoverageMin', type: 'number', min: 0, max: 1 },
+  { path: 'flags.deviceChangeJumpPct', type: 'number', min: 1, max: 100 },
+  { path: 'flags.distributionShiftPct', type: 'number', min: 1, max: 100 },
+  { path: 'flags.nonRepresentativeMaxPct', type: 'number', min: 1, max: 100 },
   { path: 'flags.rhrHighDelta', type: 'number', min: 0, max: 40 },
   { path: 'flags.rhrLowDelta', type: 'number', min: -40, max: 0 },
   { path: 'flags.plateauDays', type: 'integer', min: 3, max: 180 },

@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import de from '../../src/i18n/de.json' with { type: 'json' };
+import { FLAG_CODES, SUGGESTED_ACTIONS } from '../../src/nutrition/flags.js';
 
 const NUTRITION = new URL('../../src/nutrition', import.meta.url).pathname;
 
@@ -42,17 +43,27 @@ describe('locale coverage', () => {
     expect(orphans).toEqual([]);
   });
 
+  it('every flag code has German wording, and there are no orphans', () => {
+    expect(FLAG_CODES.filter((code) => !de.nutrition.flags[code])).toEqual([]);
+    expect(Object.keys(de.nutrition.flags).filter((code) => !FLAG_CODES.includes(code))).toEqual([]);
+  });
+
+  it('every suggested action has German wording, and there are no orphans', () => {
+    expect(SUGGESTED_ACTIONS.filter((action) => !de.nutrition.actions[action])).toEqual([]);
+    expect(Object.keys(de.nutrition.actions).filter((action) => !SUGGESTED_ACTIONS.includes(action))).toEqual([]);
+  });
+
   it('no message is empty and none leaks a raw code', () => {
-    for (const bucket of ['errors', 'warnings']) {
+    for (const bucket of ['errors', 'warnings', 'flags', 'actions']) {
       for (const [code, message] of Object.entries(de.nutrition[bucket])) {
-        expect(message.trim().length, code).toBeGreaterThan(10);
+        expect(message.trim().length, code).toBeGreaterThan(bucket === 'actions' ? 5 : 10);
         expect(message, code).not.toContain(code);
       }
     }
   });
 
   it('placeholders are balanced', () => {
-    for (const bucket of ['errors', 'warnings']) {
+    for (const bucket of ['errors', 'warnings', 'flags', 'actions']) {
       for (const [code, message] of Object.entries(de.nutrition[bucket])) {
         expect(message.split('{').length, code).toBe(message.split('}').length);
         for (const [, name] of message.matchAll(/\{([^}]*)\}/g)) {
