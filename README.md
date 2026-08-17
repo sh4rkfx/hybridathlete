@@ -48,7 +48,9 @@ the regressed weight trend rather than estimating it from a formula, then derive
 target from it: rest-day TDEE minus a continuously scaling phase deficit, bounded by a
 fat-mass-aware deficit ceiling and an intake floor, with training energy fully compensated
 so energy availability stays flat across rest and training days. A rolling weekly account
-reconciles plan against actual. Constants carry a source and an evidence level in
+reconciles plan against actual, and an 18-code warning system watches resting heart
+rate, weight trend, protein, tracking coverage, energy availability and data quality.
+Constants carry a source and an evidence level in
 `src/nutrition/sources.json`, same as the planning rules, and the handful that are
 judgement rather than evidence say so; see
 [ADR 0005](docs/decisions/0005-nutrition-module-placement.md) for why it is a sibling of
