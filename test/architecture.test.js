@@ -47,4 +47,24 @@ describe('architecture line', () => {
       }
     }
   });
+
+  // Nothing enforced this before, and the failure mode is silent: a src/ file
+  // missing from the service worker's PRECACHE simply does not exist offline,
+  // which is the one thing this app promises.
+  it('every src/ asset is precached by the service worker', () => {
+    const sw = readFileSync(new URL('../sw.js', import.meta.url).pathname, 'utf8');
+    const listed = new Set([...sw.matchAll(/'(src\/[^']+)'/g)].map(([, path]) => path));
+
+    const assets = readdirSync(ROOT, { withFileTypes: true, recursive: true })
+      .filter((d) => d.isFile() && /\.(js|json|css)$/.test(d.name))
+      .map((d) => `src/${join(d.parentPath ?? d.path, d.name).slice(ROOT.length + 1)}`);
+
+    expect(assets.length).toBeGreaterThan(30);
+    expect(assets.filter((asset) => !listed.has(asset))).toEqual([]);
+  });
+
+  it('the cache version was bumped alongside the precache list', () => {
+    const sw = readFileSync(new URL('../sw.js', import.meta.url).pathname, 'utf8');
+    expect(sw).toMatch(/const CACHE_VERSION = 'v\d+';/);
+  });
 });
