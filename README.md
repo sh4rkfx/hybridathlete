@@ -37,10 +37,17 @@ validated sRPE×duration load model (Foster 2001). Details:
 
 Hard separation line:
 
-- `src/engine/`, `src/data/`, `src/rules/` — pure vanilla ES modules. No DOM, no Preact,
-  engine has no DB access. This keeps the rule engine unit-testable in Node and the
-  science reviewable.
+- `src/engine/`, `src/data/`, `src/rules/`, `src/nutrition/` — pure vanilla ES modules. No
+  DOM, no Preact, and engine/rules/nutrition have no DB access. This keeps the rule engine
+  unit-testable in Node and the science reviewable.
 - `src/ui/` — Preact + HTM (vendored ESM, buildless), presentation only.
+
+`src/nutrition/` is the energy and target-intake module (in progress — domain layer only,
+no UI yet). It measures real daily energy turnover by reconciling tracked intake against
+the regressed weight trend, rather than estimating it from a formula. Constants carry a
+source and an evidence level in `src/nutrition/sources.json`, same as the planning rules;
+see [ADR 0005](docs/decisions/0005-nutrition-module-placement.md) for why it is a sibling
+of `src/engine/` and not a second `domain/` layer.
 
 Data flow: log → engine (`evaluate(state)`, pure) → suggestions → inbox (accept/reject
 with reason) → feedback aggregated per rule.

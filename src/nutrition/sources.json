@@ -1,0 +1,129 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "description": "Literature anchors for the constants of the energy module. Same contract as src/rules/catalog.json: every entry carries source + evidenceLevel, and the numeric values are the ones the code actually uses (config defaults). evidenceLevel scale: meta-analysis > rct > cohort > expert-consensus > assumption. Entries marked 'assumption' are transparent extensions, not literature — see the kickoff doc.",
+    "levels": ["meta-analysis", "rct", "cohort", "expert-consensus", "assumption"]
+  },
+  "entries": [
+    {
+      "id": "bmr_mifflin",
+      "name": "Mifflin-St Jeor",
+      "kind": "bmr-formula",
+      "params": { "weight": 10, "height": 6.25, "age": -5, "offsetMale": 5, "offsetFemale": -161 },
+      "source": "Mifflin MD, St Jeor ST et al. (1990), Am J Clin Nutr 51(2):241-247 — a new predictive equation for resting energy expenditure in healthy individuals. The best-validated general-population BMR equation.",
+      "doi": "10.1093/ajcn/51.2.241",
+      "evidenceLevel": "cohort"
+    },
+    {
+      "id": "bmr_owen",
+      "name": "Owen",
+      "kind": "bmr-formula",
+      "params": { "male": { "base": 879, "weight": 10.2 }, "female": { "base": 795, "weight": 7.18 } },
+      "source": "Owen OE et al. (1986), Am J Clin Nutr 44(1):1-19 (women) and (1987) 46(6):875-885 (men) — a reappraisal of the caloric requirements of healthy adults. Weight-only, therefore insensitive to height and age.",
+      "doi": "10.1093/ajcn/44.1.1",
+      "evidenceLevel": "cohort"
+    },
+    {
+      "id": "bmr_katch",
+      "name": "Katch-McArdle",
+      "kind": "bmr-formula",
+      "params": { "base": 370, "ffm": 21.6 },
+      "source": "Katch FI, McArdle WD — Exercise Physiology: Energy, Nutrition and Human Performance. Fat-free-mass based, so it needs a body-composition estimate; it does not inherit the sex term the weight-based equations carry.",
+      "evidenceLevel": "expert-consensus"
+    },
+    {
+      "id": "bmr_harris",
+      "name": "Harris-Benedict (1918 original)",
+      "kind": "bmr-formula",
+      "active": false,
+      "params": {
+        "male": { "base": 66.473, "weight": 13.7516, "height": 5.0033, "age": -6.755 },
+        "female": { "base": 655.0955, "weight": 9.5634, "height": 1.8496, "age": -4.6756 }
+      },
+      "source": "Harris JA, Benedict FG (1918), PNAS 4(12):370-373 — a biometric study of basal metabolism in man. Overestimates on modern cohorts by roughly 5 %; kept selectable for comparison, never a default.",
+      "doi": "10.1073/pnas.4.12.370",
+      "evidenceLevel": "cohort"
+    },
+    {
+      "id": "bmr_cunningham",
+      "name": "Cunningham",
+      "kind": "bmr-formula",
+      "active": false,
+      "params": { "base": 500, "ffm": 22 },
+      "source": "Cunningham JJ (1980), Am J Clin Nutr 33(11):2372-2374 — a reanalysis of the factors influencing basal metabolic rate in normal adults. Calibrated on lean, trained subjects and overestimates outside that group.",
+      "doi": "10.1093/ajcn/33.11.2372",
+      "evidenceLevel": "cohort"
+    },
+    {
+      "id": "atwater",
+      "name": "Atwater factors",
+      "kind": "intake",
+      "params": { "protein": 4, "carbs": 4, "fat": 9, "alcohol": 7, "fiberEu": 2, "fiberUs": 4 },
+      "source": "Atwater general factor system, as codified in FAO Food and Nutrition Paper 77 (2003). The fibre factor is a labelling convention, not a measurement: EU Regulation 1169/2011 Annex XIV uses 2 kcal/g, the US (21 CFR 101.9) treats fibre as 4 kcal/g carbohydrate. At 35 g/day that is a 70 kcal difference.",
+      "evidenceLevel": "expert-consensus"
+    },
+    {
+      "id": "tef_macros",
+      "name": "Thermic effect of food, per macronutrient",
+      "kind": "tef",
+      "params": { "protein": 0.25, "carbs": 0.08, "fat": 0.02, "alcohol": null, "fallbackOfIntake": 0.10 },
+      "source": "Westerterp KR (2004), Nutr Metab 1:5 — diet induced thermogenesis. Reported ranges: protein 20-30 %, carbohydrate 5-10 %, fat 0-3 %; mixed-diet total ~10 % of intake, which is the fallback when macros are missing.",
+      "doi": "10.1186/1743-7075-1-5",
+      "evidenceLevel": "cohort",
+      "gap": "No coefficient for alcohol is given in the kickoff, so alcohol energy is treated as 0 % TEF rather than guessed. The literature suggests it is not negligible (~15-20 %), which makes this a conservative underestimate of TEF."
+    },
+    {
+      "id": "energy_density",
+      "name": "Energy density of weight change",
+      "kind": "calibration",
+      "params": { "kcalPerKg": 7700 },
+      "source": "Wishnofsky M (1958), Am J Clin Nutr 6(5):542-546 — the classic 3500 kcal/lb figure for adipose tissue. Known to be a simplification: the fat/fat-free split of the tissue lost varies with body composition (Forbes 1987, Hall 2008). ADR 0006 keeps it a fixed, configurable constant rather than putting a second unvalidated model inside the measured result.",
+      "doi": "10.1093/ajcn/6.5.542",
+      "evidenceLevel": "expert-consensus"
+    },
+    {
+      "id": "max_rate_body_fat_aware",
+      "name": "Body-fat-aware weekly rate ceiling",
+      "kind": "safety",
+      "params": { "bands": [1.2, 1.0, 0.7, 0.5] },
+      "source": "Graded from the observation that leaner individuals lose proportionally more fat-free mass at a given deficit (Forbes 1987; Hall 2007). The specific band edges and rates are a practitioner convention, not a measured threshold.",
+      "evidenceLevel": "assumption"
+    },
+    {
+      "id": "max_deficit_fat_mass_aware",
+      "name": "Maximum deficit per kg fat mass",
+      "kind": "safety",
+      "params": { "kcalPerKgFatMass": 30 },
+      "source": "Alpert SS (2005), Nutrition 21(11-12):1129-1132 — a limit on the rate at which adipose tissue can mobilise energy, above which the shortfall is met from lean tissue. The 30 kcal/kg figure is the commonly cited practitioner rounding of that limit, not Alpert's own coefficient.",
+      "doi": "10.1016/j.nut.2005.03.002",
+      "evidenceLevel": "assumption"
+    },
+    {
+      "id": "energy_availability",
+      "name": "Low energy availability threshold",
+      "kind": "availability",
+      "params": { "thresholdKcalPerKgFfm": 30, "bodyFatAware": true },
+      "source": "Loucks AB, Thuma JR (2003), J Clin Endocrinol Metab 88(1):297-311 — LH pulsatility is disrupted below roughly 30 kcal/kg FFM. Mountjoy M et al. (2023), Br J Sports Med — IOC consensus on REDs.",
+      "doi": "10.1210/jc.2002-020369",
+      "evidenceLevel": "rct",
+      "gap": "Lowering the threshold with rising body fat (eaBodyFatAware) is NOT covered by this literature. The EA cut-offs come from lean athlete cohorts; at 28 % body fat the endogenous reserve is large. Physiologically plausible, deliberately unvalidated — see the kickoff, 'Energieverfügbarkeit'."
+    },
+    {
+      "id": "full_compensation",
+      "name": "Full compensation of training energy",
+      "kind": "compensation",
+      "params": { "fraction": 1.0 },
+      "source": "Torstveit MK et al. (2018), Int J Sport Nutr Exerc Metab — within-day energy deficiency: athletes with suppressed resting metabolic rate spent markedly more time below -400 kcal at an identical 24 h balance, alongside higher cortisol. Murlasits Z et al. (2025), systematic review — matching intake to expenditure in time rather than over the day.",
+      "doi": "10.1123/ijsnem.2017-0337",
+      "evidenceLevel": "cohort"
+    },
+    {
+      "id": "calibration_confidence",
+      "name": "Calibration confidence thresholds",
+      "kind": "calibration",
+      "params": { "highCoverage": 0.85, "highMaxGapDays": 2, "mediumCoverage": 0.70, "mediumMaxGapDays": 4 },
+      "source": "No literature. The kickoff requires a low/medium/high confidence level but does not define it; these cut-offs are judgement, kept in config so they are visible and changeable rather than buried as literals.",
+      "evidenceLevel": "assumption"
+    }
+  ]
+}

@@ -39,5 +39,43 @@
     "goal": "Ziel", "split": "Split", "disableUnits": "Einheiten abwählen", "constraints": "Constraints",
     "regenerate": "Plan neu generieren", "export": "Als JSON exportieren", "reset": "Zurücksetzen", "demo": "Demo-Daten laden"
   },
-  "fatigue": { "fresh": "frisch", "caution": "müde", "stop": "platt" }
+  "fatigue": { "fresh": "frisch", "caution": "müde", "stop": "platt" },
+  "nutrition": {
+    "errors": {
+      "CONFIG_REQUIRED": "{path}: Pflichtfeld fehlt.",
+      "CONFIG_UNKNOWN_ENUM": "{path}: „{value}“ ist kein gültiger Wert. Erlaubt: {allowed}.",
+      "CONFIG_NOT_A_STRING": "{path}: Text erwartet, „{value}“ bekommen.",
+      "CONFIG_NOT_A_BOOLEAN": "{path}: Ja/Nein erwartet, „{value}“ bekommen.",
+      "CONFIG_NOT_A_NUMBER": "{path}: Zahl erwartet, „{value}“ bekommen.",
+      "CONFIG_NOT_AN_INTEGER": "{path}: ganze Zahl erwartet, {value} bekommen.",
+      "CONFIG_NOT_A_DATE": "{path}: Datum im Format JJJJ-MM-TT erwartet, „{value}“ bekommen.",
+      "CONFIG_NOT_AN_ARRAY": "{path}: Liste erwartet.",
+      "CONFIG_NOT_AN_OBJECT": "{path}: Objekt erwartet.",
+      "CONFIG_OUT_OF_RANGE": "{path}: {value} liegt außerhalb des zulässigen Bereichs ({min} bis {max}).",
+      "CONFIG_SAFETY_MORE_AGGRESSIVE": "{path}: {value} ist aggressiver als die Sicherheitsgrenze {limit}. Konservativer geht immer, aggressiver nie – der Wert wurde auf {limit} zurückgesetzt.",
+      "CONFIG_CUSTOM_BMR_MISSING": "Bei bmrFormula „custom“ muss customBmrKcal gesetzt sein.",
+      "CONFIG_FORMULA_NEEDS_BODY_COMP": "Die Formel „{formula}“ braucht die fettfreie Masse. Ohne Körperfett- oder FFM-Angabe ist sie nicht verfügbar.",
+      "CONFIG_BODY_COMP_VALUE_MISSING": "Bei bodyComp-Modus „{mode}“ fehlt der Wert.",
+      "CONFIG_WINDOW_BELOW_MIN_DAYS": "Das Kalibrierungsfenster ({windowDays} Tage) ist kleiner als die Mindestanzahl Tage ({minDays}).",
+      "CONFIG_CLAMP_INVALID": "factorClamp muss [unten, oben] mit unten < 1 < oben sein.",
+      "CONFIG_CONFIDENCE_ORDER": "Die Abdeckung für „medium“ ({medium}) darf nicht über der für „high“ ({high}) liegen.",
+      "CONFIG_LEDGER_CORRECTION_ABOVE_CAP": "Die Tageskorrektur ({correction} kcal) ist größer als der Kontodeckel ({cap} kcal).",
+      "CONFIG_PHASE_RATE_ABOVE_CAP": "{path}: {value} %/Woche überschreitet die Sicherheitsgrenze von {cap} %/Woche für den aktuellen Körperfettanteil.",
+      "CONFIG_ERA_REVERSED": "Geräte-Ära endet ({to}) vor ihrem Beginn ({from}).",
+      "CONFIG_ERA_UNORDERED": "Geräte-Ären müssen chronologisch sortiert sein: {from} steht nach {previous}.",
+      "CONFIG_ERA_OVERLAP": "Geräte-Ären dürfen sich nicht überlappen und keine Lücke lassen: {from} kollidiert mit dem Ende der vorherigen Ära ({previousTo}).",
+      "CONFIG_HARD_FLOOR_ABOVE_SOFT_FLOOR": "Der harte Kalorienboden ({hard} × BMR) darf nicht über dem weichen ({soft} × BMR) liegen."
+    },
+    "warnings": {
+      "CONFIG_SCHEMA_AHEAD": "Diese Konfiguration stammt aus einer neueren App-Version (Schema {stored}, bekannt ist {known}). Sie wird unverändert übernommen – unbekannte Felder bleiben erhalten.",
+      "CONFIG_UNKNOWN_FIELDS": "Unbekannte Felder bleiben erhalten: {paths}.",
+      "CONFIG_BMR_FORMULA_OVERESTIMATES": "„{formula}“ überschätzt den Ruheumsatz systematisch (Harris 1918 auf einer historischen Kohorte, Cunningham auf Leistungssportlern kalibriert).",
+      "CONFIG_MEDIAN_WITHOUT_KATCH": "Ohne Körperfett- oder FFM-Angabe fällt Katch weg; der Median wird aus Mifflin und Owen gebildet.",
+      "CONFIG_PROFILE_INCOMPLETE": "Für die Ruheumsatz-Berechnung fehlt noch: {missing}.",
+      "CONFIG_GOAL_TARGET_MISSING": "Für den Modus „{mode}“ ist noch kein Zielgewicht hinterlegt.",
+      "CONFIG_CYCLE_WINDOW_FORCED": "Zyklus-Glättung erzwingt ein 28-Tage-Fenster (war {was}).",
+      "CONFIG_FIBER_ATWATER_UNUSUAL": "Ballaststoff-Faktor {value} kcal/g ist unüblich – 2 entspricht der EU-Kennzeichnung, 4 der US-amerikanischen.",
+      "CONFIG_PROTEIN_BASIS_NEEDS_BODY_COMP": "Proteinziel auf FFM-Basis, aber ohne Körperfett- oder FFM-Angabe. Es greift ersatzweise die Untergrenze pro kg Körpergewicht ({fallback})."
+    }
+  }
 }
