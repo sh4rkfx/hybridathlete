@@ -3,7 +3,7 @@
 import { openDB } from '../../vendor/idb/index.js';
 
 export const DB_NAME = 'hybridathlete';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 // One migration per schema version. Index = target version - 1.
 // Each migration receives (db, transaction) from idb's upgrade callback.
@@ -36,11 +36,28 @@ const MIGRATIONS = [
     db.createObjectStore('rules', { keyPath: 'ruleId' });
     db.createObjectStore('importBatches', { keyPath: 'batchId' });
   },
+
+  // v2 — energy module (kickoff "Persistenz"). The kickoff names these days /
+  // config / calibrations / ledger / phases; they carry a `nutrition` prefix
+  // here because this database is shared with the training planner and `days`
+  // and `config` are far too generic to belong to one feature. Keypaths and
+  // contents are as specified.
+  //
+  // Computed values (target, factor, flags, EA) are deliberately NOT stored —
+  // they are recomputed on load, so a corrected formula fixes history too.
+  (db) => {
+    db.createObjectStore('nutritionDays', { keyPath: 'date' });            // 'YYYY-MM-DD'
+    db.createObjectStore('nutritionConfig', { keyPath: 'id' });            // singleton, id 'me'
+    db.createObjectStore('nutritionCalibrations', { keyPath: 'computedAt' });
+    db.createObjectStore('nutritionLedger', { keyPath: 'date' });
+    db.createObjectStore('nutritionPhases', { keyPath: 'startedAt' });
+  },
 ];
 
 export const STORE_NAMES = [
   'profile', 'sports', 'exercises', 'plannedSessions', 'sessionLogs', 'setLogs',
   'fatigueEntries', 'painEntries', 'suggestions', 'rules', 'importBatches',
+  'nutritionDays', 'nutritionConfig', 'nutritionCalibrations', 'nutritionLedger', 'nutritionPhases',
 ];
 
 export function openDatabase(name = DB_NAME, version = DB_VERSION) {

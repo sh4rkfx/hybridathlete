@@ -88,6 +88,10 @@ describe('quoted params match the code', () => {
     }
   });
 
+  it('the formula adapter constants', () => {
+    expect(byId.formula_adapter.params.nonExercisePalFactor).toBe(DEFAULT_CONFIG.energy.nonExercisePalFactor);
+  });
+
   it('the compensation fraction matches the full-compensation rule', () => {
     expect(byId.full_compensation.params.fraction).toBe(1.0);
     expect(DEFAULT_CONFIG.compensation.rule).toBe('full');

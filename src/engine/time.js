@@ -7,6 +7,13 @@ export function mondayOf(d) { const x = dOnly(d); const wd = (x.getDay() + 6) % 
 export const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 export function wdShort(d) { return WD[new Date(d).getDay()]; }
 export function isSameDay(a, b) { return dOnly(a).getTime() === dOnly(b).getTime(); }
+// Calendar-day key, 'YYYY-MM-DD', in LOCAL time — dOnly already normalizes to
+// local midnight, and toISOString() would shift the day across the UTC offset.
+// The nutrition domain and its stores are keyed on this string.
+export function dateKey(d) {
+  const x = dOnly(d);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+}
 export function slotOfHour(h) { return h < 12 ? 'morning' : h < 18 ? 'midday' : 'evening'; }
 // Slot standard hours (spec §6.5 column header: morgens 8 / mittags 12 / abends 18).
 export const SLOT_HOUR = { morning: 8, midday: 12, evening: 18 };

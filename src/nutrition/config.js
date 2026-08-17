@@ -48,7 +48,13 @@ export const DEFAULT_CONFIG = {
   energy: {
     bmrFormula: 'median',
     customBmrKcal: null,
-    palFactor: 1.55,
+    palFactor: 1.55,                   // whole-day PAL, incl. exercise
+    // Non-exercise PAL for the FormulaAdapter, which adds measured activity on
+    // top and therefore must NOT use the whole-day figure — that would give
+    // every day the same estimate and erase the rest-day/training-day split the
+    // base intake depends on. Derived, not invented: the kickoff's documented
+    // rest-day TDEE of 2334 kcal over a BMR of 1790 implies 1.304.
+    nonExercisePalFactor: 1.30,
     adapterId: 'manual',
   },
 
@@ -271,6 +277,7 @@ const FIELD_SPECS = [
   { path: 'energy.bmrFormula', enum: ['median', 'mifflin', 'owen', 'katch', 'harris', 'cunningham', 'custom'] },
   { path: 'energy.customBmrKcal', type: 'number', min: 500, max: 5000, nullable: true },
   { path: 'energy.palFactor', type: 'number', min: 1.0, max: 2.6 },
+  { path: 'energy.nonExercisePalFactor', type: 'number', min: 1.0, max: 2.0 },
   { path: 'energy.adapterId', type: 'string' },
 
   { path: 'intake.entryMode', enum: ['kcal', 'macros', 'auto'] },
