@@ -118,6 +118,27 @@
       "evidenceLevel": "cohort"
     },
     {
+      "id": "auto_phase_rate",
+      "name": "Continuous auto-phase rate",
+      "kind": "targets",
+      "params": { "capFraction": 0.45 },
+      "source": "No literature. The kickoff asks for continuously scaling phases but does not give a curve, so the rate interpolates the max_rate_body_fat_aware bands and takes a fixed share of them — phase and safety ceiling then read one table and cannot drift apart. The share is judgement: 0.70 is the largest value that never touches the ceiling, but at 0.70 the fat-mass deficit cap and the hard intake floor bind for the whole cut and the curve stops steering anything. 0.45 stays clear of both and lands within about 0.05 pp of the hand-written phase ladder in the kickoff's own config.",
+      "evidenceLevel": "assumption"
+    },
+    {
+      "id": "ea_threshold_taper",
+      "name": "Body-fat-aware EA threshold",
+      "kind": "availability",
+      "params": {
+        "fullThresholdBelowBodyFatPct": { "male": 12, "female": 22 },
+        "floorAtBodyFatPct": { "male": 30, "female": 40 },
+        "minThresholdKcalPerKgFfm": 22
+      },
+      "source": "No literature, and deliberately so — see the gap on energy_availability. The 30 kcal/kg FFM cut-off comes from lean athlete cohorts (Loucks 2003); at 28 % body fat the endogenous reserve is large and a flat threshold produces false positives. The two body-fat anchors reuse the max_rate_body_fat_aware band edges, so only the floor is a new number.",
+      "evidenceLevel": "assumption",
+      "gap": "Physiologically plausible, not evidence-based. Load-bearing rather than cosmetic: at 27.9 % body fat the module's own recommended rest-day intake yields EA 28.2 kcal/kg FFM, so against the flat threshold of 30 it would raise EA_LOW every rest day indefinitely."
+    },
+    {
       "id": "calibration_confidence",
       "name": "Calibration confidence thresholds",
       "kind": "calibration",

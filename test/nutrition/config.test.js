@@ -4,6 +4,7 @@ import { describe, it, expect } from 'vitest';
 import {
   DEFAULT_CONFIG, SCHEMA_VERSION, SAFETY_BOUNDS, MAX_RATE_BANDS,
   validate, assertValid, migrate, maxRatePctBwPerWeek,
+  autoRatePctBwPerWeek, interpolatedRateCapPctBwPerWeek,
   massToKg, massFromKg, heightToCm, heightFromCm, energyToKcal, energyFromKcal,
 } from '../../src/nutrition/config.js';
 
@@ -212,6 +213,94 @@ describe('maxRate body-fat bands', () => {
     // regression: Math.min(band, fallback) would make 1.0 and 1.2 unreachable
     expect(bands('male')(35)).toBeGreaterThan(DEFAULT_CONFIG.safety.maxRate.fallbackPctBwPerWeek);
     expect(MAX_RATE_BANDS[0].maxPctBwPerWeek).toBe(1.2);
+  });
+});
+
+describe('continuous auto-phase rate', () => {
+  const male = (over = {}) => validate({ profile: { ...REFERENCE_CONFIG.profile }, ...over }).normalized;
+  // Hand-built rather than validated: SAFETY_BOUNDS clamps capFraction back to
+  // the default, and the point here is to prove the guard holds regardless.
+  const rawMale = (capFraction) => ({
+    profile: { sex: 'male' },
+    phases: { autoRate: { capFraction } },
+    safety: DEFAULT_CONFIG.safety,
+  });
+
+  it('interpolates between the band anchors instead of stepping', () => {
+    const config = male();
+    expect(interpolatedRateCapPctBwPerWeek(config, 27.9)).toBeCloseTo(1.158, 3);
+    expect(interpolatedRateCapPctBwPerWeek(config, 20)).toBeCloseTo(1.0, 6);
+    expect(interpolatedRateCapPctBwPerWeek(config, 12)).toBeCloseTo(0.7, 6);
+    // clamped outside the anchor range
+    expect(interpolatedRateCapPctBwPerWeek(config, 60)).toBe(1.2);
+    expect(interpolatedRateCapPctBwPerWeek(config, 0)).toBe(0.5);
+  });
+
+  it.each([[27.9, 0.521], [24, 0.486], [20, 0.450], [14, 0.349]])(
+    'at %f %% body fat the auto rate is %f %%/week', (bodyFatPct, expected) => {
+      expect(autoRatePctBwPerWeek(male(), bodyFatPct)).toBeCloseTo(expected, 3);
+    });
+
+  it('is continuous and monotone in body fat', () => {
+    const config = male();
+    const samples = Array.from({ length: 501 }, (_, i) => autoRatePctBwPerWeek(config, i / 10));
+    for (let i = 1; i < samples.length; i++) {
+      expect(samples[i]).toBeGreaterThanOrEqual(samples[i - 1] - 1e-12);   // monotone
+      expect(samples[i] - samples[i - 1]).toBeLessThan(0.02);              // no jumps
+    }
+  });
+
+  it('never exceeds the safety ceiling, at any body fat or any capFraction', () => {
+    for (const capFraction of [0.05, 0.45, 0.7, 1]) {
+      const config = rawMale(capFraction);
+      for (let bodyFatPct = 0; bodyFatPct <= 50; bodyFatPct += 0.1) {
+        expect(autoRatePctBwPerWeek(config, bodyFatPct))
+          .toBeLessThanOrEqual(maxRatePctBwPerWeek(config, bodyFatPct) + 1e-12);
+      }
+    }
+  });
+
+  it('falls back to the fixed ceiling share when body fat is unknown', () => {
+    expect(autoRatePctBwPerWeek(male(), null)).toBeCloseTo(0.7 * 0.45, 6);
+  });
+
+  it('capFraction 0.70 is rejected as more aggressive than the default', () => {
+    // Pinned deliberately. 0.70 is the largest share that never touches the
+    // ceiling, which is exactly what makes it useless: the fat-mass cap and the
+    // hard intake floor then bind for the whole cut and the curve stops
+    // steering. Raising the default should require seeing this fail.
+    const { valid, errors, normalized } = validate({ phases: { autoRate: { capFraction: 0.7 } } });
+    expect(valid).toBe(false);
+    expect(errors.find((e) => e.path === 'phases.autoRate.capFraction').code)
+      .toBe('CONFIG_SAFETY_MORE_AGGRESSIVE');
+    expect(normalized.phases.autoRate.capFraction).toBe(0.45);
+  });
+
+  it('a smaller share is allowed — conservative is always permitted', () => {
+    expect(validate({ phases: { autoRate: { capFraction: 0.3 } } }).valid).toBe(true);
+  });
+});
+
+describe('EA threshold taper config', () => {
+  it('rejects anchors that do not run downward', () => {
+    const { errors } = validate({ flags: { eaThresholdTaper: { fullThresholdBelowBodyFatPct: { male: 35 } } } });
+    expect(errors.find((e) => e.path === 'flags.eaThresholdTaper.floorAtBodyFatPct.male').code)
+      .toBe('CONFIG_TAPER_ANCHORS_UNORDERED');
+  });
+
+  it('a floor above the threshold flattens the taper rather than failing', () => {
+    // Raising the floor is the conservative direction, so it has to stay
+    // reachable; a floor at or above the threshold just means no taper at all.
+    const { valid, warnings, normalized } = validate({ flags: { eaThresholdTaper: { minThresholdKcalPerKgFfm: 45 } } });
+    expect(valid).toBe(true);
+    expect(codes(warnings)).toContain('CONFIG_EA_FLOOR_ABOVE_THRESHOLD');
+    expect(normalized.flags.eaThresholdTaper.minThresholdKcalPerKgFfm).toBe(30);
+  });
+
+  it('lowering the floor is rejected as more aggressive', () => {
+    const { valid, errors } = validate({ flags: { eaThresholdTaper: { minThresholdKcalPerKgFfm: 15 } } });
+    expect(valid).toBe(false);
+    expect(codes(errors)).toContain('CONFIG_SAFETY_MORE_AGGRESSIVE');
   });
 });
 

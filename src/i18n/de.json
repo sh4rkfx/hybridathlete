@@ -64,7 +64,8 @@
       "CONFIG_ERA_REVERSED": "Geräte-Ära endet ({to}) vor ihrem Beginn ({from}).",
       "CONFIG_ERA_UNORDERED": "Geräte-Ären müssen chronologisch sortiert sein: {from} steht nach {previous}.",
       "CONFIG_ERA_OVERLAP": "Geräte-Ären dürfen sich nicht überlappen und keine Lücke lassen: {from} kollidiert mit dem Ende der vorherigen Ära ({previousTo}).",
-      "CONFIG_HARD_FLOOR_ABOVE_SOFT_FLOOR": "Der harte Kalorienboden ({hard} × BMR) darf nicht über dem weichen ({soft} × BMR) liegen."
+      "CONFIG_HARD_FLOOR_ABOVE_SOFT_FLOOR": "Der harte Kalorienboden ({hard} × BMR) darf nicht über dem weichen ({soft} × BMR) liegen.",
+      "CONFIG_TAPER_ANCHORS_UNORDERED": "Die EA-Schwelle muss fallen: Der Ankerpunkt für die volle Schwelle ({lean} %) muss unter dem für den Boden ({high} %) liegen."
     },
     "warnings": {
       "CONFIG_SCHEMA_AHEAD": "Diese Konfiguration stammt aus einer neueren App-Version (Schema {stored}, bekannt ist {known}). Sie wird unverändert übernommen – unbekannte Felder bleiben erhalten.",
@@ -75,7 +76,8 @@
       "CONFIG_GOAL_TARGET_MISSING": "Für den Modus „{mode}“ ist noch kein Zielgewicht hinterlegt.",
       "CONFIG_CYCLE_WINDOW_FORCED": "Zyklus-Glättung erzwingt ein 28-Tage-Fenster (war {was}).",
       "CONFIG_FIBER_ATWATER_UNUSUAL": "Ballaststoff-Faktor {value} kcal/g ist unüblich – 2 entspricht der EU-Kennzeichnung, 4 der US-amerikanischen.",
-      "CONFIG_PROTEIN_BASIS_NEEDS_BODY_COMP": "Proteinziel auf FFM-Basis, aber ohne Körperfett- oder FFM-Angabe. Es greift ersatzweise die Untergrenze pro kg Körpergewicht ({fallback})."
+      "CONFIG_PROTEIN_BASIS_NEEDS_BODY_COMP": "Proteinziel auf FFM-Basis, aber ohne Körperfett- oder FFM-Angabe. Es greift ersatzweise die Untergrenze pro kg Körpergewicht ({fallback}).",
+      "CONFIG_EA_FLOOR_ABOVE_THRESHOLD": "Der EA-Boden ({floor} kcal/kg FFM) liegt über der Schwelle ({threshold}). Die Absenkung entfällt damit – es gilt durchgehend der Literaturwert."
     }
   }
 }
