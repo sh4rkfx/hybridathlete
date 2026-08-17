@@ -34,18 +34,53 @@ export const REASONS = {
   NON_REPRESENTATIVE_EXCLUDED: 'NON_REPRESENTATIVE_EXCLUDED',
 };
 
+// Device eras are half-open, [from, to). Validated eras touch — one ends on the
+// date the next begins — and the data recorded on that date comes from the NEW
+// device, so the switch day belongs to the new era. Treating `to` inclusively
+// would hand the boundary day to the old device and pool it with old-device
+// days, which is exactly what this module promises not to do.
+function inEra(date, era) {
+  const d = new Date(date);
+  if (d < new Date(era.from)) return false;
+  return era.to == null || d < new Date(era.to);
+}
+
+// Training-context periods are inclusive, [from, to] — deliberately unlike
+// eras. A user labelling 2026-03-01 to 2026-03-31 as rehab means all of March,
+// the 31st included; these are hand-written annotations, not a partition.
 function inPeriod(date, from, to) {
   const d = new Date(date);
   if (d < new Date(from)) return false;
   return to == null || d <= new Date(to);
 }
 
-// The era that covers `date` — calibration windows are cut at its start so a
-// device change never gets averaged across. No eras configured means one
-// implicit, unbounded era.
+// The era covering `date`, for labelling. Null before the first era or inside a
+// gap between two — which is a real state, not an error, and one the window
+// truncation below still has to respect.
 export function eraFor(date, config) {
   const eras = config?.history?.deviceEras ?? [];
-  return eras.find((era) => inPeriod(date, era.from, era.to)) ?? null;
+  return eras.find((era) => era?.from != null && inEra(date, era)) ?? null;
+}
+
+// Every date on which the recording device changed: era starts, and era ends
+// where no era follows immediately. Both are boundaries — a window that reached
+// back past an era's `to` into a gap would pool two different devices just as
+// surely as one that crossed a `from`.
+export function eraBoundaries(config) {
+  const dates = new Set();
+  for (const era of config?.history?.deviceEras ?? []) {
+    if (era?.from != null) dates.add(era.from);
+    if (era?.to != null) dates.add(era.to);
+  }
+  return [...dates].sort((a, b) => new Date(a) - new Date(b));
+}
+
+// The most recent device boundary at or before `date`, i.e. the earliest day a
+// window ending on `date` may reach back to. Null when no boundary has been
+// crossed yet, in which case nothing needs truncating.
+export function lastEraBoundaryOn(date, config) {
+  const before = eraBoundaries(config).filter((d) => new Date(d) <= new Date(date));
+  return before.at(-1) ?? null;
 }
 
 export function isRepresentative(date, config) {
@@ -64,11 +99,12 @@ export function selectWindow(days, config, { now, windowDays } = {}) {
 
   const end = now ?? sorted.at(-1).date;
   const era = eraFor(end, cfg);
+  const boundary = lastEraBoundaryOn(end, cfg);
   let start = -(span - 1); // in days relative to `end`
   let truncated = false;
-  if (era) {
-    const eraStartOffset = -daysBetween(era.from, end);
-    if (eraStartOffset > start) { start = eraStartOffset; truncated = true; }
+  if (boundary) {
+    const boundaryOffset = -daysBetween(boundary, end);
+    if (boundaryOffset > start) { start = boundaryOffset; truncated = true; }
   }
 
   const inWindow = sorted.filter((d) => {

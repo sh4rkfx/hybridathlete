@@ -253,6 +253,44 @@ describe('device eras', () => {
     expect(r.reasons).toEqual(expect.arrayContaining([REASONS.ERA_TRUNCATED, REASONS.BELOW_MIN_DAYS]));
   });
 
+  it('the switch day belongs to the new device, not the old one', () => {
+    // Regression (PR #62 review): eras touch by construction, so an inclusive
+    // `to` handed the boundary day to the outgoing era and pooled that day's
+    // new-device data with 20 old-device days.
+    expect(eraFor('2026-07-09', eraConfig).label).toBe('Fenix 6');
+    expect(eraFor(iso(10), eraConfig).label).toBe('Fenix 7');
+
+    const window = selectWindow(flatDays({ n: 30, from: 1 }), eraConfig, { now: iso(10) });
+    expect(window.era.label).toBe('Fenix 7');
+    expect(window.truncated).toBe(true);
+    expect(window.days.map((d) => d.date)).toEqual([iso(10)]);
+  });
+
+  it('a gap between eras is a boundary too', () => {
+    // Found while checking the above: with no era covering the window end,
+    // eraFor returned null and nothing was truncated at all, so the window
+    // reached back across the previous era's end. A gap is a real state — the
+    // cut is at every boundary, `from` and `to` alike, not just at eras.
+    const gapConfig = cfg({
+      history: {
+        deviceEras: [
+          { from: '2026-01-01', to: iso(12), label: 'A' },
+          { from: iso(20), to: null, label: 'B' },
+        ],
+      },
+    });
+    const window = selectWindow(flatDays({ n: 30, from: 1 }), gapConfig, { now: iso(16) });
+    expect(window.era).toBeNull();
+    expect(window.truncated).toBe(true);
+    expect(window.days[0].date).toBe(iso(12));
+  });
+
+  it('does not truncate before the first era or without eras at all', () => {
+    const late = cfg({ history: { deviceEras: [{ from: '2027-01-01', to: null, label: 'future' }] } });
+    expect(selectWindow(flatDays(), late, { now: iso(21) }).truncated).toBe(false);
+    expect(selectWindow(flatDays(), cfg(), { now: iso(21) }).truncated).toBe(false);
+  });
+
   it('calibrates normally once the new era is long enough', () => {
     const days = flatDays({ n: 21, from: 10 });
     const r = calibrate(days, eraConfig, { now: iso(30) });
@@ -277,6 +315,14 @@ describe('non-representative periods', () => {
   it('reports the exclusion instead of quietly shrinking the sample', () => {
     expect(calibrate(flatDays(), rehabConfig, { now: iso(21) }).reasons)
       .toContain(REASONS.NON_REPRESENTATIVE_EXCLUDED);
+  });
+
+  it('context periods stay inclusive of their end date, unlike eras', () => {
+    // Deliberately different semantics: a hand-written 05-09 rehab label means
+    // the 9th is rehab too, where an era's `to` is the first day of the next
+    // device. Both are asserted so neither drifts to match the other.
+    expect(isRepresentative(iso(9), rehabConfig)).toBe(false);
+    expect(isRepresentative(iso(10), rehabConfig)).toBe(true);
   });
 
   it('a period marked representative is kept', () => {

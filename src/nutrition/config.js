@@ -308,15 +308,26 @@ function setPath(obj, path, value) {
 // Union merge: defaults fill the gaps, unknown input keys are carried through
 // untouched. Arrays are replaced wholesale (phases.manual, deviceEras,
 // factorClamp are values, not things to merge element-wise).
-function deepMerge(defaults, input) {
+//
+// Where the defaults hold an object and the input holds something else —
+// `profile: null` out of a corrupted store, a hand-edited file — the default
+// subtree is KEPT and the path recorded in `mismatches`. Letting the null win
+// would make `normalized` structurally unsound, and the cross-field checks
+// below would then throw a TypeError instead of returning structured errors:
+// a config that cannot be loaded rather than a config that reports what is
+// wrong with it.
+function deepMerge(defaults, input, mismatches = [], prefix = '') {
   const out = {};
   const keys = new Set([...Object.keys(defaults), ...Object.keys(isPlainObject(input) ? input : {})]);
   for (const key of keys) {
     const d = defaults[key];
     const i = isPlainObject(input) ? input[key] : undefined;
+    const path = prefix ? `${prefix}.${key}` : key;
     if (i === undefined) out[key] = structuredClone(d);
-    else if (isPlainObject(d) && isPlainObject(i)) out[key] = deepMerge(d, i);
-    else out[key] = structuredClone(i);
+    else if (isPlainObject(d)) {
+      if (isPlainObject(i)) out[key] = deepMerge(d, i, mismatches, path);
+      else { mismatches.push(path); out[key] = structuredClone(d); }
+    } else out[key] = structuredClone(i);
   }
   return out;
 }
@@ -365,8 +376,10 @@ export function validate(input) {
   const { config: migrated, from, ahead } = migrate(input);
   if (ahead) warn('schemaVersion', 'CONFIG_SCHEMA_AHEAD', { stored: from, known: SCHEMA_VERSION });
 
-  const normalized = deepMerge(DEFAULT_CONFIG, migrated);
+  const mismatches = [];
+  const normalized = deepMerge(DEFAULT_CONFIG, migrated, mismatches);
   if (!ahead) normalized.schemaVersion = SCHEMA_VERSION;
+  for (const path of mismatches) err(path, 'CONFIG_NOT_AN_OBJECT', {});
 
   const unknown = unknownPaths(DEFAULT_CONFIG, migrated).filter((p) => p !== 'schemaVersion');
   if (unknown.length) warn('', 'CONFIG_UNKNOWN_FIELDS', { paths: unknown });
@@ -504,9 +517,10 @@ export function validate(input) {
     });
   }
 
-  // Device eras must be ordered, non-overlapping, and the last one open-ended:
-  // calibration windows are cut at era boundaries, so a gap or an overlap would
-  // silently drop or double-count days.
+  // Device eras must be ordered and non-overlapping. Gaps between them are
+  // allowed — a stretch with no device is a real thing — and calibration cuts
+  // its window at every era boundary, start or end, so a gap can neither be
+  // pooled with the era before it nor silently spanned.
   const eras = normalized.history.deviceEras;
   if (!Array.isArray(eras)) {
     err('history.deviceEras', 'CONFIG_NOT_AN_ARRAY', { value: eras });

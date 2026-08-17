@@ -112,6 +112,28 @@ describe('forward compatibility (test 9)', () => {
     expect(normalized.brandNew).toBe('keep me');
   });
 
+  it('a malformed subtree keeps the defaults and reports, instead of throwing', () => {
+    // Regression (PR #62 review): a corrupted store handing back `profile: null`
+    // used to replace the default subtree, and the cross-field checks then threw
+    // a TypeError on profile.bodyComp — a config that cannot be loaded at all
+    // rather than one that says what is wrong with it.
+    for (const [input, path] of [
+      [{ profile: null }, 'profile'],
+      [{ calibration: { confidence: null } }, 'calibration.confidence'],
+      [{ profile: { bodyComp: 'lean' } }, 'profile.bodyComp'],
+      [{ intake: { atwater: 42 } }, 'intake.atwater'],
+      [{ safety: [] }, 'safety'],
+    ]) {
+      const result = validate(input);
+      expect(result.valid, path).toBe(false);
+      expect(result.errors.find((e) => e.path === path)?.code, path).toBe('CONFIG_NOT_AN_OBJECT');
+      // the default subtree survived, so `normalized` is still usable
+      expect(result.normalized.profile.bodyComp, path).toEqual({ mode: 'none', value: null });
+      expect(result.normalized.calibration.confidence.mediumCoverage, path).toBe(0.70);
+      expect(result.normalized.safety.maxSurplusKcal, path).toBe(500);
+    }
+  });
+
   it('a missing schemaVersion is treated as current', () => {
     expect(validate({ locale: 'de-AT' }).normalized.schemaVersion).toBe(SCHEMA_VERSION);
   });
