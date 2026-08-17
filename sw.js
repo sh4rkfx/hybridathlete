@@ -1,6 +1,6 @@
 // Service worker: cache-first offline shell (spec: offline-first, no backend).
 // Bump CACHE_VERSION on every deploy that changes precached files.
-const CACHE_VERSION = 'v24';
+const CACHE_VERSION = 'v25';
 const CACHE_NAME = `hybridathlete-${CACHE_VERSION}`;
 
 const PRECACHE = [
@@ -54,6 +54,8 @@ const PRECACHE = [
   'src/seed/sports.seed.json',
   'src/ui/AcwrExplainer.js',
   'src/ui/FatigueReport.js',
+  'src/ui/EnergyScreen.js',
+  'src/ui/EnergySetup.js',
   'src/ui/GarminImport.js',
   'src/ui/garmin.js',
   'src/ui/App.js',
@@ -70,8 +72,11 @@ const PRECACHE = [
   'src/ui/WeekView.js',
   'src/ui/app.css',
   'src/ui/demo.js',
+  'src/ui/energyDemo.js',
+  'src/ui/energyHelpers.js',
   'src/ui/fonts.css',
   'src/ui/helpers.js',
+  'src/ui/nutritionText.js',
   'src/ui/html.js',
   'src/ui/sportsUi.js',
   'src/ui/store.js',

@@ -4,6 +4,7 @@
 // loads state and persists results.
 import { openDatabase } from '../data/db.js';
 import { seedIfEmpty, loadEngineState, persistSuggestions, PROFILE_KEY } from '../data/repositories.js';
+import { loadNutritionState, saveNutritionConfig, putDays } from '../data/nutritionRepository.js';
 import { evaluate } from '../rules/evaluate.js';
 import { uid } from '../engine/planner.js';
 
@@ -22,6 +23,7 @@ export async function boot() {
   await seedIfEmpty(db);
   state = await loadEngineState(db);
   state.suggestions = state.suggestions.filter((s) => s.status === 'open');
+  state.nutrition = await loadNutritionState(db);
   recompute();
   notify();
   return state;
@@ -135,10 +137,34 @@ export async function resetAll() {
   await tx.done;
   await seedIfEmpty(db);
   state = await loadEngineState(db);
+  state.nutrition = await loadNutritionState(db);
   state.suggestions = [];
   recompute();
   await sync();
   notify();
+}
+
+// Energy module. Deliberately NOT routed through update()/sync(): that path
+// rewrites whole collections, which is fine for a week of planned sessions and
+// destructive for a daily history that only grows. Here the caller says which
+// days it touched and only those rows are written.
+//
+// The rule engine is not re-run — nutrition and training planning share no
+// state — so this skips recompute() as well.
+export function updateNutrition(mutator, { days = [], config = false } = {}) {
+  mutator(state.nutrition);
+  syncNutrition({ days, config });
+  notify();
+}
+
+async function syncNutrition({ days = [], config = false } = {}) {
+  if (!db) return;
+  try {
+    if (config && state.nutrition.config) await saveNutritionConfig(db, state.nutrition.config);
+    if (days.length) await putDays(db, days);
+  } catch (e) {
+    console.error('nutrition persist failed', e);
+  }
 }
 
 export { uid };

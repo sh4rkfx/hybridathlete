@@ -6,12 +6,14 @@ import { generateStrength } from '../engine/generator.js';
 import { REGION_LABELS, FAT_LABELS } from '../engine/texts.js';
 import * as store from './store.js';
 import { loadDemoWeek } from './demo.js';
+import { loadDemoEnergy } from './energyDemo.js';
 import { SLOT_HOUR, SLOT_LABEL } from './helpers.js';
 import { HomeScreen } from './HomeScreen.js';
 import { WeekView } from './WeekView.js';
 import { SuggestionInbox } from './SuggestionInbox.js';
 import { RulebookScreen } from './RulebookScreen.js';
 import { SettingsScreen } from './SettingsScreen.js';
+import { EnergyScreen } from './EnergyScreen.js';
 import { LogFlow } from './LogFlow.js';
 import { MorningCheckin } from './MorningCheckin.js';
 import { SessionEditor } from './SessionEditor.js';
@@ -25,6 +27,7 @@ const NAV = [
   ['week', 'Woche', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="4" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 8h16M8 2v4M14 2v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`],
   ['inbox', 'Coach', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6a3 3 0 013-3h10a3 3 0 013 3v6a3 3 0 01-3 3H9l-4.2 3.4c-.5.4-1.3 0-1.3-.6V15A3 3 0 013 12V6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 8h8M7 11h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`],
   ['rules', 'Regeln', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 3h9l4 4v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13 3v5h5M7 12h8M7 15h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`],
+  ['energy', 'Energie', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2c.6 3.2-1.4 4.6-2.9 6.2C6.4 10 5 11.6 5 13.8A6 6 0 0017 14c0-2.6-1.3-4.3-2.6-6-.6 .9-1.3 1.4-2.1 1.6.6-2.6.2-5.2-1.3-7.6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`],
   ['settings', 'Setup', html`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M11 2v3M11 17v3M2 11h3M17 11h3M4.5 4.5l2 2M15.5 15.5l2 2M17.5 4.5l-2 2M6.5 15.5l-2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`],
 ];
 
@@ -302,6 +305,39 @@ export function App() {
     },
   };
 
+  // Energy module. Routed through store.updateNutrition rather than update():
+  // that path rewrites whole collections, which would erase days not currently
+  // loaded as the history grows.
+  const energyActions = {
+    goSetup: () => setScreen('settings'),
+    saveDay: (day) => store.updateNutrition((n) => {
+      const i = n.days.findIndex((d) => d.date === day.date);
+      const merged = { ...(i >= 0 ? n.days[i] : {}), ...day };
+      if (i >= 0) n.days[i] = merged; else n.days.push(merged);
+      n.days.sort((a, b) => (a.date < b.date ? -1 : 1));
+    }, { days: [day] }),
+    setProfileField: (patch) => store.updateNutrition((n) => {
+      const base = n.config ?? { id: 'me' };
+      n.config = { ...base, profile: { ...(base.profile ?? {}), ...patch } };
+    }, { config: true }),
+    setGoalField: (patch) => store.updateNutrition((n) => {
+      const base = n.config ?? { id: 'me' };
+      n.config = { ...base, goal: { ...(base.goal ?? {}), ...patch } };
+    }, { config: true }),
+    setAdapter: (adapterId) => store.updateNutrition((n) => {
+      const base = n.config ?? { id: 'me' };
+      n.config = { ...base, energy: { ...(base.energy ?? {}), adapterId } };
+    }, { config: true }),
+    loadDemoEnergy: () => {
+      let written = [];
+      store.updateNutrition((n) => { written = loadDemoEnergy(n, now); }, { config: true });
+      // The days were replaced wholesale, so persist them explicitly.
+      store.updateNutrition(() => {}, { days: written });
+      toast(`Demo-Energiedaten geladen · ${written.length} Tage`);
+      setScreen('energy');
+    },
+  };
+
   const openEdit = (id) => { if (!suppressTapRef.current) setOverlay({ kind: 'edit', sessionId: id }); };
   const openAdd = (dayOff, slot) => { if (!suppressTapRef.current) setOverlay({ kind: 'add', dayOff, slot }); };
 
@@ -317,7 +353,8 @@ export function App() {
     week: () => html`<${WeekView} state=${state} now=${now} onEdit=${openEdit} onAdd=${openAdd} onMove=${moveSession} suppressTapRef=${suppressTapRef} />`,
     inbox: () => html`<${SuggestionInbox} state=${state} onAccept=${acceptSug} onReject=${rejectSug} />`,
     rules: () => html`<${RulebookScreen} state=${state} />`,
-    settings: () => html`<${SettingsScreen} state=${state} now=${now} actions=${settingsActions} toast=${toast} />`,
+    energy: () => html`<${EnergyScreen} state=${state} now=${now} actions=${energyActions} toast=${toast} />`,
+    settings: () => html`<${SettingsScreen} state=${state} now=${now} actions=${settingsActions} energyActions=${energyActions} toast=${toast} />`,
   }[screen]();
 
   return html`<div class="phone" role="application" aria-label="HybridAthlete">
