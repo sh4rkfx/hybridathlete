@@ -30,6 +30,7 @@ const PRECACHE = [
   'src/nutrition/calibration.js',
   'src/nutrition/config.js',
   'src/nutrition/energy.js',
+  'src/nutrition/ledger.js',
   'src/nutrition/sources.json',
   'src/nutrition/targets.js',
   'src/nutrition/trend.js',
