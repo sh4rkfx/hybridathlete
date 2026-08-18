@@ -37,7 +37,13 @@ export const DEFAULT_CONFIG = {
     target: { type: 'weight', valueKg: null },
   },
 
-  phases: { auto: true, manual: [] },
+  // capFraction is the share of the body-fat rate ceiling the continuous auto
+  // phase actually uses. 0.45 is chosen, not tuned: at 0.70 — the largest value
+  // that never touches the ceiling — the fat-mass deficit cap and the hard
+  // intake floor both bind for the whole cut, so the curve would never steer
+  // anything and the taper toward goal weight would silently not happen.
+  // ASSUMPTION (sources.json: auto_phase_rate): the fraction is judgement.
+  phases: { auto: true, autoRate: { capFraction: 0.45 }, manual: [] },
 
   energy: {
     bmrFormula: 'median',
@@ -126,13 +132,45 @@ export const DEFAULT_CONFIG = {
 
   flags: {
     rhrBaseline: 'auto',
+    rhrBaselineDays: 28,               // 'auto' = median of the first 28 days of the era
     rhrHighDelta: 4,
+    rhrHighDays: 7,
     rhrLowDelta: -4,
+    rhrLowDays: 21,
     plateauDays: 21,
-    trackingCoverageMin: 5,
+    // "Gewichtstrend ~ 0" needs a width. 0.01 kg/day is 0.07 kg/week, roughly
+    // 77 kcal/day — below the noise any weekly weigh-in can resolve.
+    // ASSUMPTION: the kickoff says "approximately zero" and no more.
+    plateauMaxTrendKgPerDay: 0.01,
+    trackingCoverageMin: 5,            // of 7 days
     proteinMinGPerKgFfm: 2.0,
+    proteinMissingDaysOf7: 3,          // PROTEIN_NOT_TRACKED above this many
+    eaLowDaysOf7: 5,
+    eaCriticalConsecutiveDays: 3,
+    sourceCoverageMin: 0.8,            // SOURCE_DEGRADED below this share of days
+    deviceChangeJumpPct: 15,
+    // "Same activity and pulse" for the device-change detector: rest days whose
+    // resting heart rate sits within this band of the baseline.
+    // ASSUMPTION: the kickoff names neither the comparison set nor the band.
+    rhrSameDeltaBpm: 2,
+    distributionShiftPct: 20,
+    nonRepresentativeMaxPct: 30,
     eaLowThreshold: 30,
+    eaCriticalMargin: 5,               // EA_CRITICAL fires below threshold - margin
     eaBodyFatAware: true,
+    // Body-fat-aware EA threshold (kickoff "Energieverfügbarkeit"). The two
+    // body-fat anchors reuse MAX_RATE_BANDS edges so the taper introduces one
+    // new number rather than three.
+    // ASSUMPTION (sources.json: ea_threshold_taper): explicitly NOT covered by
+    // the literature — the EA cut-offs come from lean athlete cohorts. It is
+    // also load-bearing rather than cosmetic: at 27.9 % body fat the module's
+    // own recommended rest-day intake gives EA 28.2 kcal/kg FFM, so against the
+    // flat threshold of 30 it would trip its own EA_LOW warning permanently.
+    eaThresholdTaper: {
+      fullThresholdBelowBodyFatPct: { male: 12, female: 22 },
+      floorAtBodyFatPct: { male: 30, female: 40 },
+      minThresholdKcalPerKgFfm: 22,
+    },
   },
 };
 
@@ -159,6 +197,39 @@ export function maxRatePctBwPerWeek(config, bodyFatPct) {
   return band.maxPctBwPerWeek;
 }
 
+// The same bands read as a continuous curve: each band's rate is anchored at its
+// lower edge and interpolated between. Used by the auto phase, which needs a
+// rate that changes smoothly as body fat falls rather than jumping at a band
+// edge. Note the interpolated value sits ABOVE the step cap inside a band (at
+// 27.9 % male: 1.158 vs 1.0) — that is why autoRatePctBwPerWeek below both
+// scales it down and clamps it against the step cap.
+export function interpolatedRateCapPctBwPerWeek(config, bodyFatPct) {
+  const sex = config?.profile?.sex === 'male' ? 'male' : 'female';
+  const anchors = MAX_RATE_BANDS
+    .map((band) => [band.minPct[sex], band.maxPctBwPerWeek])
+    .sort((a, b) => a[0] - b[0]);
+  if (!Number.isFinite(bodyFatPct) || bodyFatPct <= anchors[0][0]) return anchors[0][1];
+  if (bodyFatPct >= anchors.at(-1)[0]) return anchors.at(-1)[1];
+  for (let i = 1; i < anchors.length; i++) {
+    const [x0, y0] = anchors[i - 1];
+    const [x1, y1] = anchors[i];
+    if (bodyFatPct <= x1) return y0 + ((bodyFatPct - x0) / (x1 - x0)) * (y1 - y0);
+  }
+  return anchors.at(-1)[1];
+}
+
+// The rate the continuous auto phase targets. Lives here rather than in
+// targets.js so the phase rate and the safety ceiling read one table and cannot
+// drift apart. The final Math.min makes "the auto rate never exceeds the cap"
+// true by construction, whatever capFraction is set to.
+export function autoRatePctBwPerWeek(config, bodyFatPct) {
+  const cfg = config ?? DEFAULT_CONFIG;
+  const fraction = cfg.phases?.autoRate?.capFraction ?? DEFAULT_CONFIG.phases.autoRate.capFraction;
+  const ceiling = maxRatePctBwPerWeek(cfg, bodyFatPct);
+  if (!Number.isFinite(bodyFatPct)) return ceiling * fraction;
+  return Math.min(interpolatedRateCapPctBwPerWeek(cfg, bodyFatPct) * fraction, ceiling);
+}
+
 // Declarative hardcaps. `direction: 'max'` means the default is a ceiling (the
 // user may only go lower), `'min'` means it is a floor (may only go higher).
 // Data-driven on purpose, mirroring how src/rules/params.js reads thresholds
@@ -172,6 +243,10 @@ export const SAFETY_BOUNDS = [
   { path: 'safety.maxSurplusKcal', direction: 'max' },
   { path: 'safety.dietBreak.everyWeeks', direction: 'max' },
   { path: 'safety.dietBreak.durationWeeks', direction: 'min' },
+  // Not under safety.*, but the same contract: a smaller share of the rate
+  // ceiling and a higher EA floor are both the conservative direction.
+  { path: 'phases.autoRate.capFraction', direction: 'max' },
+  { path: 'flags.eaThresholdTaper.minThresholdKcalPerKgFfm', direction: 'min' },
 ];
 
 // Per-field type/enum/range checks. Everything expressible here stays here;
@@ -191,6 +266,7 @@ const FIELD_SPECS = [
   { path: 'goal.target.type', enum: ['weight', 'bodyFatPct', 'ffm'] },
 
   { path: 'phases.auto', type: 'boolean' },
+  { path: 'phases.autoRate.capFraction', type: 'number', min: 0.05, max: 1 },
 
   { path: 'energy.bmrFormula', enum: ['median', 'mifflin', 'owen', 'katch', 'harris', 'cunningham', 'custom'] },
   { path: 'energy.customBmrKcal', type: 'number', min: 500, max: 5000, nullable: true },
@@ -271,13 +347,31 @@ const FIELD_SPECS = [
   { path: 'history.trainingContext.defaultLabel', type: 'string' },
 
   { path: 'flags.rhrBaseline', type: 'rhrBaseline' },
+  { path: 'flags.rhrBaselineDays', type: 'integer', min: 3, max: 365 },
+  { path: 'flags.rhrHighDays', type: 'integer', min: 1, max: 180 },
+  { path: 'flags.rhrLowDays', type: 'integer', min: 1, max: 365 },
+  { path: 'flags.rhrSameDeltaBpm', type: 'number', min: 0, max: 20 },
+  { path: 'flags.plateauMaxTrendKgPerDay', type: 'number', min: 0, max: 1 },
+  { path: 'flags.proteinMissingDaysOf7', type: 'integer', min: 0, max: 7 },
+  { path: 'flags.eaLowDaysOf7', type: 'integer', min: 1, max: 7 },
+  { path: 'flags.eaCriticalConsecutiveDays', type: 'integer', min: 1, max: 30 },
+  { path: 'flags.sourceCoverageMin', type: 'number', min: 0, max: 1 },
+  { path: 'flags.deviceChangeJumpPct', type: 'number', min: 1, max: 100 },
+  { path: 'flags.distributionShiftPct', type: 'number', min: 1, max: 100 },
+  { path: 'flags.nonRepresentativeMaxPct', type: 'number', min: 1, max: 100 },
   { path: 'flags.rhrHighDelta', type: 'number', min: 0, max: 40 },
   { path: 'flags.rhrLowDelta', type: 'number', min: -40, max: 0 },
   { path: 'flags.plateauDays', type: 'integer', min: 3, max: 180 },
   { path: 'flags.trackingCoverageMin', type: 'integer', min: 0, max: 7 },
   { path: 'flags.proteinMinGPerKgFfm', type: 'number', min: 0, max: 5 },
   { path: 'flags.eaLowThreshold', type: 'number', min: 5, max: 80 },
+  { path: 'flags.eaCriticalMargin', type: 'number', min: 0, max: 30 },
   { path: 'flags.eaBodyFatAware', type: 'boolean' },
+  { path: 'flags.eaThresholdTaper.minThresholdKcalPerKgFfm', type: 'number', min: 5, max: 80 },
+  { path: 'flags.eaThresholdTaper.fullThresholdBelowBodyFatPct.male', type: 'number', min: 0, max: 75 },
+  { path: 'flags.eaThresholdTaper.fullThresholdBelowBodyFatPct.female', type: 'number', min: 0, max: 75 },
+  { path: 'flags.eaThresholdTaper.floorAtBodyFatPct.male', type: 'number', min: 0, max: 75 },
+  { path: 'flags.eaThresholdTaper.floorAtBodyFatPct.female', type: 'number', min: 0, max: 75 },
 ];
 
 // Formulas that need fat-free mass, i.e. that are unavailable at bodyComp 'none'.
@@ -551,6 +645,26 @@ export function validate(input) {
       if (!isPlainObject(p) || !isValidDate(p.from)) err(`${path}.from`, 'CONFIG_NOT_A_DATE', { value: p?.from });
       else if (p.to != null && !isValidDate(p.to)) err(`${path}.to`, 'CONFIG_NOT_A_DATE', { value: p.to });
     });
+  }
+
+  // The taper must run downward: full threshold below the lean anchor, floor at
+  // the high one.
+  const taper = normalized.flags.eaThresholdTaper;
+  for (const sex of ['male', 'female']) {
+    const lean = taper.fullThresholdBelowBodyFatPct?.[sex];
+    const high = taper.floorAtBodyFatPct?.[sex];
+    if (Number.isFinite(lean) && Number.isFinite(high) && lean >= high) {
+      err(`flags.eaThresholdTaper.floorAtBodyFatPct.${sex}`, 'CONFIG_TAPER_ANCHORS_UNORDERED', { lean, high });
+    }
+  }
+  // A floor above the threshold it tapers toward is not an error, just a flat
+  // taper — i.e. the literature behaviour. Clamp and say so; raising the floor
+  // is the conservative direction and must stay reachable.
+  if (taper.minThresholdKcalPerKgFfm > normalized.flags.eaLowThreshold) {
+    warn('flags.eaThresholdTaper.minThresholdKcalPerKgFfm', 'CONFIG_EA_FLOOR_ABOVE_THRESHOLD', {
+      floor: taper.minThresholdKcalPerKgFfm, threshold: normalized.flags.eaLowThreshold,
+    });
+    taper.minThresholdKcalPerKgFfm = normalized.flags.eaLowThreshold;
   }
 
   if (safety.intakeFloor.hardFloorBmrMultiple > safety.intakeFloor.bmrMultiple) {

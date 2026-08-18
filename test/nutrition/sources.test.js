@@ -27,7 +27,8 @@ describe('source mandate', () => {
   });
 
   it('the deliberately unvalidated extensions are labelled as assumptions', () => {
-    for (const id of ['max_rate_body_fat_aware', 'max_deficit_fat_mass_aware', 'calibration_confidence']) {
+    for (const id of ['max_rate_body_fat_aware', 'max_deficit_fat_mass_aware', 'calibration_confidence',
+      'auto_phase_rate', 'ea_threshold_taper']) {
       expect(byId[id].evidenceLevel, id).toBe('assumption');
     }
   });
@@ -74,6 +75,17 @@ describe('quoted params match the code', () => {
   it('calibration confidence cut-offs', () => {
     const { highCoverage, highMaxGapDays, mediumCoverage, mediumMaxGapDays } = DEFAULT_CONFIG.calibration.confidence;
     expect(byId.calibration_confidence.params).toEqual({ highCoverage, highMaxGapDays, mediumCoverage, mediumMaxGapDays });
+  });
+
+  it('auto-phase fraction and EA taper anchors', () => {
+    expect(byId.auto_phase_rate.params.capFraction).toBe(DEFAULT_CONFIG.phases.autoRate.capFraction);
+    expect(byId.ea_threshold_taper.params).toEqual(DEFAULT_CONFIG.flags.eaThresholdTaper);
+    // the taper's body-fat anchors are band edges, not new numbers
+    const edges = MAX_RATE_BANDS.map((b) => b.minPct);
+    for (const sex of ['male', 'female']) {
+      expect(edges.map((e) => e[sex])).toContain(DEFAULT_CONFIG.flags.eaThresholdTaper.fullThresholdBelowBodyFatPct[sex]);
+      expect(edges.map((e) => e[sex])).toContain(DEFAULT_CONFIG.flags.eaThresholdTaper.floorAtBodyFatPct[sex]);
+    }
   });
 
   it('the compensation fraction matches the full-compensation rule', () => {

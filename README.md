@@ -44,10 +44,17 @@ Hard separation line:
 
 `src/nutrition/` is the energy and target-intake module (in progress — domain layer only,
 no UI yet). It measures real daily energy turnover by reconciling tracked intake against
-the regressed weight trend, rather than estimating it from a formula. Constants carry a
-source and an evidence level in `src/nutrition/sources.json`, same as the planning rules;
-see [ADR 0005](docs/decisions/0005-nutrition-module-placement.md) for why it is a sibling
-of `src/engine/` and not a second `domain/` layer.
+the regressed weight trend rather than estimating it from a formula, then derives a daily
+target from it: rest-day TDEE minus a continuously scaling phase deficit, bounded by a
+fat-mass-aware deficit ceiling and an intake floor, with training energy fully compensated
+so energy availability stays flat across rest and training days. A rolling weekly account
+reconciles plan against actual, and an 18-code warning system watches resting heart
+rate, weight trend, protein, tracking coverage, energy availability and data quality.
+Constants carry a source and an evidence level in
+`src/nutrition/sources.json`, same as the planning rules, and the handful that are
+judgement rather than evidence say so; see
+[ADR 0005](docs/decisions/0005-nutrition-module-placement.md) for why it is a sibling of
+`src/engine/` and not a second `domain/` layer.
 
 Data flow: log → engine (`evaluate(state)`, pure) → suggestions → inbox (accept/reject
 with reason) → feedback aggregated per rule.
