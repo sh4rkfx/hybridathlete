@@ -118,6 +118,15 @@
       "evidenceLevel": "cohort"
     },
     {
+      "id": "formula_adapter",
+      "name": "Formula-based expenditure estimate",
+      "kind": "adapter",
+      "params": { "nonExercisePalFactor": 1.30, "activeIntercept": 30, "activeKcalPerMinute": 4.27, "activeKcalPerStep": 0.0308, "r2": 0.827 },
+      "source": "The activity term is the kickoff's own regression over 825 measured days (Aktivkalorien = 30 + 4,27 x Trainingsminuten + 0,0308 x Schritte, R2 = 0.827). The non-exercise PAL is derived from the same data rather than chosen: the documented rest-day TDEE of 2334 kcal over a BMR of 1790 implies 1.304. The combination reproduces all three documented day types — rest 2328 vs 2334, 105 min 2806 vs 2803, 180 min 3126 vs 3127.",
+      "evidenceLevel": "cohort",
+      "gap": "Single-subject regression. It is a fallback for having no wearable at all, not a measurement, and the calibration factor is what corrects it."
+    },
+    {
       "id": "auto_phase_rate",
       "name": "Continuous auto-phase rate",
       "kind": "targets",

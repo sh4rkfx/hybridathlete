@@ -7,10 +7,10 @@ let dbCounter = 0;
 const freshName = () => `test-db-${++dbCounter}`;
 
 describe('db schema', () => {
-  it('creates all 11 object stores from spec §2.1 on first open', async () => {
+  it('creates all 16 object stores (spec §2.1 plus the energy module) on first open', async () => {
     const db = await openDatabase(freshName());
     expect([...db.objectStoreNames].sort()).toEqual([...STORE_NAMES].sort());
-    expect(db.objectStoreNames.length).toBe(11);
+    expect(db.objectStoreNames.length).toBe(16);
     db.close();
   });
 
