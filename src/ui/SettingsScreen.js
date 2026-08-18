@@ -9,6 +9,8 @@ import { catalogOf, GOAL_SCHEMES, SPLITS, SPLIT_EVIDENCE } from '../engine/catal
 import { generateStrength, splitCoverageGaps, splitHint } from '../engine/generator.js';
 import { exerciseReadiness } from '../engine/readiness.js';
 import { GarminImport } from './GarminImport.js';
+import { EnergySetup } from './EnergySetup.js';
+import { EnergyImport } from './EnergyImport.js';
 import { PlanAdvisor } from './PlanAdvisor.js';
 import { SportGlyph } from './sportsUi.js';
 import { initialSetupSection } from './helpers.js';
@@ -30,7 +32,7 @@ function Section({ id, title, desc, open, onToggle, children }) {
   </div>`;
 }
 
-export function SettingsScreen({ state, now, actions, toast }) {
+export function SettingsScreen({ state, now, actions, energyActions, toast }) {
   const cat = catalogOf(state);
   const p = state.profile;
   const gaps = splitCoverageGaps(p);
@@ -102,6 +104,11 @@ export function SettingsScreen({ state, now, actions, toast }) {
       </div>
       ${gaps.map((g) => html`<div class="gap-hint"><b>Lücke: ${g.label}</b><br/>${g.note} Vorschlag: ${g.fixIds.map((id) => cat.exById[id].name).join(', ')} in Push einstreuen.</div>`)}
       <button class="act-btn primary" onClick=${actions.regenerate}>Plan neu generieren</button>
+    <//>
+
+    <${Section} id="energy" title="Energie & Zielzufuhr" desc="Profil, Ziel und Datenquelle für das Energiemodul" open=${open === 'energy'} onToggle=${setOpen}>
+      <${EnergySetup} state=${state} actions=${energyActions} />
+      <${EnergyImport} actions=${energyActions} toast=${toast} />
     <//>
 
     <${Section} id="import" title="Garmin-Import" desc="FIT / TCX / Export-ZIP als Entwürfe" open=${open === 'import'} onToggle=${setOpen}>

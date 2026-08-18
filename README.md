@@ -37,13 +37,14 @@ validated sRPE×duration load model (Foster 2001). Details:
 
 Hard separation line:
 
-- `src/engine/`, `src/data/`, `src/rules/`, `src/nutrition/` — pure vanilla ES modules. No
+- `src/engine/`, `src/data/`, `src/rules/`, `src/nutrition/`, `src/adapters/` — pure vanilla ES modules. No
   DOM, no Preact, and engine/rules/nutrition have no DB access. This keeps the rule engine
   unit-testable in Node and the science reviewable.
 - `src/ui/` — Preact + HTM (vendored ESM, buildless), presentation only.
 
-`src/nutrition/` is the energy and target-intake module (in progress — domain layer only,
-no UI yet). It measures real daily energy turnover by reconciling tracked intake against
+`src/nutrition/` is the energy and target-intake module, reachable in the app via the
+**Energie** tab (`Setup → Energie & Zielzufuhr → Demo-Energiedaten laden` seeds a reference
+profile to try it with). It measures real daily energy turnover by reconciling tracked intake against
 the regressed weight trend rather than estimating it from a formula, then derives a daily
 target from it: rest-day TDEE minus a continuously scaling phase deficit, bounded by a
 fat-mass-aware deficit ceiling and an intake floor, with training energy fully compensated
