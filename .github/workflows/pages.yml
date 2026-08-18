@@ -7,9 +7,23 @@
 # allowed to fail, `npm test` writes test-report.js either way, and a red run
 # publishes a red dashboard.
 #
-# Only test-dashboard.html and test-report.js are deployed, not the app. The
-# service worker runtime-caches every same-origin GET, so shipping the PWA
-# alongside would serve a stale dashboard after the first visit.
+# Two things are published, side by side:
+#
+#   /       the dashboard
+#   /app/   the PWA itself, so the app can be opened on a phone without a
+#           checkout and a local static server
+#
+# The app lives under a subdirectory for one specific reason. A service worker's
+# default scope is the directory its script is served from, and this one
+# runtime-caches every same-origin GET it sees. Served from /app/sw.js it can
+# only ever see /app/ requests, so the dashboard at the root stays outside its
+# scope and never gets cached out from under a new deploy. Serving the app at
+# the root instead would put the dashboard inside the worker's scope and pin it
+# to whatever version was cached on the first visit.
+#
+# The app is relative-path clean throughout — the import map, the manifest's
+# start_url/scope, and the worker's PRECACHE are all relative — so the
+# subdirectory needs no build step and no rewriting.
 #
 # Requires Settings -> Pages -> Source: "GitHub Actions" to be enabled once.
 name: pages
@@ -42,13 +56,10 @@ jobs:
       - name: Build the report (a red suite still publishes)
         continue-on-error: true
         run: npm run coverage
-      - name: Stage the dashboard
-        run: |
-          mkdir -p _site
-          cp test-dashboard.html _site/index.html
-          cp test-dashboard.html _site/test-dashboard.html
-          cp test-report.js _site/test-report.js
-          mkdir -p _site/icons && cp icons/icon.svg _site/icons/icon.svg
+      # Stages the dashboard at / and the app at /app/, and fails the build if
+      # anything the worker precaches did not make it into the tree.
+      - name: Stage the site
+        run: node scripts/stage-pages.mjs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

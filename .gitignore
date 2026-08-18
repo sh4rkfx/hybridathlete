@@ -9,3 +9,6 @@ test-report.js
 
 .vitest-report.json
 .test-details.jsonl
+
+# Pages deploy tree, rebuilt by scripts/stage-pages.mjs on every run
+_site/
