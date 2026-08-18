@@ -10,6 +10,7 @@ import { generateStrength, splitCoverageGaps, splitHint } from '../engine/genera
 import { exerciseReadiness } from '../engine/readiness.js';
 import { GarminImport } from './GarminImport.js';
 import { EnergySetup } from './EnergySetup.js';
+import { EnergyImport } from './EnergyImport.js';
 import { PlanAdvisor } from './PlanAdvisor.js';
 import { SportGlyph } from './sportsUi.js';
 import { initialSetupSection } from './helpers.js';
@@ -107,6 +108,7 @@ export function SettingsScreen({ state, now, actions, energyActions, toast }) {
 
     <${Section} id="energy" title="Energie & Zielzufuhr" desc="Profil, Ziel und Datenquelle für das Energiemodul" open=${open === 'energy'} onToggle=${setOpen}>
       <${EnergySetup} state=${state} actions=${energyActions} />
+      <${EnergyImport} actions=${energyActions} toast=${toast} />
     <//>
 
     <${Section} id="import" title="Garmin-Import" desc="FIT / TCX / Export-ZIP als Entwürfe" open=${open === 'import'} onToggle=${setOpen}>

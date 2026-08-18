@@ -328,6 +328,18 @@ export function App() {
       const base = n.config ?? { id: 'me' };
       n.config = { ...base, energy: { ...(base.energy ?? {}), adapterId } };
     }, { config: true }),
+    importDays: (days) => {
+      // putDay merges per field, so an imported weight cannot wipe macros that
+      // were typed by hand for the same day.
+      store.updateNutrition((n) => {
+        for (const day of days) {
+          const i = n.days.findIndex((d) => d.date === day.date);
+          if (i >= 0) n.days[i] = { ...n.days[i], ...day };
+          else n.days.push({ ...day });
+        }
+        n.days.sort((a, b) => (a.date < b.date ? -1 : 1));
+      }, { days });
+    },
     loadDemoEnergy: () => {
       let written = [];
       store.updateNutrition((n) => { written = loadDemoEnergy(n, now); }, { config: true });
