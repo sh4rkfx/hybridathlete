@@ -54,10 +54,23 @@ describe('pages staging', () => {
 
   it('publishes nothing outside the app and the dashboard', () => {
     const publishable = [...APP_FILES, ...APP_DIRS, ...DASHBOARD_FILES.map(([from]) => from)];
-    for (const path of publishable) expect(existsSync(ROOT + path), path).toBe(true);
     // test/, docs/, scripts/ and node_modules/ have no business on Pages.
     for (const secret of ['test', 'docs', 'scripts', 'node_modules', 'package.json']) {
       expect(publishable).not.toContain(secret);
+    }
+  });
+
+  // Separate from the list check above, and skipping the one input the test run
+  // has not produced yet. test-report.js is gitignored and written after vitest
+  // exits, so on a fresh checkout — which is exactly what CI is — it does not
+  // exist while this file runs. Asserting otherwise passes locally and fails in
+  // CI, which is the worst kind of test.
+  it('every committed staging input exists', () => {
+    const GENERATED = new Set(['test-report.js']);
+    const inputs = [...APP_FILES, ...APP_DIRS, ...DASHBOARD_FILES.map(([from]) => from)];
+    for (const path of inputs) {
+      if (GENERATED.has(path)) continue;
+      expect(existsSync(ROOT + path), path).toBe(true);
     }
   });
 
