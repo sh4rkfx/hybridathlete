@@ -73,12 +73,21 @@ tr.fail td{background:var(--stop-dim)}
 .d-block.exp{border-left:3px solid var(--brand)}
 .d-block.act-pass{border-left:3px solid var(--fresh)}
 .d-block.act-fail{border-left:3px solid var(--stop);color:var(--text-hi)}
+/* The app is deployed next to this page, at ./app/. Anyone who has this open
+   is one tap from the build these numbers describe — on a phone that matters
+   more than it does here, so the link is a target, not a footnote. */
+.applink{display:inline-flex;align-items:center;gap:8px;margin:0 0 20px;padding:9px 15px;
+  border:1px solid var(--border-strong);border-radius:var(--r-md);background:var(--brand-dim);
+  color:var(--brand-hi);text-decoration:none;font-size:13.5px;font-weight:600}
+.applink:hover{background:var(--brand);color:#0E1320;border-color:var(--brand)}
+.applink .arr{font-size:15px;line-height:1}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1><b>HYBRID</b>ATHLETE · Test-Dashboard</h1>
   <div class="meta" id="meta">–</div>
+  <a class="applink" href="./app/">App öffnen <span class="arr">→</span></a>
   <div class="chips" id="chips"></div>
   <div id="empty">Kein Report gefunden. <code>npm test</code> ausführen — der Lauf schreibt <code>test-report.js</code> neben diese Datei.</div>
   <div id="content"></div>
