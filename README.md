@@ -87,7 +87,9 @@ backup. Garmin data comes in via file import (FIT/TCX) only.
 Three levels: data-layer unit tests (fake-indexeddb), engine/rules unit tests, and the
 normative **scenario suite T01–T17** (the "science gate": every suggestion asserted
 against rule, operation and literature anchor). Coverage targets: engine+rules ≥ 90 %,
-total ≥ 75 %. See the [test dashboard](test-dashboard.html).
+total ≥ 75 %. The [test dashboard](https://sh4rkfx.github.io/hybridathlete/) is published
+from `main` on every push; `test-dashboard.html` also opens straight from `file://` once
+`npm test` has written `test-report.js` next to it.
 
 ## Roadmap
 
