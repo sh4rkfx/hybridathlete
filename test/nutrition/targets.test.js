@@ -188,6 +188,29 @@ describe('safety limits (test 5)', () => {
     expect(Math.round(r.baseIntakeKcal - r.targetIntakeKcal)).toBe(31);
   });
 
+  it('reports what the correction achieved, not what it asked for', () => {
+    // The breakdown a UI prints must add up. When the floor clips the
+    // correction, the requested figure is not the one that happened.
+    const r = dailyTarget({ ...BODY, ledgerCorrectionKcal: -250 }, cfg());
+    expect(r.ledgerCorrectionKcal).toBe(-250);
+    expect(Math.round(r.appliedLedgerCorrectionKcal)).toBe(-31);
+    expect(r.baseIntakeKcal + r.appliedLedgerCorrectionKcal).toBeCloseTo(r.targetIntakeKcal, 10);
+  });
+
+  it.each([
+    ['no correction', { }],
+    ['correction that fits', { restTdeeKcal: 2600, ledgerCorrectionKcal: -100 }],
+    ['correction capped', { restTdeeKcal: 2600, ledgerCorrectionKcal: -900 }],
+    ['correction clipped by the floor', { ledgerCorrectionKcal: -250 }],
+    ['floor binding on its own', { restTdeeKcal: 2100, bmrKcal: 1900, weightKg: 120, bodyFatPct: 40 }],
+    ['upward correction', { ledgerCorrectionKcal: 200 }],
+  ])('the breakdown adds up: %s', (_name, over) => {
+    const r = dailyTarget({ ...BODY, ...over }, cfg());
+    // restTdee - deficit + appliedCorrection == target, in every path
+    expect(r.restTdeeKcal - r.deficitKcal).toBeCloseTo(r.baseIntakeKcal, 10);
+    expect(r.baseIntakeKcal + r.appliedLedgerCorrectionKcal).toBeCloseTo(r.targetIntakeKcal, 10);
+  });
+
   it('an upward correction is not floored', () => {
     const r = dailyTarget({ ...BODY, ledgerCorrectionKcal: 200 }, cfg());
     expect(r.reasons).not.toContain(REASONS.LEDGER_CORRECTION_CLIPPED_BY_FLOOR);

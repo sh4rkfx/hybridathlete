@@ -11,6 +11,7 @@ import { ledgerBalance, ledgerCorrectionKcal, eveningReconcile, windowSummary } 
 import { evaluateFlags } from '../nutrition/flags.js';
 import { createFormulaAdapter } from '../adapters/FormulaAdapter.js';
 import { createManualAdapter } from '../adapters/ManualAdapter.js';
+import { weightTrend, toSeries, daysBetween } from '../nutrition/trend.js';
 import { dateKey, dOnly, addDays } from '../engine/time.js';
 
 // The fields the entry mask writes. Weight, calories and protein are always
@@ -216,4 +217,143 @@ export function setupGaps(config) {
 
 export function isReady(state) {
   return setupGaps(nutritionConfig(state)).length === 0;
+}
+
+// --- what the screen shows ---------------------------------------------------
+
+// The target as an ordered list of contributions whose sum IS the target. Keys
+// only; the German labels live in the component, as everywhere else in src/ui.
+//
+// The applied ledger correction is used, not the requested one. Printing the
+// request produces a breakdown that does not add up whenever the intake floor
+// clipped it — restTdee - deficit + request != target — which is the fastest
+// way to lose a user's trust in a screen made of numbers.
+export function targetBreakdown(derived) {
+  const { target, compensation } = derived;
+  if (target?.baseIntakeKcal == null) return [];
+  const rows = [{ key: 'restTdee', kcal: target.restTdeeKcal }];
+  if (target.deficitKcal) rows.push({ key: 'deficit', kcal: -target.deficitKcal });
+  if (Math.round(target.appliedLedgerCorrectionKcal)) {
+    rows.push({
+      key: 'ledger',
+      kcal: target.appliedLedgerCorrectionKcal,
+      // Flagged so the UI can say why it is smaller than the account balance.
+      clipped: Math.abs(target.appliedLedgerCorrectionKcal) + 0.5 < Math.abs(target.ledgerCorrectionKcal),
+    });
+  }
+  if (compensation?.kcal) rows.push({ key: 'compensation', kcal: compensation.kcal });
+  return rows;
+}
+
+export function breakdownSum(rows) {
+  return rows.reduce((total, row) => total + row.kcal, 0);
+}
+
+// Today against today's target. This is the question the app is opened to
+// answer, and it is the one the first version never actually answered.
+export function todayProgress(derived) {
+  const target = derived.plannedIntakeKcal;
+  const consumed = Number.isFinite(derived.today?.intakeKcal) ? derived.today.intakeKcal : null;
+  const proteinTargetG = derived.macros?.proteinG ?? null;
+  const proteinG = Number.isFinite(derived.today?.proteinG) ? derived.today.proteinG : null;
+  const ratio = (a, b) => (Number.isFinite(a) && Number.isFinite(b) && b > 0 ? a / b : null);
+  return {
+    targetKcal: target,
+    consumedKcal: consumed,
+    remainingKcal: Number.isFinite(target) && consumed != null ? target - consumed : null,
+    kcalRatio: ratio(consumed, target),
+    over: Number.isFinite(target) && consumed != null && consumed > target,
+    proteinG,
+    proteinTargetG,
+    proteinRatio: ratio(proteinG, proteinTargetG),
+    logged: consumed != null,
+  };
+}
+
+// Progress toward the first calibration. Days 1-13 are where this feature is
+// abandoned — the domain returns null until minDays, and a screen that only
+// says "not yet" gives no reason to come back tomorrow.
+export function calibrationProgress(days, config, now) {
+  const usable = (days ?? []).filter((day) => Number.isFinite(day.intakeKcal));
+  const needed = config.calibration.minDays;
+  const today = dateKey(now);
+
+  // Consecutive days ending today or yesterday — one missed day should not
+  // read as a total reset while the day is still young.
+  const tracked = new Set(usable.map((day) => day.date));
+  let streak = 0;
+  for (let i = 0; i < 400; i++) {
+    const date = dateKey(addDays(dOnly(now), -i));
+    if (tracked.has(date)) streak++;
+    else if (!(i === 0)) break;
+  }
+
+  return {
+    tracked: usable.length,
+    needed,
+    remaining: Math.max(0, needed - usable.length),
+    ratio: Math.min(1, needed ? usable.length / needed : 0),
+    streak,
+    loggedToday: tracked.has(today),
+  };
+}
+
+// Weight points plus the regression the whole feature rests on, in viewBox
+// units so the component only has to draw. Showing the scatter against the fit
+// is the one honest argument for "measure, do not estimate" — the daily noise
+// the regression exists to absorb becomes visible instead of asserted.
+export function weightChartData(days, config, { width = 320, height = 90, pad = 6, goalKg = null } = {}) {
+  const series = toSeries(days ?? [], 'weightKg');
+  if (series.length < 2) return null;
+
+  const trend = weightTrend(days, {
+    method: config.calibration.trendMethod,
+    emaHalfLifeDays: config.calibration.emaHalfLifeDays,
+    outlier: config.calibration.outlier,
+  });
+
+  const xs = series.map((p) => p.x);
+  const ys = series.map((p) => p.y);
+  // The scale is set by the weights alone. Stretching it to reach a goal 15 kg
+  // away would flatten months of real movement into a straight line, and the
+  // movement is the entire point of the chart. A goal outside the range simply
+  // does not get a line.
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const spanY = maxY - minY || 1;
+  const spanX = Math.max(...xs) - Math.min(...xs) || 1;
+  const minX = Math.min(...xs);
+
+  const sx = (x) => pad + ((x - minX) / spanX) * (width - 2 * pad);
+  const sy = (y) => height - pad - ((y - minY) / spanY) * (height - 2 * pad);
+
+  const excluded = new Set((trend.excluded ?? []).map((e) => e.date));
+  const points = series.map((p) => ({ x: sx(p.x), y: sy(p.y), date: p.date, kg: p.y, excluded: excluded.has(p.date) }));
+
+  let fit = null;
+  if (trend.slopeKgPerDay != null && trend.intercept != null) {
+    const at = (x) => trend.intercept + trend.slopeKgPerDay * x;
+    const x0 = minX;
+    const x1 = Math.max(...xs);
+    fit = { x1: sx(x0), y1: sy(at(x0)), x2: sx(x1), y2: sy(at(x1)) };
+  }
+
+  return {
+    width,
+    height,
+    points,
+    fit,
+    // A regression over three days is noise drawn confidently. The calibration
+    // refuses to state a factor below minDays for the same reason, so the chart
+    // marks a short window as provisional rather than asserting a slope the
+    // data cannot carry.
+    provisional: daysBetween(series[0].date, series.at(-1).date) < config.calibration.minDays,
+    goalY: Number.isFinite(goalKg) && goalKg >= minY && goalKg <= maxY ? sy(goalKg) : null,
+    minKg: minY,
+    maxKg: maxY,
+    firstDate: series[0].date,
+    lastDate: series.at(-1).date,
+    slopeKgPerWeek: trend.slopeKgPerDay == null ? null : trend.slopeKgPerDay * 7,
+    spanDays: daysBetween(series[0].date, series.at(-1).date),
+  };
 }
