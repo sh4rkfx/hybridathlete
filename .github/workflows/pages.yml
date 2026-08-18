@@ -1,0 +1,64 @@
+# Publishes the test/science dashboard to GitHub Pages so the current state of
+# main is readable without cloning and running the suite. The tests workflow
+# stays the gate; this one only publishes.
+#
+# Deliberately NOT gated on the tests passing: a dashboard that disappears when
+# the build goes red is useless precisely when it matters. The test step is
+# allowed to fail, `npm test` writes test-report.js either way, and a red run
+# publishes a red dashboard.
+#
+# Only test-dashboard.html and test-report.js are deployed, not the app. The
+# service worker runtime-caches every same-origin GET, so shipping the PWA
+# alongside would serve a stale dashboard after the first visit.
+#
+# Requires Settings -> Pages -> Source: "GitHub Actions" to be enabled once.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; drop superseded runs but let a running one finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build the report (a red suite still publishes)
+        continue-on-error: true
+        run: npm run coverage
+      - name: Stage the dashboard
+        run: |
+          mkdir -p _site
+          cp test-dashboard.html _site/index.html
+          cp test-dashboard.html _site/test-dashboard.html
+          cp test-report.js _site/test-report.js
+          mkdir -p _site/icons && cp icons/icon.svg _site/icons/icon.svg
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
