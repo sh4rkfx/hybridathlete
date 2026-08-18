@@ -168,6 +168,11 @@ export function dailyTarget(input, config) {
     floor,
     caps,
     ledgerCorrectionKcal: correction,
+    // What the correction actually achieved once the floor had its say. The
+    // requested figure above can be larger, and a UI that shows the request
+    // instead of the effect prints a breakdown that does not add up:
+    // restTdee - deficit + requested != target whenever the floor clips.
+    appliedLedgerCorrectionKcal: targetIntakeKcal - baseIntakeKcal,
     restTdeeKcal,
     reasons,
   };
