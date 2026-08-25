@@ -9,11 +9,11 @@
 //   4. everything diagnostic, collapsed
 // Anything at warn level or above jumps above all of it.
 import { html } from './html.js';
-import { useState, useEffect, useMemo } from 'preact/hooks';
+import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import {
   assembleDays, deriveEnergy, nutritionConfig, prefillEntry, entryToDay,
-  parseNumber, setupGaps, targetBreakdown, todayProgress, calibrationProgress,
-  weightChartData,
+  entryMatchesStored, hasEntryData, parseNumber, setupGaps, targetBreakdown,
+  todayProgress, calibrationProgress, weightChartData,
 } from './energyHelpers.js';
 import { flagMessage, flagAction, LEVEL_LABEL } from './nutritionText.js';
 import { dateKey } from '../engine/time.js';
@@ -107,37 +107,64 @@ function BudgetCard({ derived, progress }) {
 // The one place this app uses a free-text numeric field. Steppers are the house
 // style and remain so elsewhere, but reaching 2143 kcal in 50-kcal taps is not
 // the 15-second entry the kickoff asks for.
-function NumField({ label, unit, value, onInput, autofocus }) {
+//
+// The field keeps the RAW TEXT, not the parsed number. Binding value to the
+// parsed number makes decimals impossible to type: after the separator,
+// parseNumber('88.') is 88, the field rewrites itself to "88", the separator is
+// gone and the next key lands as 884. Measured key by key, with a period and
+// with a German comma — 88.4 kg became 884 kg both ways, in the one input the
+// whole calibration is built on.
+//
+// So text is local and authoritative while the field is being edited. It
+// resyncs only when the value arriving from outside disagrees with what the
+// text parses to, which is what a prefill or a day change must do and what a
+// half-typed "88." must not.
+function NumField({ label, unit, value, onInput, autofocus, hint }) {
+  const [text, setText] = useState(value == null ? '' : String(value));
+  useEffect(() => {
+    if (parseNumber(text) !== value) setText(value == null ? '' : String(value));
+  }, [value]);
+
   return html`<label class="nf">
     <span class="nf-l">${label}${unit ? html` <small>${unit}</small>` : ''}</span>
     <input class="nf-i" type="text" inputmode="decimal" enterkeyhint="next" autofocus=${autofocus}
-      value=${value ?? ''} placeholder="—"
-      onInput=${(e) => onInput(parseNumber(e.target.value))} />
+      value=${text} placeholder="—" aria-describedby=${hint ? `${label}-hint` : undefined}
+      onInput=${(e) => { setText(e.target.value); onInput(parseNumber(e.target.value)); }} />
+    ${hint ? html`<span class="nf-h" id=${`${label}-hint`}>${hint}</span>` : ''}
   </label>`;
 }
 
-function EntryCard({ entry, setEntry, onSave, dirty }) {
+// Two fields carry the whole feature — what you ate and what you weigh — and
+// everything else is optional. The old card presented all four identically and
+// said nothing about where the numbers come from, which is a fair reading of
+// "I do not know what I am supposed to enter". They are now named as the two
+// that matter, in order, with the rest demoted behind them.
+function EntryCard({ entry, setEntry, saved }) {
   const [details, setDetails] = useState(false);
   const set = (field) => (value) => setEntry({ ...entry, [field]: value });
 
   return html`<div class="settings-card">
     <div class="s-k">${entry.isNew ? 'Heute eintragen' : 'Heute'}</div>
+    <p class="s-hint">Zwei Zahlen reichen: was du heute gegessen hast und was die Waage
+      heute früh gezeigt hat. Alles andere ist optional.</p>
     <div class="nf-grid">
-      <${NumField} label="Kalorien" unit="kcal" value=${entry.kcal} onInput=${set('kcal')} />
-      <${NumField} label="Protein" unit="g" value=${entry.proteinG} onInput=${set('proteinG')} />
-      <${NumField} label="Gewicht" unit="kg" value=${entry.weightKg} onInput=${set('weightKg')} />
-      <${NumField} label="Körperfett" unit="%" value=${entry.bodyFatPct} onInput=${set('bodyFatPct')} />
+      <${NumField} label="Kalorien" unit="kcal" value=${entry.kcal} onInput=${set('kcal')}
+        hint="Tagessumme aus deiner Tracking-App" />
+      <${NumField} label="Gewicht" unit="kg" value=${entry.weightKg} onInput=${set('weightKg')}
+        hint="nüchtern, nach dem Aufstehen" />
     </div>
     <button class="det-toggle" onClick=${() => setDetails(!details)} aria-expanded=${details}>
-      ${details ? 'Weniger' : 'Fett, Kohlenhydrate, Ballaststoffe, Alkohol'}
+      ${details ? 'Weniger' : 'Protein, Körperfett und Makros ergänzen'}
     </button>
     ${details ? html`<div class="nf-grid">
+      <${NumField} label="Protein" unit="g" value=${entry.proteinG} onInput=${set('proteinG')} />
+      <${NumField} label="Körperfett" unit="%" value=${entry.bodyFatPct} onInput=${set('bodyFatPct')} />
       <${NumField} label="Fett" unit="g" value=${entry.fatG} onInput=${set('fatG')} />
       <${NumField} label="Kohlenhydrate" unit="g" value=${entry.carbsG} onInput=${set('carbsG')} />
       <${NumField} label="Ballaststoffe" unit="g" value=${entry.fiberG} onInput=${set('fiberG')} />
       <${NumField} label="Alkohol" unit="g" value=${entry.alcoholG} onInput=${set('alcoholG')} />
     </div>` : ''}
-    ${dirty ? html`<button class="act-btn primary" onClick=${onSave}>Speichern</button>` : ''}
+    <div class="nf-saved" aria-live="polite">${saved ? 'Gespeichert' : ''}</div>
   </div>`;
 }
 
@@ -197,7 +224,7 @@ function FlagList({ flags }) {
   </div>`);
 }
 
-export function EnergyScreen({ state, now, actions, toast }) {
+export function EnergyScreen({ state, now, actions }) {
   const config = nutritionConfig(state);
   const today = dateKey(now);
   const gaps = setupGaps(config);
@@ -216,6 +243,32 @@ export function EnergyScreen({ state, now, actions, toast }) {
 
   useEffect(() => { setEntry(prefillEntry(state, today)); setDirty(false); }, [rows.length, today]);
 
+  // Autosave. The entry used to live only in this component's state behind a
+  // Speichern button, so typing four numbers and switching tabs threw them away
+  // with no warning — measured, and the likeliest way to lose a day. There is
+  // no server, no undo and no reason to make anyone press a button for four
+  // numbers on a phone.
+  //
+  // Debounced rather than per-keystroke because each write reassembles the day
+  // series through the adapters, and a ref rather than a dependency so that
+  // leaving the screen inside the debounce window still saves what is pending.
+  const pending = useRef(null);
+  const saveNow = useRef(null);
+  saveNow.current = (value) => { if (hasEntryData(value)) actions.saveDay(entryToDay(value)); };
+
+  useEffect(() => {
+    if (!dirty) return undefined;
+    pending.current = entry;
+    const handle = setTimeout(() => {
+      saveNow.current(pending.current);
+      pending.current = null;
+      setDirty(false);
+    }, 600);
+    return () => clearTimeout(handle);
+  }, [entry, dirty]);
+
+  useEffect(() => () => { if (pending.current) saveNow.current(pending.current); }, []);
+
   const derived = useMemo(() => (days ? deriveEnergy(state, { now, days }) : null), [days, config]);
 
   if (gaps.length) {
@@ -231,7 +284,6 @@ export function EnergyScreen({ state, now, actions, toast }) {
   }
 
   const change = (next) => { setEntry(next); setDirty(true); };
-  const save = () => { actions.saveDay(entryToDay(entry)); setDirty(false); toast('Tag gespeichert'); };
 
   if (!derived) {
     return html`<div><div class="eyebrow">Energie</div><h1 class="title">Rechne …</h1></div>`;
@@ -246,6 +298,15 @@ export function EnergyScreen({ state, now, actions, toast }) {
   const a = derived.availability;
   const c = derived.calibration;
 
+  // Before the first measurement, every one of the four folds reads "—" or
+  // "noch nicht" and the notices count the days you have not logged yet — two
+  // different denominators for it, 14 in the start card and 7 in the notice.
+  // That is scaffolding for a state the user does not have, shown to the person
+  // least able to read it. During the first window the screen has exactly one
+  // job: get today entered. The diagnostics come back the moment they can say
+  // something.
+  const measured = calib.remaining === 0 || derived.plannedIntakeKcal != null;
+
   return html`<div>
     <div class="eyebrow">Energie</div>
     <h1 class="title">${progress.logged && !progress.over ? 'Gut unterwegs'
@@ -253,11 +314,13 @@ export function EnergyScreen({ state, now, actions, toast }) {
 
     ${urgent.length ? html`<div class="settings-card urgent"><${FlagList} flags=${urgent} /></div>` : ''}
 
-    <${BudgetCard} derived=${derived} progress=${progress} />
+    ${Number.isFinite(progress.targetKcal) || calib.remaining === 0
+    ? html`<${BudgetCard} derived=${derived} progress=${progress} />` : ''}
     ${calib.remaining > 0 ? html`<${StartCard} progress=${progress} calib=${calib} />` : ''}
-    <${EntryCard} entry=${entry} setEntry=${change} onSave=${save} dirty=${dirty} />
+    <${EntryCard} entry=${entry} setEntry=${change} saved=${!dirty && entryMatchesStored(entry, state)} />
     <${TrendCard} chart=${chart} goalKg=${config.goal.target?.valueKg} />
 
+    ${measured ? html`
     <div class="sec-title">Wie die Zahl zustande kommt</div>
 
     <${Fold} id="target" title="Zielzufuhr" value=${kcal(derived.plannedIntakeKcal)}
@@ -330,5 +393,6 @@ export function EnergyScreen({ state, now, actions, toast }) {
 
     ${rest.length ? html`<div class="settings-card"><div class="s-k">Hinweise</div>
       <${FlagList} flags=${rest} /></div>` : ''}
+    ` : ''}
   </div>`;
 }

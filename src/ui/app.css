@@ -155,6 +155,14 @@ body { display: block; padding: 0; background: var(--bg); }
   font:600 17px/1 var(--font-mono);text-align:right}
 .nf-i::placeholder{color:var(--text-low);font-weight:400}
 .nf-i:focus-visible{outline:2px solid var(--brand-hi);outline-offset:2px;border-color:var(--brand-line)}
+/* Where the number comes from. "I do not know what I am supposed to enter" is
+   not answered by a label reading KALORIEN — it is answered by saying which
+   number, from where, measured when. */
+.nf-h{font:400 11px/1.3 var(--font-body);color:var(--text-low)}
+/* Autosave has no button to press, so it owes the user a word that it happened.
+   Reserves its own line either way, so the card does not jump as it appears. */
+.nf-saved{min-height:16px;font:600 11px/16px var(--font-mono);letter-spacing:.06em;
+  text-transform:uppercase;color:var(--fresh);text-align:right}
 
 .big-kcal{font:400 30px/1.1 var(--font-display);color:var(--brand);margin:6px 0 10px}
 .big-kcal small{font:600 13px/1 var(--font-body);color:var(--text-mid)}
