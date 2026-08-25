@@ -251,6 +251,42 @@ function roundKcal(value, config) {
     : Math.floor(value / step) * step;
 }
 
+// Which number stands for today's activity, given that a day can carry two and
+// one contains the other.
+//
+//   exerciseKcal   what the watch calls active calories, entered right after
+//                  training. Available early, and only ever a part of the day.
+//   totalKcal      the whole day's expenditure, entered in the evening or the
+//                  next morning. The activity figure is ALREADY INSIDE IT.
+//
+// Adding both would pay for the same training twice. So the total wins the
+// moment it exists, and the activity figure stops being an input and becomes an
+// explanation of what is inside the total.
+//
+// The total is used as a DIFFERENCE, never as a level: activity is what it
+// exceeds a rest day by. Consumer devices carry a mean absolute error above
+// 30 % on absolute expenditure, but the gap between a training day and a rest
+// day is a far steadier thing than either endpoint — and the level is what this
+// module measures for itself from intake against the weight trend. Taking the
+// device's absolute number would throw that measurement away in favour of a
+// worse one.
+//
+// A total at or below the rest-day figure yields zero, not a negative: a quiet
+// day is not a reason to eat less than the plan already says.
+export function activityEnergyKcal({ totalKcal, exerciseKcal, restDayTdeeKcal } = {}) {
+  if (Number.isFinite(totalKcal) && Number.isFinite(restDayTdeeKcal)) {
+    return {
+      kcal: Math.max(0, totalKcal - restDayTdeeKcal),
+      source: 'total',
+      // What the entry said before the total arrived, kept so the screen can
+      // show it as contained rather than dropping it without a word.
+      containedKcal: Number.isFinite(exerciseKcal) ? exerciseKcal : null,
+    };
+  }
+  if (Number.isFinite(exerciseKcal)) return { kcal: Math.max(0, exerciseKcal), source: 'exercise', containedKcal: null };
+  return { kcal: null, source: 'none', containedKcal: null };
+}
+
 // Compensation for a session's energy, calibrated (kickoff "Basiszufuhr plus
 // volle Kompensation"). Rounding DOWN is the asymmetry principle: errors are
 // meant to fall on the under-compensated side every time, not on average.

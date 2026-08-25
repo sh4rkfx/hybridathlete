@@ -185,7 +185,9 @@
       "fatG": "Fett",
       "carbsG": "Kohlenhydrate",
       "fiberG": "Ballaststoffe",
-      "alcoholG": "Alkohol"
+      "alcoholG": "Alkohol",
+      "totalKcal": "Gesamtumsatz",
+      "exerciseKcal": "Aktivitätsumsatz"
     }
   }
 }

@@ -13,7 +13,7 @@ import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import {
   assembleDays, deriveEnergy, nutritionConfig, prefillEntry, entryToDay,
   entryMatchesStored, hasEntryData, parseNumber, setupGaps, targetBreakdown,
-  todayProgress, calibrationProgress, weightChartData,
+  todayProgress, calibrationProgress, weightChartData, yesterdayGap,
 } from './energyHelpers.js';
 import { sanitizeDay } from '../nutrition/dayValidation.js';
 import { flagMessage, flagAction, issueMessage, LEVEL_LABEL } from './nutritionText.js';
@@ -120,7 +120,7 @@ function BudgetCard({ derived, progress }) {
 // resyncs only when the value arriving from outside disagrees with what the
 // text parses to, which is what a prefill or a day change must do and what a
 // half-typed "88." must not.
-function NumField({ label, unit, value, onInput, autofocus, hint, issue }) {
+function NumField({ label, unit, value, onInput, autofocus, hint, issue, wide }) {
   const [text, setText] = useState(value == null ? '' : String(value));
   useEffect(() => {
     if (parseNumber(text) !== value) setText(value == null ? '' : String(value));
@@ -132,7 +132,7 @@ function NumField({ label, unit, value, onInput, autofocus, hint, issue }) {
   const note = issue ? issueMessage(issue) : hint;
   const tone = issue ? `nf-${issue.level}` : '';
 
-  return html`<label class="nf">
+  return html`<label class="nf ${wide ? 'nf-wide' : ''}">
     <span class="nf-l">${label}${unit ? html` <small>${unit}</small>` : ''}</span>
     <input class="nf-i ${tone}" type="text" inputmode="decimal" enterkeyhint="next" autofocus=${autofocus}
       value=${text} placeholder="—" aria-invalid=${issue?.level === 'error' ? 'true' : undefined}
@@ -141,6 +141,54 @@ function NumField({ label, unit, value, onInput, autofocus, hint, issue }) {
     ${note ? html`<span class="nf-h ${tone}" id=${`${label}-hint`} aria-live=${issue ? 'polite' : undefined}>
       ${note}</span>` : ''}
   </label>`;
+}
+
+// Yesterday is usually still open when the scale is read, so it gets a strip
+// rather than a card: one line, present only when a number is actually owed,
+// gone the moment it is given. Named for what it wants — "Gestrige Kalorien" —
+// rather than for what is missing.
+function YesterdayStrip({ gap, onSave }) {
+  const [text, setText] = useState('');
+  if (!gap) return '';
+  const value = parseNumber(text);
+  return html`<div class="ystrip">
+    <div class="ys-t">Gestrige Kalorien</div>
+    <input class="nf-i ys-i" type="text" inputmode="decimal" enterkeyhint="done"
+      value=${text} placeholder="kcal" aria-label=${`Kalorien für ${gap.date}`}
+      onInput=${(e) => setText(e.target.value)}
+      onKeyDown=${(e) => { if (e.key === 'Enter' && value != null) { onSave(gap.date, value); setText(''); } }} />
+    <button class="ys-b" disabled=${value == null}
+      onClick=${() => { onSave(gap.date, value); setText(''); }}>Sichern</button>
+  </div>`;
+}
+
+// The two expenditure numbers, and the one rule that matters between them: the
+// day's total already contains the session. Once the total is there the
+// activity field stops being an input and becomes a line UNDER the total —
+// showing the containment instead of asserting it, so nobody adds the two in
+// their head and concludes the budget is wrong.
+function SpendCard({ entry, setEntry, issueFor, activity }) {
+  const set = (field) => (value) => setEntry({ ...entry, [field]: value });
+  const hasTotal = Number.isFinite(entry.totalKcal);
+
+  return html`<div class="settings-card">
+    <div class="s-k">Verbrauch heute</div>
+    <div class="nf-grid">
+      ${hasTotal ? '' : html`<${NumField} label="Aktivitätsumsatz" unit="kcal" wide
+        value=${entry.exerciseKcal} onInput=${set('exerciseKcal')} issue=${issueFor('exerciseKcal')}
+        hint="Aktivkalorien deiner Uhr, wenn du trainiert hast" />`}
+      <${NumField} label="Gesamtumsatz" unit="kcal" wide
+        value=${entry.totalKcal} onInput=${set('totalKcal')} issue=${issueFor('totalKcal')}
+        hint=${hasTotal ? 'gemessen · ersetzt die Schätzung' : 'abends: Gesamtkalorien des Tages'} />
+    </div>
+    ${hasTotal && Number.isFinite(entry.exerciseKcal) ? html`<div class="am-row">
+      <span class="am-k">davon Aktivität</span>
+      <span class="am-v">${kcal(entry.exerciseKcal)}</span>
+      <span class="am-d">enthalten, nicht zusätzlich</span>
+    </div>` : ''}
+    ${activity?.source === 'total' ? html`<p class="s-hint">${kcal(activity.kcal)} über einem
+      Ruhetag — das ist die Zahl, die dein Budget hebt.</p>` : ''}
+  </div>`;
 }
 
 // Two fields carry the whole feature — what you ate and what you weigh — and
@@ -158,10 +206,10 @@ function EntryCard({ entry, setEntry, saved, issues }) {
     <p class="s-hint">Zwei Zahlen reichen: was du heute gegessen hast und was die Waage
       heute früh gezeigt hat. Alles andere ist optional.</p>
     <div class="nf-grid">
-      <${NumField} label="Kalorien" unit="kcal" value=${entry.kcal} onInput=${set('kcal')} issue=${issueFor('kcal')}
-        hint="Tagessumme aus deiner Tracking-App" />
-      <${NumField} label="Gewicht" unit="kg" value=${entry.weightKg} onInput=${set('weightKg')} issue=${issueFor('weightKg')}
-        hint="nüchtern, nach dem Aufstehen" />
+      <${NumField} label="Kalorien" unit="kcal" value=${entry.kcal} onInput=${set('kcal')}
+        issue=${issueFor('kcal')} hint="Tagessumme aus deiner Tracking-App" />
+      <${NumField} label="Gewicht" unit="kg" value=${entry.weightKg} onInput=${set('weightKg')}
+        issue=${issueFor('weightKg')} hint="nüchtern, nach dem Aufstehen" />
     </div>
     <button class="det-toggle" onClick=${() => setDetails(!details)} aria-expanded=${details}>
       ${details ? 'Weniger' : 'Protein, Körperfett und Makros ergänzen'}
@@ -243,6 +291,7 @@ export function EnergyScreen({ state, now, actions }) {
   const [entry, setEntry] = useState(() => prefillEntry(state, today));
   const [dirty, setDirty] = useState(false);
   const [open, setOpen] = useState(null);
+  const [tab, setTab] = useState('heute');
 
   const rows = state?.nutrition?.days ?? [];
   useEffect(() => {
@@ -320,6 +369,15 @@ export function EnergyScreen({ state, now, actions }) {
 
   const change = (next) => { setEntry(next); setDirty(true); };
 
+  // The strip writes straight through rather than into the entry state: it
+  // belongs to another day, and routing it through today's mask would put
+  // yesterday's calories on today's row.
+  const saveYesterday = (date, value) => {
+    const existing = rows.find((row) => row.date === date) ?? { date };
+    const clean = sanitizeDay({ ...existing, date, kcal: value }, { history: rows });
+    if (hasEntryData(clean.day)) actions.saveDay(clean.day);
+  };
+
   if (!derived) {
     return html`<div><div class="eyebrow">Energie</div><h1 class="title">Rechne …</h1></div>`;
   }
@@ -341,20 +399,34 @@ export function EnergyScreen({ state, now, actions }) {
   // job: get today entered. The diagnostics come back the moment they can say
   // something.
   const measured = calib.remaining === 0 || derived.plannedIntakeKcal != null;
+  const gap = yesterdayGap(state, now);
 
   return html`<div>
     <div class="eyebrow">Energie</div>
     <h1 class="title">${progress.logged && !progress.over ? 'Gut unterwegs'
     : progress.over ? 'Über dem Ziel' : 'Heute'}</h1>
 
+    <div class="e-tabs" role="tablist">
+      ${[['heute', 'Heute'], ['woche', 'Woche']].map(([id, label]) => html`
+        <button role="tab" aria-selected=${tab === id} class=${tab === id ? 'on' : ''}
+          onClick=${() => setTab(id)}>${label}</button>`)}
+    </div>
+
     ${urgent.length ? html`<div class="settings-card urgent"><${FlagList} flags=${urgent} /></div>` : ''}
 
+    ${tab === 'heute' ? html`
+    <${YesterdayStrip} gap=${gap} onSave=${saveYesterday} />
     ${Number.isFinite(progress.targetKcal) || calib.remaining === 0
     ? html`<${BudgetCard} derived=${derived} progress=${progress} />` : ''}
     ${calib.remaining > 0 ? html`<${StartCard} progress=${progress} calib=${calib} />` : ''}
     <${EntryCard} entry=${entry} setEntry=${change} issues=${validation.issues}
       saved=${!dirty && !validation.refused.length && entryMatchesStored(entry, state)} />
+    <${SpendCard} entry=${entry} setEntry=${change} activity=${derived.activity}
+      issueFor=${(f) => validation.issues.find((i) => i.field === f)} />
     <${TrendCard} chart=${chart} goalKg=${config.goal.target?.valueKg} />
+    ` : ''}
+
+    ${tab === 'woche' ? html`
 
     ${measured ? html`
     <div class="sec-title">Wie die Zahl zustande kommt</div>
@@ -429,6 +501,8 @@ export function EnergyScreen({ state, now, actions }) {
 
     ${rest.length ? html`<div class="settings-card"><div class="s-k">Hinweise</div>
       <${FlagList} flags=${rest} /></div>` : ''}
+    ` : ''}
+    ${!measured ? html`<p class="s-hint">Die Auswertung erscheint, sobald genug Tage erfasst sind.</p>` : ''}
     ` : ''}
   </div>`;
 }

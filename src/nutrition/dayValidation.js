@@ -47,6 +47,22 @@ export const DAY_BOUNDS = {
     source: 'Measured intakes in grand-tour and ultra-endurance athletes.',
     evidenceLevel: 'moderate',
   },
+  // Expenditure, not intake. The floor is a resting day for a small adult; the
+  // plausible ceiling clears a hard training day for a large one without
+  // reaching the multi-day-ultra figures the hard bound still allows.
+  totalKcal: {
+    hard: [500, 15000],
+    plausible: [1200, 6000],
+    source: 'Resting metabolic rate at the low end; measured expenditure in endurance athletes at the high end.',
+    evidenceLevel: 'moderate',
+  },
+  // Active calories for one day. Zero is a rest day and entirely normal.
+  exerciseKcal: {
+    hard: [0, 10000],
+    plausible: [0, 3000],
+    source: 'Bounded by the daily expenditure figures above, less resting metabolism.',
+    evidenceLevel: 'assumption',
+  },
   proteinG: { hard: [0, 1500], plausible: [20, 400], source: 'Derived from the kcal bound at 4 kcal/g.', evidenceLevel: 'assumption' },
   fatG: { hard: [0, 1500], plausible: [10, 300], source: 'Derived from the kcal bound at 9 kcal/g.', evidenceLevel: 'assumption' },
   carbsG: { hard: [0, 3000], plausible: [20, 1200], source: 'Derived from the kcal bound at 4 kcal/g.', evidenceLevel: 'assumption' },

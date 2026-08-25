@@ -5,7 +5,9 @@
 import { validate } from '../nutrition/config.js';
 import { bmr, ffmKg, fatMassKg, bodyFatPct, reconcileIntake } from '../nutrition/energy.js';
 import { calibrate, rollingCalibrations, effectiveFactor } from '../nutrition/calibration.js';
-import { restDayTdeeKcal, dailyTarget, macroTargets, compensationKcal } from '../nutrition/targets.js';
+import {
+  restDayTdeeKcal, dailyTarget, macroTargets, compensationKcal, activityEnergyKcal,
+} from '../nutrition/targets.js';
 import { energyAvailability } from '../nutrition/availability.js';
 import { ledgerBalance, ledgerCorrectionKcal, eveningReconcile, windowSummary } from '../nutrition/ledger.js';
 import { evaluateFlags } from '../nutrition/flags.js';
@@ -14,13 +16,22 @@ import { createManualAdapter } from '../adapters/ManualAdapter.js';
 import { weightTrend, toSeries, daysBetween } from '../nutrition/trend.js';
 import { dateKey, dOnly, addDays } from '../engine/time.js';
 
-// The fields the entry mask writes. Weight, calories and protein are always
-// visible; body fat is visible but optional; the rest sit behind "Details"
-// (kickoff "UI-Hinweise für Schritt 9").
+// The fields the entry mask writes, grouped by the moment they belong to.
+// Morning is measurement, evening is the reckoning, and expenditure is its own
+// pair because one of those two numbers contains the other — see
+// activityEnergyKcal in nutrition/targets.js.
+export const MORNING_FIELDS = ['weightKg', 'bodyFatPct'];
+export const INTAKE_FIELDS = ['kcal', 'proteinG'];
+export const SPEND_FIELDS = ['exerciseKcal', 'totalKcal'];
+export const DETAIL_FIELDS = ['fatG', 'carbsG', 'fiberG', 'alcoholG'];
+
+// Kept for the older call sites and the storage round-trip: the full set, in a
+// stable order.
 export const ALWAYS_FIELDS = ['weightKg', 'kcal', 'proteinG'];
 export const OPTIONAL_FIELD = 'bodyFatPct';
-export const DETAIL_FIELDS = ['fatG', 'carbsG', 'fiberG', 'alcoholG'];
-export const ENTRY_FIELDS = [...ALWAYS_FIELDS, OPTIONAL_FIELD, ...DETAIL_FIELDS];
+export const ENTRY_FIELDS = [
+  ...ALWAYS_FIELDS, OPTIONAL_FIELD, ...SPEND_FIELDS, ...DETAIL_FIELDS,
+];
 
 export function nutritionConfig(state) {
   return validate(state?.nutrition?.config ?? {}).normalized;
@@ -47,10 +58,14 @@ export function prefillEntry(state, date) {
     const previous = earlier.find((row) => Number.isFinite(row[field]));
     out[field] = previous ? previous[field] : null;
   }
-  // Intake is the one thing that must be re-entered every day; carrying
-  // yesterday's calories forward as if they were today's would quietly
-  // fabricate the very data the calibration measures.
-  if (!today) { out.kcal = null; out.proteinG = null; for (const f of DETAIL_FIELDS) out[f] = null; }
+  // Intake and expenditure must both be re-entered every day. Carrying either
+  // forward would fabricate the very data the calibration measures — yesterday's
+  // calories as today's, or yesterday's training as a session that never
+  // happened. Only body measurements carry over, because a weight from two days
+  // ago is still the best estimate of today's until the scale says otherwise.
+  if (!today) {
+    for (const f of [...INTAKE_FIELDS, ...SPEND_FIELDS, ...DETAIL_FIELDS]) out[f] = null;
+  }
   return { date, ...out, isNew: !today };
 }
 
@@ -78,6 +93,26 @@ export function entryMatchesStored(entry, state) {
     const kept = Number.isFinite(stored[field]) ? stored[field] : null;
     return shown === kept;
   });
+}
+
+// Yesterday, when yesterday still owes a number. Intake is entered in the
+// evening or the next morning, so at the moment the scale is read the previous
+// day is usually still open — that is the normal case here, not the exception.
+// Returns null when there is nothing to chase, so the strip can be absent
+// rather than empty on every other day.
+//
+// Only intake counts as owed. A missing weigh-in is not a gap worth chasing:
+// the trend regression is built to survive one, and asking for a weight after
+// the fact would invite a made-up number.
+export function yesterdayGap(state, today) {
+  const date = dateKey(addDays(dOnly(today), -1));
+  const rows = dayRows(state);
+  // Nothing to chase before there is any history at all — a first-ever day has
+  // no yesterday, only an absence.
+  if (!rows.some((row) => row.date < date)) return null;
+  const row = rows.find((r) => r.date === date);
+  if (row && Number.isFinite(row.kcal)) return null;
+  return { date, kcal: null, proteinG: row?.proteinG ?? null };
 }
 
 export function entryToDay(entry) {
@@ -183,7 +218,14 @@ export function deriveEnergy(state, { now, days }) {
   }, config);
 
   const today = days.find((day) => day.date === date) ?? { date };
-  const compensation = compensationKcal(today.exerciseKcal, usableFactor, config);
+  // One of the two expenditure numbers, never both — the day's total already
+  // contains the session. See activityEnergyKcal.
+  const activity = activityEnergyKcal({
+    totalKcal: today.totalKcal,
+    exerciseKcal: today.exerciseKcal,
+    restDayTdeeKcal: restTdeeKcal,
+  });
+  const compensation = compensationKcal(activity.kcal, usableFactor, config);
   const plannedIntakeKcal = target.targetIntakeKcal == null
     ? null
     : target.targetIntakeKcal + compensation.kcal;
@@ -194,7 +236,7 @@ export function deriveEnergy(state, { now, days }) {
 
   const availability = energyAvailability({
     intakeKcal: today.intakeKcal,
-    exerciseKcal: today.exerciseKcal ?? 0,
+    exerciseKcal: activity.kcal ?? 0,
     factor: usableFactor,
     ffmKg: body.ffmKg,
     bodyFatPct: body.bodyFatPct,
@@ -212,7 +254,7 @@ export function deriveEnergy(state, { now, days }) {
 
   return {
     config, date, body, bmrKcal: bmrResult.kcal, bmrFormulas: bmrResult.parts,
-    calibration, rolling, factor, restTdeeKcal, target, compensation, plannedIntakeKcal,
+    calibration, rolling, factor, restTdeeKcal, target, compensation, activity, plannedIntakeKcal,
     macros, availability, ledger, flags, today,
     week: windowSummary(state?.nutrition?.ledger ?? [], date, config),
   };
