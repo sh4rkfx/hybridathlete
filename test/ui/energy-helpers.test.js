@@ -3,8 +3,8 @@
 // lives here and is tested here.
 import { describe, it, expect } from 'vitest';
 import {
-  prefillEntry, entryToDay, parseNumber, currentBody, assembleDays, deriveEnergy,
-  nutritionConfig, setupGaps, isReady, reconcileToday, ENTRY_FIELDS,
+  prefillEntry, entryToDay, hasEntryData, entryMatchesStored, parseNumber, currentBody, assembleDays,
+  deriveEnergy, nutritionConfig, setupGaps, isReady, reconcileToday, ENTRY_FIELDS,
   targetBreakdown, breakdownSum, todayProgress, calibrationProgress, weightChartData,
 } from '../../src/ui/energyHelpers.js';
 import { loadDemoEnergy, buildDemoDays, DEMO_DAYS } from '../../src/ui/energyDemo.js';
@@ -26,6 +26,65 @@ const SEED_CONFIG = {
 describe('parseNumber', () => {
   it.each([['2100', 2100], ['89,5', 89.5], ['  72.4 ', 72.4], ['', null], ['abc', null], [null, null]])(
     '%o -> %o', (raw, expected) => { expect(parseNumber(raw)).toBe(expected); });
+});
+
+// The entry autosaves on every pause in typing, so this decides what counts as
+// worth writing. A row of nulls would inflate "X von 14 Tagen erfasst" and tell
+// the calibration a day exists that carries no measurement.
+describe('hasEntryData', () => {
+  const empty = { date: TODAY, isNew: true, ...Object.fromEntries(ENTRY_FIELDS.map((f) => [f, null])) };
+
+  it('is false for an untouched entry', () => {
+    expect(hasEntryData(empty)).toBe(false);
+  });
+
+  it('is false for null and undefined', () => {
+    expect(hasEntryData(null)).toBe(false);
+    expect(hasEntryData(undefined)).toBe(false);
+  });
+
+  it.each(ENTRY_FIELDS)('is true when only %s is filled', (field) => {
+    expect(hasEntryData({ ...empty, [field]: 1 })).toBe(true);
+  });
+
+  it('treats a genuine zero as data, since 0 g alcohol is a statement', () => {
+    expect(hasEntryData({ ...empty, alcoholG: 0 })).toBe(true);
+  });
+
+  it('ignores values that are not finite numbers', () => {
+    expect(hasEntryData({ ...empty, kcal: NaN })).toBe(false);
+    expect(hasEntryData({ ...empty, kcal: '2100' })).toBe(false);
+    expect(hasEntryData({ ...empty, kcal: Infinity })).toBe(false);
+  });
+});
+
+describe('entryMatchesStored', () => {
+  const state = withDays([{ date: TODAY, kcal: 2100, weightKg: 88.4 }]);
+
+  it('is true when the screen shows exactly what is stored', () => {
+    expect(entryMatchesStored({ date: TODAY, kcal: 2100, weightKg: 88.4 }, state)).toBe(true);
+  });
+
+  it('is false while an edit is not written yet', () => {
+    expect(entryMatchesStored({ date: TODAY, kcal: 2200, weightKg: 88.4 }, state)).toBe(false);
+  });
+
+  it('is false for a day with no stored row', () => {
+    expect(entryMatchesStored({ date: '2026-08-18', kcal: 2100 }, state)).toBe(false);
+  });
+
+  it('is false for an empty entry, even against a stored row of nulls', () => {
+    const blank = withDays([{ date: TODAY }]);
+    expect(entryMatchesStored({ date: TODAY }, blank)).toBe(false);
+  });
+
+  it('treats an absent field and an explicit null as the same value', () => {
+    expect(entryMatchesStored({ date: TODAY, kcal: 2100, weightKg: 88.4, proteinG: null }, state)).toBe(true);
+  });
+
+  it('does not report saved when a field was added but not written', () => {
+    expect(entryMatchesStored({ date: TODAY, kcal: 2100, weightKg: 88.4, proteinG: 160 }, state)).toBe(false);
+  });
 });
 
 describe('prefill', () => {

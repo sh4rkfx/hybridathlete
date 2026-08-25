@@ -54,6 +54,32 @@ export function prefillEntry(state, date) {
   return { date, ...out, isNew: !today };
 }
 
+// Whether an entry is worth writing at all. Autosave fires on every pause in
+// typing, and a row of nothing but nulls is not a logged day — it would count
+// towards "X von 14 Tagen erfasst" and tell the calibration a day exists that
+// carries no measurement.
+export function hasEntryData(entry) {
+  if (!entry) return false;
+  return ENTRY_FIELDS.some((field) => Number.isFinite(entry[field]));
+}
+
+// Whether what is on screen is what is in the database. The saved indicator was
+// component state first, and it went missing on the first save of a day —
+// exactly the save a new user makes — because inserting the row re-runs the
+// prefill and the flag did not survive it. Reading the stored row instead
+// cannot drift: it reports what is persisted rather than what a variable
+// remembers about a write.
+export function entryMatchesStored(entry, state) {
+  if (!hasEntryData(entry)) return false;
+  const stored = dayFor(state, entry?.date);
+  if (!stored) return false;
+  return ENTRY_FIELDS.every((field) => {
+    const shown = Number.isFinite(entry[field]) ? entry[field] : null;
+    const kept = Number.isFinite(stored[field]) ? stored[field] : null;
+    return shown === kept;
+  });
+}
+
 export function entryToDay(entry) {
   const day = { date: entry.date };
   for (const field of ENTRY_FIELDS) day[field] = Number.isFinite(entry[field]) ? entry[field] : null;
