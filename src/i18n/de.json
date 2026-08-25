@@ -1,45 +1,101 @@
 {
-  "nav": { "home": "Home", "week": "Woche", "inbox": "Inbox", "rules": "Regeln", "settings": "Setup" },
+  "nav": {
+    "home": "Home",
+    "week": "Woche",
+    "inbox": "Inbox",
+    "rules": "Regeln",
+    "settings": "Setup"
+  },
   "common": {
-    "accept": "Übernehmen", "reject": "Ablehnen", "save": "Speichern", "next": "Weiter",
-    "done": "Fertig – speichern", "cancel": "Abbrechen", "understood": "Verstanden", "add": "＋ anlegen"
+    "accept": "Übernehmen",
+    "reject": "Ablehnen",
+    "save": "Speichern",
+    "next": "Weiter",
+    "done": "Fertig – speichern",
+    "cancel": "Abbrechen",
+    "understood": "Verstanden",
+    "add": "＋ anlegen"
   },
   "home": {
-    "weeklyLoad": "Wochenlast", "logNow": "loggen", "plannedToday": "Heute geplant",
-    "allLogged": "Alles geloggt", "noOpenSession": "Keine offene Einheit",
-    "goodMorning": "Guten Morgen", "checkin": "Check-in · 30 Sekunden",
-    "recoveryToday": "Erholung heute", "thisWeek": "Diese Woche", "seeAll": "Alle ansehen"
+    "weeklyLoad": "Wochenlast",
+    "logNow": "loggen",
+    "plannedToday": "Heute geplant",
+    "allLogged": "Alles geloggt",
+    "noOpenSession": "Keine offene Einheit",
+    "goodMorning": "Guten Morgen",
+    "checkin": "Check-in · 30 Sekunden",
+    "recoveryToday": "Erholung heute",
+    "thisWeek": "Diese Woche",
+    "seeAll": "Alle ansehen"
   },
-  "zones": { "sweet": "Im grünen Bereich", "under": "Untertrainiert", "elevated": "Erhöht – aufpassen", "over": "Überlast" },
+  "zones": {
+    "sweet": "Im grünen Bereich",
+    "under": "Untertrainiert",
+    "elevated": "Erhöht – aufpassen",
+    "over": "Überlast"
+  },
   "inbox": {
-    "eyebrow": "Vorschläge", "title": "Dein Coach meldet sich",
+    "eyebrow": "Vorschläge",
+    "title": "Dein Coach meldet sich",
     "fixedNote": "Fixe Einheiten (Boulderabende, Bergtag) werden nie verschoben oder gestrichen – höchstens abgeschwächt.",
-    "why": "Warum", "source": "Quelle", "hideSource": "Quelle ausblenden",
-    "out": "Raus", "in": "Rein", "stays": "Bleibt", "noReplacement": "keiner nötig – Einheit wird kürzer",
-    "reasonFit": "Fühle mich fit genug", "reasonFix": "Passt mir nicht", "reasonNc": "Nicht nachvollziehbar",
-    "emptyTitle": "Alles entschieden", "emptyText": "Neue Vorschläge erscheinen nach dem nächsten Log oder Check-in.",
-    "accepted": "Übernommen ✓ – Woche aktualisiert", "rejected": "Abgelehnt – Grund gespeichert"
+    "why": "Warum",
+    "source": "Quelle",
+    "hideSource": "Quelle ausblenden",
+    "out": "Raus",
+    "in": "Rein",
+    "stays": "Bleibt",
+    "noReplacement": "keiner nötig – Einheit wird kürzer",
+    "reasonFit": "Fühle mich fit genug",
+    "reasonFix": "Passt mir nicht",
+    "reasonNc": "Nicht nachvollziehbar",
+    "emptyTitle": "Alles entschieden",
+    "emptyText": "Neue Vorschläge erscheinen nach dem nächsten Log oder Check-in.",
+    "accepted": "Übernommen ✓ – Woche aktualisiert",
+    "rejected": "Abgelehnt – Grund gespeichert"
   },
-  "ops": { "swap": "Anpassen", "reduce": "Abschwächen", "move": "Verschieben", "remove": "Streichen" },
+  "ops": {
+    "swap": "Anpassen",
+    "reduce": "Abschwächen",
+    "move": "Verschieben",
+    "remove": "Streichen"
+  },
   "week": {
-    "eyebrow": "Planung", "title": "Deine Woche",
+    "eyebrow": "Planung",
+    "title": "Deine Woche",
     "subtitle": "📌 Fixe Einheiten bleiben unangetastet. HybridAthlete plant nur darum herum.",
-    "planUnit": "＋ Einheit planen", "today": "HEUTE",
+    "planUnit": "＋ Einheit planen",
+    "today": "HEUTE",
     "hint": "Antippen = bearbeiten · Halten & Ziehen = verschieben · leerer Slot = neue Einheit",
-    "slots": { "morning": "morgens", "midday": "mittags", "evening": "abends" }
+    "slots": {
+      "morning": "morgens",
+      "midday": "mittags",
+      "evening": "abends"
+    }
   },
   "rules": {
-    "eyebrow": "Vertrauen", "title": "Regelwerk",
+    "eyebrow": "Vertrauen",
+    "title": "Regelwerk",
     "subtitle": "Jede Empfehlung kommt aus einer Regel mit Quelle und Evidenzgrad. Nichts ist erfunden.",
     "votes": "Angenommen {up} · Abgelehnt {down}"
   },
   "settings": {
-    "eyebrow": "Setup", "title": "Dein Plan",
+    "eyebrow": "Setup",
+    "title": "Dein Plan",
     "subtitle": "Ziel und Split bestimmen, was der Generator baut – abgestimmt auf Bouldern, Berg und Laufen.",
-    "goal": "Ziel", "split": "Split", "disableUnits": "Einheiten abwählen", "constraints": "Constraints",
-    "regenerate": "Plan neu generieren", "export": "Als JSON exportieren", "reset": "Zurücksetzen", "demo": "Demo-Daten laden"
+    "goal": "Ziel",
+    "split": "Split",
+    "disableUnits": "Einheiten abwählen",
+    "constraints": "Constraints",
+    "regenerate": "Plan neu generieren",
+    "export": "Als JSON exportieren",
+    "reset": "Zurücksetzen",
+    "demo": "Demo-Daten laden"
   },
-  "fatigue": { "fresh": "frisch", "caution": "müde", "stop": "platt" },
+  "fatigue": {
+    "fresh": "frisch",
+    "caution": "müde",
+    "stop": "platt"
+  },
   "nutrition": {
     "errors": {
       "CONFIG_REQUIRED": "{path}: Pflichtfeld fehlt.",
@@ -65,7 +121,10 @@
       "CONFIG_ERA_UNORDERED": "Geräte-Ären müssen chronologisch sortiert sein: {from} steht nach {previous}.",
       "CONFIG_ERA_OVERLAP": "Geräte-Ären dürfen sich nicht überlappen und keine Lücke lassen: {from} kollidiert mit dem Ende der vorherigen Ära ({previousTo}).",
       "CONFIG_HARD_FLOOR_ABOVE_SOFT_FLOOR": "Der harte Kalorienboden ({hard} × BMR) darf nicht über dem weichen ({soft} × BMR) liegen.",
-      "CONFIG_TAPER_ANCHORS_UNORDERED": "Die EA-Schwelle muss fallen: Der Ankerpunkt für die volle Schwelle ({lean} %) muss unter dem für den Boden ({high} %) liegen."
+      "CONFIG_TAPER_ANCHORS_UNORDERED": "Die EA-Schwelle muss fallen: Der Ankerpunkt für die volle Schwelle ({lean} %) muss unter dem für den Boden ({high} %) liegen.",
+      "DAY_NOT_A_NUMBER": "{field}: das ist keine Zahl.",
+      "DAY_BELOW_HARD_MIN": "{field} {value} ist zu klein — unter {min} kann das kein echter Wert sein. Nicht gespeichert.",
+      "DAY_ABOVE_HARD_MAX": "{field} {value} ist zu groß — über {max} kann das kein echter Wert sein. Nicht gespeichert."
     },
     "warnings": {
       "CONFIG_SCHEMA_AHEAD": "Diese Konfiguration stammt aus einer neueren App-Version (Schema {stored}, bekannt ist {known}). Sie wird unverändert übernommen – unbekannte Felder bleiben erhalten.",
@@ -77,7 +136,10 @@
       "CONFIG_CYCLE_WINDOW_FORCED": "Zyklus-Glättung erzwingt ein 28-Tage-Fenster (war {was}).",
       "CONFIG_FIBER_ATWATER_UNUSUAL": "Ballaststoff-Faktor {value} kcal/g ist unüblich – 2 entspricht der EU-Kennzeichnung, 4 der US-amerikanischen.",
       "CONFIG_PROTEIN_BASIS_NEEDS_BODY_COMP": "Proteinziel auf FFM-Basis, aber ohne Körperfett- oder FFM-Angabe. Es greift ersatzweise die Untergrenze pro kg Körpergewicht ({fallback}).",
-      "CONFIG_EA_FLOOR_ABOVE_THRESHOLD": "Der EA-Boden ({floor} kcal/kg FFM) liegt über der Schwelle ({threshold}). Die Absenkung entfällt damit – es gilt durchgehend der Literaturwert."
+      "CONFIG_EA_FLOOR_ABOVE_THRESHOLD": "Der EA-Boden ({floor} kcal/kg FFM) liegt über der Schwelle ({threshold}). Die Absenkung entfällt damit – es gilt durchgehend der Literaturwert.",
+      "DAY_UNUSUALLY_LOW": "{field} {value} liegt unter {min} — ungewöhnlich, aber möglich. Gespeichert.",
+      "DAY_UNUSUALLY_HIGH": "{field} {value} liegt über {max} — ungewöhnlich, aber möglich. Gespeichert.",
+      "DAY_JUMPED": "{field} springt in {days} Tag(en) um {delta} — von {from} auf {to}. Vertippt?"
     },
     "flags": {
       "RHR_ELEVATED": "Ruhepuls seit {days} Tagen bei oder über {limit} bpm (Baseline {baseline}). Ein typisches Zeichen für zu wenig Erholung.",
@@ -114,6 +176,18 @@
       "CHECK_DATA_SOURCE": "Datenquelle prüfen.",
       "ADD_DEVICE_ERA": "Geräte-Ära eintragen.",
       "REVIEW_CONTEXT": "Kontext-Zeiträume prüfen."
+    },
+    "fields": {
+      "weightKg": "Gewicht",
+      "bodyFatPct": "Körperfett",
+      "kcal": "Kalorien",
+      "proteinG": "Protein",
+      "fatG": "Fett",
+      "carbsG": "Kohlenhydrate",
+      "fiberG": "Ballaststoffe",
+      "alcoholG": "Alkohol",
+      "totalKcal": "Gesamtumsatz",
+      "exerciseKcal": "Aktivitätsumsatz"
     }
   }
 }

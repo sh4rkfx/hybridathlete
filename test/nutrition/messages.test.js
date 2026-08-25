@@ -15,12 +15,18 @@ const NUTRITION = new URL('../../src/nutrition', import.meta.url).pathname;
 
 // Matches the err()/warn() helper call sites: err(<path>, 'CODE', { ... }).
 const CALL = /\b(err|warn)\(\s*[^,\n]*,\s*'([A-Z][A-Z0-9_]*)'/g;
+// Day validation returns issue literals instead, because its issues carry a
+// field rather than a config path: { field, level: 'error', code: 'DAY_...' }.
+// Both forms have to be scanned or the orphan check silently stops covering
+// whichever one it cannot see — which is the failure this test exists against.
+const LITERAL = /level:\s*'(error|warn)'\s*,\s*code:\s*'([A-Z][A-Z0-9_]*)'/g;
 
 function emittedCodes() {
   const found = { err: new Set(), warn: new Set() };
   for (const name of readdirSync(NUTRITION).filter((f) => f.endsWith('.js'))) {
     const code = readFileSync(join(NUTRITION, name), 'utf8');
     for (const [, kind, id] of code.matchAll(CALL)) found[kind].add(id);
+    for (const [, level, id] of code.matchAll(LITERAL)) found[level === 'error' ? 'err' : 'warn'].add(id);
   }
   return found;
 }

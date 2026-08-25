@@ -159,6 +159,36 @@ body { display: block; padding: 0; background: var(--bg); }
    not answered by a label reading KALORIEN — it is answered by saying which
    number, from where, measured when. */
 .nf-h{font:400 11px/1.3 var(--font-body);color:var(--text-low)}
+/* A refused value is not written, so the field has to say so — otherwise the
+   number sits there looking accepted and is simply gone on the next visit.
+   Warnings are the quieter case: stored, but worth a second look. */
+.nf-h.nf-error{color:var(--stop)}
+.nf-h.nf-warn{color:var(--caution)}
+.nf-i.nf-error{border-color:var(--stop)}
+.nf-i.nf-warn{border-color:var(--caution)}
+/* Expenditure fields hold four digits and a hint sentence; half a row is not
+   enough for either. */
+.nf-wide{grid-column:1/-1}
+
+/* Two moments, two questions: "what may I eat" and "how did the week go".
+   The diagnostics live behind the second one because they are read weekly, not
+   every morning. */
+.e-tabs{display:flex;gap:6px;background:var(--surface-2);border-radius:var(--r-md);
+  padding:3px;margin:0 0 12px}
+.e-tabs button{flex:1;min-height:36px;border:0;border-radius:var(--r-sm);background:transparent;
+  color:var(--text-low);font:700 13px/1 var(--font-body)}
+.e-tabs button.on{background:var(--surface-3);color:var(--text-hi)}
+.e-tabs button:focus-visible{outline:2px solid var(--brand-hi);outline-offset:-2px}
+
+/* Yesterday's intake is normally still open when the scale is read, so it gets
+   one line rather than a card — and only when a number is actually owed. */
+.ystrip{display:flex;align-items:center;gap:9px;margin-bottom:10px;padding:9px 11px;
+  background:var(--caution-dim);border:1px solid var(--caution);border-radius:var(--r-md)}
+.ys-t{flex:1;font:600 13px/1.3 var(--font-body);color:var(--text-hi)}
+.ys-i{width:88px;min-height:36px;font-size:15px;line-height:34px}
+.ys-b{min-height:36px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--brand);
+  background:var(--brand);color:var(--bg);font:700 12px/1 var(--font-body)}
+.ys-b:disabled{background:transparent;color:var(--text-low);border-color:var(--border-strong)}
 /* Autosave has no button to press, so it owes the user a word that it happened.
    Reserves its own line either way, so the card does not jump as it appears. */
 .nf-saved{min-height:16px;font:600 11px/16px var(--font-mono);letter-spacing:.06em;

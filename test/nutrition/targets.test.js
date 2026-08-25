@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   isRestDay, restDayTdeeKcal, deficitKcalPerDay, phaseFor, dailyTarget,
-  macroTargets, compensationKcal, REASONS,
+  macroTargets, compensationKcal, activityEnergyKcal, REASONS,
 } from '../../src/nutrition/targets.js';
 import { validate } from '../../src/nutrition/config.js';
 
@@ -367,5 +367,63 @@ describe('compensation', () => {
     expect(compensationKcal(600, 0.95, cfg({ compensation: { roundingDirection: 'nearest' } })).kcal).toBe(550);
     expect(compensationKcal(620, 0.95, cfg({ compensation: { roundingDirection: 'nearest' } })).kcal).toBe(600);
     expect(compensationKcal(620, 0.95, cfg()).kcal).toBe(550);
+  });
+});
+
+// A day can carry two expenditure numbers and one contains the other. Paying
+// for the same training twice is the failure this prevents, and it is silent:
+// the budget is simply too high, every training day, until the weight trend
+// eventually says so.
+describe('activityEnergyKcal', () => {
+  const REST = 2370;
+
+  it('uses the session figure while it is the only one there', () => {
+    expect(activityEnergyKcal({ exerciseKcal: 382, restDayTdeeKcal: REST }))
+      .toMatchObject({ kcal: 382, source: 'exercise' });
+  });
+
+  it('switches to the total the moment it arrives, as a difference', () => {
+    // 2784 measured against a 2370 rest day is 414 of activity — NOT 414 + 382.
+    expect(activityEnergyKcal({ totalKcal: 2784, exerciseKcal: 382, restDayTdeeKcal: REST }))
+      .toMatchObject({ kcal: 414, source: 'total' });
+  });
+
+  it('keeps the session figure visible as contained rather than dropping it', () => {
+    expect(activityEnergyKcal({ totalKcal: 2784, exerciseKcal: 382, restDayTdeeKcal: REST }).containedKcal)
+      .toBe(382);
+  });
+
+  it('never pays twice, whatever the two numbers are', () => {
+    for (const exercise of [0, 100, 382, 900]) {
+      const out = activityEnergyKcal({ totalKcal: 2784, exerciseKcal: exercise, restDayTdeeKcal: REST });
+      expect(out.kcal, `exercise ${exercise}`).toBe(414);
+    }
+  });
+
+  it('a quiet day yields zero, not a negative', () => {
+    // Below a rest day is not a reason to eat less than the plan already says.
+    expect(activityEnergyKcal({ totalKcal: 2100, restDayTdeeKcal: REST }).kcal).toBe(0);
+  });
+
+  it('refuses a negative session figure rather than subtracting from the budget', () => {
+    expect(activityEnergyKcal({ exerciseKcal: -200, restDayTdeeKcal: REST }).kcal).toBe(0);
+  });
+
+  it('has nothing to say without data, so nothing is compensated', () => {
+    expect(activityEnergyKcal({ restDayTdeeKcal: REST })).toMatchObject({ kcal: null, source: 'none' });
+    expect(activityEnergyKcal({})).toMatchObject({ kcal: null, source: 'none' });
+  });
+
+  it('falls back to the session figure when the rest-day level is unknown', () => {
+    // Without a baseline the total cannot become a difference, and guessing one
+    // would be worse than using the number that needs no baseline.
+    expect(activityEnergyKcal({ totalKcal: 2784, exerciseKcal: 382 }))
+      .toMatchObject({ kcal: 382, source: 'exercise' });
+  });
+
+  it('feeds compensation, so the total path pays what the difference says', () => {
+    const activity = activityEnergyKcal({ totalKcal: 2784, exerciseKcal: 382, restDayTdeeKcal: REST });
+    const paid = compensationKcal(activity.kcal, 1, undefined);
+    expect(paid.kcal).toBe(400); // 414 rounded down to the 50 kcal step
   });
 });

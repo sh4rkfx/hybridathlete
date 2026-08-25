@@ -3,7 +3,8 @@
 // lives here and is tested here.
 import { describe, it, expect } from 'vitest';
 import {
-  prefillEntry, entryToDay, hasEntryData, entryMatchesStored, parseNumber, currentBody, assembleDays,
+  prefillEntry, entryToDay, hasEntryData, entryMatchesStored, yesterdayGap,
+  parseNumber, currentBody, assembleDays,
   deriveEnergy, nutritionConfig, setupGaps, isReady, reconcileToday, ENTRY_FIELDS,
   targetBreakdown, breakdownSum, todayProgress, calibrationProgress, weightChartData,
 } from '../../src/ui/energyHelpers.js';
@@ -453,5 +454,65 @@ describe('weightChartData', () => {
     const flat = series.map((d) => ({ ...d, weightKg: 88 }));
     const c = weightChartData(flat, config);
     expect(c.points.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y))).toBe(true);
+  });
+});
+
+// The strip that chases yesterday's calories. It must be absent whenever there
+// is nothing to chase, or it becomes a permanent fixture on a screen whose
+// whole point was to stop being crowded.
+describe('yesterdayGap', () => {
+  const NOW = new Date('2026-08-18T07:00:00');
+  const YESTERDAY = '2026-08-17';
+
+  it('asks for yesterday when yesterday has no intake', () => {
+    const state = withDays([{ date: '2026-08-16', kcal: 2100 }, { date: YESTERDAY, weightKg: 89.4 }]);
+    expect(yesterdayGap(state, NOW)).toMatchObject({ date: YESTERDAY });
+  });
+
+  it('stays away once yesterday has its number', () => {
+    const state = withDays([{ date: '2026-08-16', kcal: 2100 }, { date: YESTERDAY, kcal: 2050 }]);
+    expect(yesterdayGap(state, NOW)).toBeNull();
+  });
+
+  it('asks when yesterday has no row at all', () => {
+    const state = withDays([{ date: '2026-08-15', kcal: 2100 }]);
+    expect(yesterdayGap(state, NOW)).toMatchObject({ date: YESTERDAY });
+  });
+
+  it('says nothing on a first-ever day, which has no yesterday but an absence', () => {
+    expect(yesterdayGap(withDays([]), NOW)).toBeNull();
+    expect(yesterdayGap(withDays([{ date: YESTERDAY, weightKg: 89.4 }]), NOW)).toBeNull();
+  });
+
+  it('carries protein through so a partial row is not lost by filling in kcal', () => {
+    const state = withDays([{ date: '2026-08-16', kcal: 2100 }, { date: YESTERDAY, proteinG: 150 }]);
+    expect(yesterdayGap(state, NOW).proteinG).toBe(150);
+  });
+
+  it('treats a zero-calorie day as answered, since a fast is a real answer', () => {
+    const state = withDays([{ date: '2026-08-16', kcal: 2100 }, { date: YESTERDAY, kcal: 0 }]);
+    expect(yesterdayGap(state, NOW)).toBeNull();
+  });
+});
+
+describe('expenditure never carries forward', () => {
+  it('leaves both spend fields empty on a new day', () => {
+    // Yesterday's training is not today's. Carrying it would credit a session
+    // that never happened, every single day after one hard workout.
+    const state = withDays([{ date: '2026-08-16', totalKcal: 2900, exerciseKcal: 500, weightKg: 89.4 }]);
+    const entry = prefillEntry(state, TODAY);
+    expect(entry.totalKcal).toBeNull();
+    expect(entry.exerciseKcal).toBeNull();
+    expect(entry.weightKg).toBe(89.4);  // body measurements still carry
+  });
+
+  it('shows what was already entered for today', () => {
+    const state = withDays([{ date: TODAY, totalKcal: 2784, exerciseKcal: 382 }]);
+    expect(prefillEntry(state, TODAY)).toMatchObject({ totalKcal: 2784, exerciseKcal: 382 });
+  });
+
+  it('round-trips both fields through the day record', () => {
+    const day = entryToDay({ date: TODAY, totalKcal: 2784, exerciseKcal: 382, isNew: true });
+    expect(day).toMatchObject({ totalKcal: 2784, exerciseKcal: 382 });
   });
 });

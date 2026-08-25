@@ -13,9 +13,10 @@ import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import {
   assembleDays, deriveEnergy, nutritionConfig, prefillEntry, entryToDay,
   entryMatchesStored, hasEntryData, parseNumber, setupGaps, targetBreakdown,
-  todayProgress, calibrationProgress, weightChartData,
+  todayProgress, calibrationProgress, weightChartData, yesterdayGap,
 } from './energyHelpers.js';
-import { flagMessage, flagAction, LEVEL_LABEL } from './nutritionText.js';
+import { sanitizeDay } from '../nutrition/dayValidation.js';
+import { flagMessage, flagAction, issueMessage, LEVEL_LABEL } from './nutritionText.js';
 import { dateKey } from '../engine/time.js';
 
 const kcal = (v) => (Number.isFinite(v) ? `${Math.round(v)} kcal` : '—');
@@ -119,19 +120,75 @@ function BudgetCard({ derived, progress }) {
 // resyncs only when the value arriving from outside disagrees with what the
 // text parses to, which is what a prefill or a day change must do and what a
 // half-typed "88." must not.
-function NumField({ label, unit, value, onInput, autofocus, hint }) {
+function NumField({ label, unit, value, onInput, autofocus, hint, issue, wide }) {
   const [text, setText] = useState(value == null ? '' : String(value));
   useEffect(() => {
     if (parseNumber(text) !== value) setText(value == null ? '' : String(value));
   }, [value]);
 
-  return html`<label class="nf">
+  // A refused value is not written, so saying so under the field is the only
+  // signal there is — without it the number sits on screen looking accepted and
+  // vanishes on the next visit.
+  const note = issue ? issueMessage(issue) : hint;
+  const tone = issue ? `nf-${issue.level}` : '';
+
+  return html`<label class="nf ${wide ? 'nf-wide' : ''}">
     <span class="nf-l">${label}${unit ? html` <small>${unit}</small>` : ''}</span>
-    <input class="nf-i" type="text" inputmode="decimal" enterkeyhint="next" autofocus=${autofocus}
-      value=${text} placeholder="—" aria-describedby=${hint ? `${label}-hint` : undefined}
+    <input class="nf-i ${tone}" type="text" inputmode="decimal" enterkeyhint="next" autofocus=${autofocus}
+      value=${text} placeholder="—" aria-invalid=${issue?.level === 'error' ? 'true' : undefined}
+      aria-describedby=${note ? `${label}-hint` : undefined}
       onInput=${(e) => { setText(e.target.value); onInput(parseNumber(e.target.value)); }} />
-    ${hint ? html`<span class="nf-h" id=${`${label}-hint`}>${hint}</span>` : ''}
+    ${note ? html`<span class="nf-h ${tone}" id=${`${label}-hint`} aria-live=${issue ? 'polite' : undefined}>
+      ${note}</span>` : ''}
   </label>`;
+}
+
+// Yesterday is usually still open when the scale is read, so it gets a strip
+// rather than a card: one line, present only when a number is actually owed,
+// gone the moment it is given. Named for what it wants — "Gestrige Kalorien" —
+// rather than for what is missing.
+function YesterdayStrip({ gap, onSave }) {
+  const [text, setText] = useState('');
+  if (!gap) return '';
+  const value = parseNumber(text);
+  return html`<div class="ystrip">
+    <div class="ys-t">Gestrige Kalorien</div>
+    <input class="nf-i ys-i" type="text" inputmode="decimal" enterkeyhint="done"
+      value=${text} placeholder="kcal" aria-label=${`Kalorien für ${gap.date}`}
+      onInput=${(e) => setText(e.target.value)}
+      onKeyDown=${(e) => { if (e.key === 'Enter' && value != null) { onSave(gap.date, value); setText(''); } }} />
+    <button class="ys-b" disabled=${value == null}
+      onClick=${() => { onSave(gap.date, value); setText(''); }}>Sichern</button>
+  </div>`;
+}
+
+// The two expenditure numbers, and the one rule that matters between them: the
+// day's total already contains the session. Once the total is there the
+// activity field stops being an input and becomes a line UNDER the total —
+// showing the containment instead of asserting it, so nobody adds the two in
+// their head and concludes the budget is wrong.
+function SpendCard({ entry, setEntry, issueFor, activity }) {
+  const set = (field) => (value) => setEntry({ ...entry, [field]: value });
+  const hasTotal = Number.isFinite(entry.totalKcal);
+
+  return html`<div class="settings-card">
+    <div class="s-k">Verbrauch heute</div>
+    <div class="nf-grid">
+      ${hasTotal ? '' : html`<${NumField} label="Aktivitätsumsatz" unit="kcal" wide
+        value=${entry.exerciseKcal} onInput=${set('exerciseKcal')} issue=${issueFor('exerciseKcal')}
+        hint="Aktivkalorien deiner Uhr, wenn du trainiert hast" />`}
+      <${NumField} label="Gesamtumsatz" unit="kcal" wide
+        value=${entry.totalKcal} onInput=${set('totalKcal')} issue=${issueFor('totalKcal')}
+        hint=${hasTotal ? 'gemessen · ersetzt die Schätzung' : 'abends: Gesamtkalorien des Tages'} />
+    </div>
+    ${hasTotal && Number.isFinite(entry.exerciseKcal) ? html`<div class="am-row">
+      <span class="am-k">davon Aktivität</span>
+      <span class="am-v">${kcal(entry.exerciseKcal)}</span>
+      <span class="am-d">enthalten, nicht zusätzlich</span>
+    </div>` : ''}
+    ${activity?.source === 'total' ? html`<p class="s-hint">${kcal(activity.kcal)} über einem
+      Ruhetag — das ist die Zahl, die dein Budget hebt.</p>` : ''}
+  </div>`;
 }
 
 // Two fields carry the whole feature — what you ate and what you weigh — and
@@ -139,9 +196,10 @@ function NumField({ label, unit, value, onInput, autofocus, hint }) {
 // said nothing about where the numbers come from, which is a fair reading of
 // "I do not know what I am supposed to enter". They are now named as the two
 // that matter, in order, with the rest demoted behind them.
-function EntryCard({ entry, setEntry, saved }) {
+function EntryCard({ entry, setEntry, saved, issues }) {
   const [details, setDetails] = useState(false);
   const set = (field) => (value) => setEntry({ ...entry, [field]: value });
+  const issueFor = (field) => issues.find((i) => i.field === field);
 
   return html`<div class="settings-card">
     <div class="s-k">${entry.isNew ? 'Heute eintragen' : 'Heute'}</div>
@@ -149,20 +207,20 @@ function EntryCard({ entry, setEntry, saved }) {
       heute früh gezeigt hat. Alles andere ist optional.</p>
     <div class="nf-grid">
       <${NumField} label="Kalorien" unit="kcal" value=${entry.kcal} onInput=${set('kcal')}
-        hint="Tagessumme aus deiner Tracking-App" />
+        issue=${issueFor('kcal')} hint="Tagessumme aus deiner Tracking-App" />
       <${NumField} label="Gewicht" unit="kg" value=${entry.weightKg} onInput=${set('weightKg')}
-        hint="nüchtern, nach dem Aufstehen" />
+        issue=${issueFor('weightKg')} hint="nüchtern, nach dem Aufstehen" />
     </div>
     <button class="det-toggle" onClick=${() => setDetails(!details)} aria-expanded=${details}>
       ${details ? 'Weniger' : 'Protein, Körperfett und Makros ergänzen'}
     </button>
     ${details ? html`<div class="nf-grid">
-      <${NumField} label="Protein" unit="g" value=${entry.proteinG} onInput=${set('proteinG')} />
-      <${NumField} label="Körperfett" unit="%" value=${entry.bodyFatPct} onInput=${set('bodyFatPct')} />
-      <${NumField} label="Fett" unit="g" value=${entry.fatG} onInput=${set('fatG')} />
-      <${NumField} label="Kohlenhydrate" unit="g" value=${entry.carbsG} onInput=${set('carbsG')} />
-      <${NumField} label="Ballaststoffe" unit="g" value=${entry.fiberG} onInput=${set('fiberG')} />
-      <${NumField} label="Alkohol" unit="g" value=${entry.alcoholG} onInput=${set('alcoholG')} />
+      <${NumField} label="Protein" unit="g" value=${entry.proteinG} onInput=${set('proteinG')} issue=${issueFor('proteinG')} />
+      <${NumField} label="Körperfett" unit="%" value=${entry.bodyFatPct} onInput=${set('bodyFatPct')} issue=${issueFor('bodyFatPct')} />
+      <${NumField} label="Fett" unit="g" value=${entry.fatG} onInput=${set('fatG')} issue=${issueFor('fatG')} />
+      <${NumField} label="Kohlenhydrate" unit="g" value=${entry.carbsG} onInput=${set('carbsG')} issue=${issueFor('carbsG')} />
+      <${NumField} label="Ballaststoffe" unit="g" value=${entry.fiberG} onInput=${set('fiberG')} issue=${issueFor('fiberG')} />
+      <${NumField} label="Alkohol" unit="g" value=${entry.alcoholG} onInput=${set('alcoholG')} issue=${issueFor('alcoholG')} />
     </div>` : ''}
     <div class="nf-saved" aria-live="polite">${saved ? 'Gespeichert' : ''}</div>
   </div>`;
@@ -233,6 +291,7 @@ export function EnergyScreen({ state, now, actions }) {
   const [entry, setEntry] = useState(() => prefillEntry(state, today));
   const [dirty, setDirty] = useState(false);
   const [open, setOpen] = useState(null);
+  const [tab, setTab] = useState('heute');
 
   const rows = state?.nutrition?.days ?? [];
   useEffect(() => {
@@ -241,7 +300,21 @@ export function EnergyScreen({ state, now, actions }) {
     return () => { alive = false; };
   }, [rows.length, JSON.stringify(rows.at(-1) ?? null), config.energy.adapterId]);
 
-  useEffect(() => { setEntry(prefillEntry(state, today)); setDirty(false); }, [rows.length, today]);
+  useEffect(() => {
+    setEntry((current) => {
+      const fresh = prefillEntry(state, today);
+      // A refused value was deliberately not written, so the prefill reads back
+      // null for it — and re-applying that would wipe the number off the screen
+      // along with the reason it was rejected, half a second after typing it.
+      // That is precisely the disappearance the message exists to prevent, so
+      // refused fields keep what the user typed until the user changes it.
+      for (const field of sanitizeDay(entryToDay(current), { history: rows }).refused) {
+        fresh[field] = current[field];
+      }
+      return fresh;
+    });
+    setDirty(false);
+  }, [rows.length, today]);
 
   // Autosave. The entry used to live only in this component's state behind a
   // Speichern button, so typing four numbers and switching tabs threw them away
@@ -252,9 +325,20 @@ export function EnergyScreen({ state, now, actions }) {
   // Debounced rather than per-keystroke because each write reassembles the day
   // series through the adapters, and a ref rather than a dependency so that
   // leaving the screen inside the debounce window still saves what is pending.
+  // Validation sits on the write, not on the keystroke: sanitizeDay drops the
+  // fields it refuses and keeps the rest, so one impossible body-fat reading
+  // does not also discard the weight typed beside it.
+  const validation = useMemo(
+    () => sanitizeDay(entryToDay(entry), { history: rows }),
+    [JSON.stringify(entryToDay(entry)), rows.length],
+  );
+
   const pending = useRef(null);
   const saveNow = useRef(null);
-  saveNow.current = (value) => { if (hasEntryData(value)) actions.saveDay(entryToDay(value)); };
+  saveNow.current = (value) => {
+    const clean = sanitizeDay(entryToDay(value), { history: rows });
+    if (hasEntryData(clean.day)) actions.saveDay(clean.day);
+  };
 
   useEffect(() => {
     if (!dirty) return undefined;
@@ -285,6 +369,15 @@ export function EnergyScreen({ state, now, actions }) {
 
   const change = (next) => { setEntry(next); setDirty(true); };
 
+  // The strip writes straight through rather than into the entry state: it
+  // belongs to another day, and routing it through today's mask would put
+  // yesterday's calories on today's row.
+  const saveYesterday = (date, value) => {
+    const existing = rows.find((row) => row.date === date) ?? { date };
+    const clean = sanitizeDay({ ...existing, date, kcal: value }, { history: rows });
+    if (hasEntryData(clean.day)) actions.saveDay(clean.day);
+  };
+
   if (!derived) {
     return html`<div><div class="eyebrow">Energie</div><h1 class="title">Rechne …</h1></div>`;
   }
@@ -306,19 +399,34 @@ export function EnergyScreen({ state, now, actions }) {
   // job: get today entered. The diagnostics come back the moment they can say
   // something.
   const measured = calib.remaining === 0 || derived.plannedIntakeKcal != null;
+  const gap = yesterdayGap(state, now);
 
   return html`<div>
     <div class="eyebrow">Energie</div>
     <h1 class="title">${progress.logged && !progress.over ? 'Gut unterwegs'
     : progress.over ? 'Über dem Ziel' : 'Heute'}</h1>
 
+    <div class="e-tabs" role="tablist">
+      ${[['heute', 'Heute'], ['woche', 'Woche']].map(([id, label]) => html`
+        <button role="tab" aria-selected=${tab === id} class=${tab === id ? 'on' : ''}
+          onClick=${() => setTab(id)}>${label}</button>`)}
+    </div>
+
     ${urgent.length ? html`<div class="settings-card urgent"><${FlagList} flags=${urgent} /></div>` : ''}
 
+    ${tab === 'heute' ? html`
+    <${YesterdayStrip} gap=${gap} onSave=${saveYesterday} />
     ${Number.isFinite(progress.targetKcal) || calib.remaining === 0
     ? html`<${BudgetCard} derived=${derived} progress=${progress} />` : ''}
     ${calib.remaining > 0 ? html`<${StartCard} progress=${progress} calib=${calib} />` : ''}
-    <${EntryCard} entry=${entry} setEntry=${change} saved=${!dirty && entryMatchesStored(entry, state)} />
+    <${EntryCard} entry=${entry} setEntry=${change} issues=${validation.issues}
+      saved=${!dirty && !validation.refused.length && entryMatchesStored(entry, state)} />
+    <${SpendCard} entry=${entry} setEntry=${change} activity=${derived.activity}
+      issueFor=${(f) => validation.issues.find((i) => i.field === f)} />
     <${TrendCard} chart=${chart} goalKg=${config.goal.target?.valueKg} />
+    ` : ''}
+
+    ${tab === 'woche' ? html`
 
     ${measured ? html`
     <div class="sec-title">Wie die Zahl zustande kommt</div>
@@ -393,6 +501,8 @@ export function EnergyScreen({ state, now, actions }) {
 
     ${rest.length ? html`<div class="settings-card"><div class="s-k">Hinweise</div>
       <${FlagList} flags=${rest} /></div>` : ''}
+    ` : ''}
+    ${!measured ? html`<p class="s-hint">Die Auswertung erscheint, sobald genug Tage erfasst sind.</p>` : ''}
     ` : ''}
   </div>`;
 }
