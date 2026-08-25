@@ -36,5 +36,15 @@ export const flagAction = (flag) => lookup('actions', flag.suggestedAction, {});
 export const errorMessage = (issue) => lookup('errors', issue.code, { ...issue.params, path: issue.path });
 export const warningMessage = (issue) => lookup('warnings', issue.code, { ...issue.params, path: issue.path });
 
+// Validation issues name a field by its domain key. The user never saw that
+// key, so it is swapped for the label they read above the input before the
+// sentence is built.
+export const fieldLabel = (field) => N?.fields?.[field] ?? field;
+export const issueMessage = (issue) => lookup(
+  issue.level === 'error' ? 'errors' : 'warnings',
+  issue.code,
+  { ...issue.params, field: fieldLabel(issue.params?.field ?? issue.field) },
+);
+
 export const LEVEL_LABEL = { stop: 'Stopp', warn: 'Achtung', info: 'Hinweis' };
 export const LEVEL_CLASS = { stop: 'v-stop', warn: 'v-caution', info: 'v-fresh' };
